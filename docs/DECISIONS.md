@@ -157,3 +157,23 @@ Raw material for the README – not a polished document.
 - Page breaks: overlap is also carried across them, and a chunk takes the page number where its own text starts. Found by running a real multi-page PDF: with chunks forbidden to cross pages, a sentence cut by the page break ended up whole in no chunk at all. A chunk may now open with a few sentences from the previous page, which makes the page citation slightly generous for those sentences.
 - Token counts are estimated as characters / 4. There is no Gemini tokenizer for Node, and for English the estimate is close enough to size chunks; the embedding model's input limit (2,048 tokens for `gemini-embedding-001`) leaves a wide margin.
 - Trade-offs / when to revisit: whole paragraphs bigger than the overlap are not repeated (only sentence-level tails are); no semantic chunking (embedding-based boundary detection), which costs an embedding call per sentence; tables and code are not treated specially.
+
+### Embeddings: `gemini-embedding-001` at 768 dimensions through the Vercel AI SDK
+
+- Chosen: `gemini-embedding-001`, truncated to 768 dimensions by the API, called through `embedMany`/`embed` of the AI SDK with `taskType` `RETRIEVAL_DOCUMENT` for passages and `RETRIEVAL_QUERY` for questions. The model id is configurable (`EMBEDDING_MODEL`).
+- Considered: `gemini-embedding-2` (newer, multimodal, 8,192-token input, normalises truncated vectors itself); OpenAI `text-embedding-3-small`; a local model.
+- Why: `-001` is the text-only model with documented retrieval task types, and passage and query vectors that are trained to match each other are a real quality gain for question answering. `-2` has no task type and expects instructions written into the text (`task: search result | query: …`), which is a different code path I did not want to carry untested. A local model would not fit in the 512 MB free instance. Cosine distance ignores vector length, so the manual normalisation Google asks for with truncated vectors is not needed for `vector_cosine_ops`.
+- Trade-offs / when to revisit: free-tier Gemini data may be used by Google to improve its products, so no sensitive documents. Switching to `-2` means adding the prefix handling and re-embedding every chunk.
+
+### Rate limits and failures: retries in the SDK, classification and a time limit on top
+
+- Chosen: up to 5 retries on 429 and 5xx (the SDK waits 2 s, 4 s, 8 s… and obeys `Retry-After`, roughly a minute of throttling), at most 2 batches in flight (100 texts per request is the provider's limit and `embedMany` splits automatically), a 2-minute limit per call, and a vector-size check before anything reaches the database. Every failure becomes an `EmbeddingError` with a kind and a user-readable message; the provider's own message is kept only as `cause` for the logs.
+- Why: Google publishes no free-tier numbers in its documentation (they are shown per project in AI Studio), so the design assumes throttling instead of relying on a figure. Keeping provider text out of messages avoids leaking keys or internals into the UI.
+- Found by calling the real API with a deliberately wrong key: Google answers an invalid key with HTTP **400** (`API key not valid`), not 401/403, so a plain status mapping would have told users that their document contained "text the service rejected". The message is checked as well.
+- Trade-offs / when to revisit: a large document can take minutes on a throttled key; ingestion has to report progress and tolerate that. Retries are per call; a quota that is exhausted for the day is not distinguishable from a per-minute limit.
+
+### The app runs without a Gemini key
+
+- Chosen: `GOOGLE_GENERATIVE_AI_API_KEY` is optional; a blank value counts as unset. Without it the embedder is a stand-in that fails with a "not configured" error, so indexing reports a clear reason instead of the API refusing to start.
+- Why: sign-up, sign-in and the UI can be developed and reviewed without a key, and a Render redeploy cannot be broken by a missing variable.
+- Trade-offs / when to revisit: the problem shows up at upload time instead of at boot; the startup log warns about it.

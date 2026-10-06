@@ -8,6 +8,11 @@ const envSchema = z
     LOG_LEVEL: z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default('info'),
+    GOOGLE_GENERATIVE_AI_API_KEY: z
+      .string()
+      .optional()
+      .transform((key) => key?.trim() || undefined),
+    EMBEDDING_MODEL: z.string().min(1).default('gemini-embedding-001'),
     COOKIE_SECURE: z.stringbool().optional(),
   })
   .transform((env) => ({

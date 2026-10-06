@@ -29,6 +29,8 @@ services:
         fromDatabase:
           name: rag-chat-db
           property: connectionString
+      - key: GOOGLE_GENERATIVE_AI_API_KEY
+        sync: false
 
   - type: web
     name: rag-chat-web
