@@ -1,12 +1,20 @@
-import { AppShell } from './components/AppShell';
+import { Navigate, Route, Routes } from 'react-router';
+import { LoginPage } from './features/auth/LoginPage';
+import { RegisterPage } from './features/auth/RegisterPage';
+import { RedirectIfAuthenticated, RequireAuth } from './features/auth/RouteGuards';
+import { HomePage } from './pages/HomePage';
 
 export function App() {
   return (
-    <AppShell>
-      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-        <h2 className="text-2xl font-semibold">Ask questions about your documents</h2>
-        <p className="mt-3 text-slate-600">Upload a document and start a conversation.</p>
-      </div>
-    </AppShell>
+    <Routes>
+      <Route element={<RequireAuth />}>
+        <Route path="/" element={<HomePage />} />
+      </Route>
+      <Route element={<RedirectIfAuthenticated />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }

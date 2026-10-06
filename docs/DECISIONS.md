@@ -106,3 +106,21 @@ Raw material for the README – not a polished document.
 - Considered: TanStack Query, axios.
 - Why: auth state is one small value, so a library would be overhead for now. `unavailable` is separate from `anonymous` on purpose: a free-tier API that is still waking up answers 502, and showing the login form then would look like the user had been signed out.
 - Trade-offs / when to revisit: server data for chats and documents (polling, caching, optimistic updates) is where a data-fetching library starts to pay off; revisit at that point.
+
+### UI kit: shadcn/ui (Radix, "Nova" preset) with Tailwind 4, CLI not kept as a dependency
+
+- Chosen: shadcn components copied into `apps/web/src/components/ui` (button, input, label, card, alert); added with `npx shadcn@latest add <name>` when needed.
+- Why: accessible primitives I own and can edit, no runtime component library to upgrade. The CLI package itself pulled in 7 high-severity advisories (`braces`/`fast-glob`/`ts-morph`) and the app only needed one CSS file from it, so the few `@custom-variant` rules were inlined into `index.css` and the CLI is invoked through `npx` only.
+- Trade-offs / when to revisit: generated files follow shadcn's style, not ours (formatted with Prettier, `react-refresh` lint rule off for that folder). The generated `utils.ts` re-exports `cn` from the shadcn-maintained `cn` package (checked: published by the shadcn author, repo `shadcn-ui/cn`).
+
+### Routing: React Router in declarative mode, guards as layout routes
+
+- Chosen: `RequireAuth` and `RedirectIfAuthenticated` are layout routes wrapping the pages; they render loading and "server not responding" screens themselves, so no page has to handle those states.
+- Why: one place decides who may see what; after signing in the user lands where they were headed (`from` location state).
+- Trade-offs / when to revisit: the guard only controls the UI. The API enforces access itself with `requireAuth`, so a tampered client gains nothing.
+
+### Auth forms rely on the server for validation
+
+- Chosen: native constraints (`required`, `type=email`, `minLength`) for instant feedback; the API's field errors are shown next to the inputs and anything else in an alert.
+- Why: one source of truth for the rules; no schema duplicated in the browser.
+- Trade-offs / when to revisit: native validation bubbles are browser-styled; switch to a form library with a shared schema if forms become more complex.

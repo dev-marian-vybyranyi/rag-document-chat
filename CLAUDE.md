@@ -10,7 +10,7 @@ Answers are grounded in the documents and cite their sources.
 Two services in an npm-workspaces monorepo:
 
 - `apps/api` – Express + TypeScript, Vercel AI SDK (Gemini), Drizzle ORM, Postgres + pgvector
-- `apps/web` – React + Vite + TypeScript + Tailwind
+- `apps/web` – React + Vite + TypeScript + Tailwind + shadcn/ui + React Router
 
 Deployed to Render via a Blueprint (`render.yaml`) using Docker. CI runs on GitHub Actions.
 Everything must work on free tiers.
@@ -39,6 +39,8 @@ docker compose up --build   # full stack in containers on http://localhost:8080
 - ESM only. Use `import type` for type-only imports.
 - Validate every external input (HTTP bodies, env vars, LLM output) with zod.
 - Keep modules small and feature-oriented (`auth`, `documents`, `rag`, `chat`), not layer-oriented.
+- UI components come from shadcn/ui (`npx shadcn@latest add <name>` inside `apps/web`); the CLI is not a
+  dependency. Use the `@/` import alias for files under `apps/web/src`.
 - No RAG framework (LangChain, LlamaIndex). The Vercel AI SDK is used only for model calls,
   embeddings and streaming; retrieval and prompting are written explicitly.
 - Never hardcode secrets. Configuration comes from environment variables; document new ones in

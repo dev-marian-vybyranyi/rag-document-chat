@@ -24,5 +24,9 @@ export default tseslint.config(
     extends: [reactHooks.configs.flat.recommended, reactRefresh.configs.vite],
     rules: { 'no-console': 'error' },
   },
+  {
+    files: ['apps/web/src/components/ui/**'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
   prettier,
 );
