@@ -1,8 +1,10 @@
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq, getTableColumns, sql } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import { chunks, documents } from '../db/schema.js';
 
 export type DocumentRecord = typeof documents.$inferSelect;
+
+export type DocumentWithChunkCount = DocumentRecord & { chunkCount: number };
 
 export interface NewChunk {
   ordinal: number;
@@ -14,6 +16,8 @@ export interface NewChunk {
 
 const CHUNK_INSERT_BATCH_SIZE = 100;
 
+const chunkCountOf = sql<number>`(select count(*)::int from "chunks" c where c."document_id" = "documents"."id")`;
+
 export function createDocumentRepository(db: Database) {
   return {
     async create(input: {
@@ -24,6 +28,30 @@ export function createDocumentRepository(db: Database) {
     }): Promise<DocumentRecord> {
       const [document] = await db.insert(documents).values(input).returning();
       return document!;
+    },
+
+    async listByUser(userId: string): Promise<DocumentWithChunkCount[]> {
+      return db
+        .select({ ...getTableColumns(documents), chunkCount: chunkCountOf })
+        .from(documents)
+        .where(eq(documents.userId, userId))
+        .orderBy(desc(documents.createdAt), desc(documents.id));
+    },
+
+    async findForUser(id: string, userId: string): Promise<DocumentWithChunkCount | undefined> {
+      const [document] = await db
+        .select({ ...getTableColumns(documents), chunkCount: chunkCountOf })
+        .from(documents)
+        .where(and(eq(documents.id, id), eq(documents.userId, userId)));
+      return document;
+    },
+
+    async deleteForUser(id: string, userId: string): Promise<boolean> {
+      const deleted = await db
+        .delete(documents)
+        .where(and(eq(documents.id, id), eq(documents.userId, userId)))
+        .returning({ id: documents.id });
+      return deleted.length > 0;
     },
 
     async completeWithChunks(input: {

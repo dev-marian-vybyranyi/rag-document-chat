@@ -1,12 +1,13 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { requireAuth, userOf } from '../auth/middleware.js';
 import { AppError } from '../http/errors.js';
 import { checkContent, detectFileType, sanitizeFilename } from './file-types.js';
 import type { IngestionService } from './ingest.js';
-import type { DocumentRecord, DocumentRepository } from './repository.js';
+import type { DocumentRepository, DocumentWithChunkCount } from './repository.js';
 import { singleFileUpload } from './upload.js';
 
-function toPublicDocument(document: DocumentRecord) {
+function toPublicDocument(document: DocumentWithChunkCount) {
   return {
     id: document.id,
     filename: document.filename,
@@ -15,6 +16,7 @@ function toPublicDocument(document: DocumentRecord) {
     status: document.status,
     error: document.error,
     pageCount: document.pageCount,
+    chunkCount: document.chunkCount,
     createdAt: document.createdAt,
   };
 }
@@ -33,6 +35,30 @@ export function createDocumentsRouter({
   const router = Router();
 
   router.use(requireAuth);
+
+  const notFound = () => new AppError(404, 'not_found', 'Document not found');
+  const idParam = (value: unknown): string => {
+    const parsed = z.uuid().safeParse(value);
+    if (!parsed.success) throw notFound();
+    return parsed.data;
+  };
+
+  router.get('/', async (req, res) => {
+    const list = await documents.listByUser(userOf(req).id);
+    res.json({ documents: list.map(toPublicDocument) });
+  });
+
+  router.get('/:id', async (req, res) => {
+    const document = await documents.findForUser(idParam(req.params.id), userOf(req).id);
+    if (!document) throw notFound();
+    res.json({ document: toPublicDocument(document) });
+  });
+
+  router.delete('/:id', async (req, res) => {
+    const deleted = await documents.deleteForUser(idParam(req.params.id), userOf(req).id);
+    if (!deleted) throw notFound();
+    res.status(204).end();
+  });
 
   router.post('/', singleFileUpload(maxUploadBytes), async (req, res) => {
     const file = req.file;
@@ -57,7 +83,7 @@ export function createDocumentsRouter({
       sizeBytes: file.size,
     });
     ingestion.enqueue({ document, type, content: file.buffer });
-    res.status(202).json({ document: toPublicDocument(document) });
+    res.status(202).json({ document: toPublicDocument({ ...document, chunkCount: 0 }) });
   });
 
   return router;
