@@ -11,7 +11,7 @@ const { db, pool } = createDb(env.DATABASE_URL);
 await runMigrations(db);
 logger.info('database migrations applied');
 
-const app = createApp({ logger, db });
+const app = createApp({ logger, db, cookieSecure: env.COOKIE_SECURE });
 
 const server = app.listen(env.PORT, () => {
   logger.info({ port: env.PORT, env: env.NODE_ENV }, 'api listening');

@@ -85,3 +85,17 @@ Raw material for the README – not a polished document.
 
 - Chosen: every error is `{ error: { code, message, details? } }`; `AppError` carries the status and a stable machine-readable code, unexpected errors become a generic 500 and are only logged.
 - Why: the frontend can branch on `code`, and internal messages never leak.
+
+### Sessions: opaque token in an httpOnly cookie, hash stored in Postgres
+
+- Chosen: 32 random bytes in a `sid` cookie (httpOnly, SameSite=Lax, Secure in production); the `sessions` table holds only the SHA-256 of the token; fixed 7-day lifetime; expired rows are purged whenever a new session is created.
+- Considered: JWT in a cookie or `localStorage`.
+- Why: a server-side row can be revoked on logout; a leaked table is not replayable; page scripts never see the token. SameSite=Lax is the CSRF defence, since the API only accepts JSON and cross-site POSTs do not carry the cookie.
+- Trade-offs / when to revisit: one extra query per authenticated request; no sliding expiry or "sign out everywhere"; `Secure` is controlled by `COOKIE_SECURE` because the plain-HTTP compose setup cannot use it (Safari rejects Secure cookies on http://localhost).
+
+### Rate limits keyed by account, not by client IP
+
+- Chosen: 10 failed sign-ins per email per 15 min (successful ones are not counted and a correct password clears the counter) plus a ceiling of 100 requests/min across all `/auth` routes.
+- Considered: the usual per-IP limit with `trust proxy`.
+- Why: in front of the API sit Render's edge, our nginx and Render's edge again, so the real client IP is at an unpredictable position in `X-Forwarded-For`. A wrong `trust proxy` hop count either gives every user the same key (one attacker locks out the whole site) or lets attackers choose their own key.
+- Trade-offs / when to revisit: someone who knows an email can lock that account for 15 minutes; counters live in memory, so they reset on restart and are per instance. With a known proxy topology add a per-IP limit, and move the store to Redis when running several instances.

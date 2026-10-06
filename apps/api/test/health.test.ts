@@ -5,7 +5,7 @@ import { createApp } from '../src/app.js';
 import { createDb } from '../src/db/client.js';
 
 const { db } = createDb('postgres://unused:unused@localhost:1/unused');
-const app = createApp({ logger: pino({ level: 'silent' }), db });
+const app = createApp({ logger: pino({ level: 'silent' }), db, cookieSecure: false });
 
 describe('GET /health', () => {
   it('reports the service as ok', async () => {

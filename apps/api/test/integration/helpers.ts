@@ -1,6 +1,9 @@
 import { sql } from 'drizzle-orm';
+import { pino } from 'pino';
 import { afterAll, beforeEach, inject } from 'vitest';
-import { createDb } from '../../src/db/client.js';
+import { createApp } from '../../src/app.js';
+import { createDb, type Database } from '../../src/db/client.js';
+import type { AuthRateLimits } from '../../src/http/rate-limit.js';
 
 export function useTestDb() {
   const { db, pool } = createDb(inject('testDatabaseUrl'));
@@ -19,4 +22,24 @@ export function useTestDb() {
   });
 
   return db;
+}
+
+const generousLimits: AuthRateLimits = {
+  maxFailedLogins: 1_000,
+  failedLoginWindowMs: 60_000,
+  maxRequests: 10_000,
+  overallWindowMs: 60_000,
+};
+
+export function buildTestApp(
+  db: Database,
+  overrides: { cookieSecure?: boolean; authRateLimits?: AuthRateLimits } = {},
+) {
+  return createApp({
+    logger: pino({ level: 'silent' }),
+    db,
+    cookieSecure: false,
+    authRateLimits: generousLimits,
+    ...overrides,
+  });
 }

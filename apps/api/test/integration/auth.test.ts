@@ -1,13 +1,11 @@
-import { pino } from 'pino';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { createApp } from '../../src/app.js';
 import { users } from '../../src/db/schema.js';
-import { useTestDb } from './helpers.js';
+import { buildTestApp, useTestDb } from './helpers.js';
 
 describe('auth endpoints', () => {
   const db = useTestDb();
-  const app = createApp({ logger: pino({ level: 'silent' }), db });
+  const app = buildTestApp(db);
 
   const credentials = { email: 'ada@example.com', password: 'correct horse battery' };
   const register = (body: object = credentials) => request(app).post('/auth/register').send(body);
