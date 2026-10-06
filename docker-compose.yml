@@ -21,6 +21,7 @@ services:
       dockerfile: apps/api/Dockerfile
     environment:
       PORT: 3000
+      DATABASE_URL: postgres://postgres:postgres@db:5432/ragchat
     ports:
       - '3000:3000'
     depends_on:

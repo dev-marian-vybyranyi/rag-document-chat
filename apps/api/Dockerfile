@@ -18,6 +18,8 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/
 RUN npm ci -w @rag-chat/api --omit=dev && npm cache clean --force
 COPY --from=build /repo/apps/api/dist apps/api/dist
+# SQL migrations are applied by the server on startup.
+COPY apps/api/drizzle apps/api/drizzle
 
 USER node
 WORKDIR /repo/apps/api

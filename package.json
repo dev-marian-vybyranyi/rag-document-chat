@@ -33,5 +33,12 @@
     "prettier": "^3.9.9",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.1"
+  },
+  "overrides": {
+    "drizzle-kit": {
+      "@esbuild-kit/core-utils": {
+        "esbuild": "^0.28.2"
+      }
+    }
   }
 }
