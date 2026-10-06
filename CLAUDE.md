@@ -21,10 +21,12 @@ Run from the repository root:
 
 ```bash
 npm install          # install all workspaces
+npm run dev          # api (:3000) and web (:5173) together; web proxies /api/* to the api
 npm run lint         # eslint
 npm run format       # prettier --write
 npm run typecheck    # tsc --noEmit in every workspace
 npm test             # vitest in every workspace
+docker compose up --build   # full stack in containers on http://localhost:8080
 ```
 
 ## Conventions
