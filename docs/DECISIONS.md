@@ -99,3 +99,10 @@ Raw material for the README – not a polished document.
 - Considered: the usual per-IP limit with `trust proxy`.
 - Why: in front of the API sit Render's edge, our nginx and Render's edge again, so the real client IP is at an unpredictable position in `X-Forwarded-For`. A wrong `trust proxy` hop count either gives every user the same key (one attacker locks out the whole site) or lets attackers choose their own key.
 - Trade-offs / when to revisit: someone who knows an email can lock that account for 15 minutes; counters live in memory, so they reset on restart and are per instance. With a known proxy topology add a per-IP limit, and move the store to Redis when running several instances.
+
+### Frontend auth state: plain React context, with an `unavailable` state
+
+- Chosen: `AuthProvider` asks `/auth/me` on start and exposes `loading | anonymous | unavailable | authenticated`; the HTTP layer is a thin `fetch` wrapper that turns the API error contract into `ApiError`.
+- Considered: TanStack Query, axios.
+- Why: auth state is one small value, so a library would be overhead for now. `unavailable` is separate from `anonymous` on purpose: a free-tier API that is still waking up answers 502, and showing the login form then would look like the user had been signed out.
+- Trade-offs / when to revisit: server data for chats and documents (polling, caching, optimistic updates) is where a data-fetching library starts to pay off; revisit at that point.
