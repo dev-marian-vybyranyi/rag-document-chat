@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { pino } from 'pino';
+import type { Response } from 'supertest';
 import { afterAll, beforeEach, inject } from 'vitest';
 import { createApp } from '../../src/app.js';
 import { createDb, type Database } from '../../src/db/client.js';
@@ -42,4 +43,13 @@ export function buildTestApp(
     authRateLimits: generousLimits,
     ...overrides,
   });
+}
+
+export function sessionCookie(res: Response): string | undefined {
+  const header = res.headers['set-cookie'] as string[] | string | undefined;
+  return [header ?? []].flat().find((c) => c.startsWith('sid='));
+}
+
+export function tokenOf(cookie: string): string {
+  return cookie.split(';')[0]!.slice('sid='.length);
 }

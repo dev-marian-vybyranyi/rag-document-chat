@@ -3,16 +3,9 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { hashToken, SESSION_TTL_MS } from '../../src/auth/sessions.js';
 import { sessions } from '../../src/db/schema.js';
-import { buildTestApp, useTestDb } from './helpers.js';
+import { buildTestApp, sessionCookie, tokenOf, useTestDb } from './helpers.js';
 
 const credentials = { email: 'ada@example.com', password: 'correct horse battery' };
-
-function sessionCookie(res: request.Response): string | undefined {
-  const header = res.headers['set-cookie'] as string[] | string | undefined;
-  return [header ?? []].flat().find((c) => c.startsWith('sid='));
-}
-
-const tokenOf = (cookie: string) => cookie.split(';')[0]!.slice('sid='.length);
 
 describe('sessions', () => {
   const db = useTestDb();
