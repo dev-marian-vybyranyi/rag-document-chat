@@ -20,7 +20,10 @@ server {
   location /api/ {
     proxy_pass ${API_UPSTREAM}/;
     proxy_http_version 1.1;
-    proxy_set_header Host $host;
+    # Host is deliberately left at nginx's default ($proxy_host = the upstream's own name):
+    # Render routes public traffic by Host header, so forwarding ours would miss the API.
+    # SNI is required to reach an HTTPS upstream such as https://<service>.onrender.com.
+    proxy_ssl_server_name on;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
