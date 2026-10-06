@@ -1,0 +1,20 @@
+# dependencies & build output
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# environment (never commit secrets)
+.env
+.env.*
+!.env.example
+
+# logs & OS/editor noise
+*.log
+.DS_Store
+.idea/
+.vscode/
+
+# local working notes (not part of the deliverable)
+PLAN.md
