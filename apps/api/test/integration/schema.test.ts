@@ -1,10 +1,8 @@
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
+import { PG_FOREIGN_KEY_VIOLATION, PG_UNIQUE_VIOLATION, pgErrorCode } from '../../src/db/errors.js';
 import { sessions, users } from '../../src/db/schema.js';
-import { pgErrorCode, useTestDb } from './helpers.js';
-
-const UNIQUE_VIOLATION = '23505';
-const FOREIGN_KEY_VIOLATION = '23503';
+import { useTestDb } from './helpers.js';
 
 describe('database schema', () => {
   const db = useTestDb();
@@ -24,7 +22,7 @@ describe('database schema', () => {
 
     const duplicate = db.insert(users).values(newUser());
 
-    await expect(duplicate).rejects.toSatisfy((e) => pgErrorCode(e) === UNIQUE_VIOLATION);
+    await expect(duplicate).rejects.toSatisfy((e) => pgErrorCode(e) === PG_UNIQUE_VIOLATION);
   });
 
   it('rejects a session that points at a missing user', async () => {
@@ -34,7 +32,7 @@ describe('database schema', () => {
       expiresAt: inOneHour(),
     });
 
-    await expect(orphan).rejects.toSatisfy((e) => pgErrorCode(e) === FOREIGN_KEY_VIOLATION);
+    await expect(orphan).rejects.toSatisfy((e) => pgErrorCode(e) === PG_FOREIGN_KEY_VIOLATION);
   });
 
   it('deletes a user’s sessions together with the user', async () => {

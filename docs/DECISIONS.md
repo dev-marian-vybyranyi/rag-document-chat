@@ -68,3 +68,20 @@ Raw material for the README – not a polished document.
 - Chosen: apply Drizzle migrations when the API container starts (wired in Stage 3).
 - Why: `preDeployCommand` is not something to rely on for free services; startup migration works on every plan.
 - Trade-offs / when to revisit: with several API instances this races; production would run migrations as a separate release step.
+
+### Password hashing with Node's built-in scrypt
+
+- Chosen: `crypto.scrypt` (N=2^15, r=8, p=3, 16-byte salt), stored as `scrypt$N$r$p$salt$hash`.
+- Considered: argon2 (`argon2` package), bcrypt.
+- Why: scrypt is on OWASP's list and ships with Node, so there is no native module to compile in the Alpine image. The cost parameters live inside each hash, so they can be raised later without invalidating old passwords.
+- Trade-offs / when to revisit: argon2id is the first OWASP choice and could replace it; ~32 MiB per hash is acceptable on the 512 MB free instance only because logins are rate limited (added later).
+
+### Login does not reveal whether an email exists
+
+- Chosen: unknown email and wrong password give the same 401 body, and an unknown email is still verified against a decoy hash so the response time matches.
+- Trade-offs / when to revisit: registration still answers 409 for a taken email (needed for a usable sign-up form), so enumeration is possible there. Closing it needs email verification, which is out of scope.
+
+### Uniform JSON error contract
+
+- Chosen: every error is `{ error: { code, message, details? } }`; `AppError` carries the status and a stable machine-readable code, unexpected errors become a generic 500 and are only logged.
+- Why: the frontend can branch on `code`, and internal messages never leak.

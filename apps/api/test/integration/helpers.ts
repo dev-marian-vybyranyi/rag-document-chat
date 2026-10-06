@@ -20,8 +20,3 @@ export function useTestDb() {
 
   return db;
 }
-
-export function pgErrorCode(error: unknown): string | undefined {
-  const cause = (error as { cause?: { code?: string } } | undefined)?.cause;
-  return cause?.code;
-}
