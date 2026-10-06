@@ -124,3 +124,21 @@ Raw material for the README – not a polished document.
 - Chosen: native constraints (`required`, `type=email`, `minLength`) for instant feedback; the API's field errors are shown next to the inputs and anything else in an alert.
 - Why: one source of truth for the rules; no schema duplicated in the browser.
 - Trade-offs / when to revisit: native validation bubbles are browser-styled; switch to a form library with a shared schema if forms become more complex.
+
+### Document store: `documents` and `chunks` in the same Postgres
+
+- Chosen: `chunks` holds the text, a `vector(768)` embedding and a generated English `tsvector`, with an HNSW index (`vector_cosine_ops`) and a GIN index; `user_id` is copied onto every chunk; ingestion state lives in a `document_status` enum (`processing | ready | failed`).
+- Why: one database for vectors, keywords and metadata means hybrid retrieval is a single SQL query and a user's data is removed by cascading deletes. `user_id` on the chunk lets every retrieval query filter by owner without joining `documents`. 768 dimensions is a supported size for both current Gemini embedding models and keeps each row around 3 KB, which matters on the 1 GB free database. The keyword side is hardcoded to English because documents are English-only by design.
+- Trade-offs / when to revisit: changing the embedding dimension or language means a migration plus re-embedding everything. HNSW applies the owner filter after the index scan, so queries must over-fetch (pgvector's iterative scans) or users with few chunks could get too few results; handled in the retrieval step.
+
+### Uploads: validated in memory, original file not kept
+
+- Chosen: multer with memory storage, one file in the `file` field, 10 MB limit, no extra form fields; type decided by extension and then confirmed by content (PDF header, valid UTF-8 without NUL bytes for text/Markdown); the display name is stripped of directories and control/direction-override characters; the endpoint answers `202` with the document in `processing`.
+- Why: only extracted text is needed afterwards, so there is no file storage to run or secure; extension-plus-content avoids trusting the browser's MIME type, which differs by platform for Markdown; `202` keeps the request short while indexing runs.
+- Trade-offs / when to revisit: the source viewer can show extracted text but not the original PDF. In production the original would go to object storage (S3/GCS) and ingestion into a queue.
+
+### nginx body limit above the API's own limit
+
+- Chosen: `client_max_body_size 12m` on `/api/`, API limit 10 MB.
+- Why: nginx's default of 1 MB silently rejects uploads the API would accept (caught while testing through docker compose with a 5 MB file). Staying slightly above the API limit means a 10.6 MB file gets the API's JSON error instead of an HTML page.
+- Trade-offs / when to revisit: anything over 12 MB still gets nginx's HTML 413, which the frontend must treat as "file too large".

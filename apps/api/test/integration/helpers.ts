@@ -34,7 +34,11 @@ const generousLimits: AuthRateLimits = {
 
 export function buildTestApp(
   db: Database,
-  overrides: { cookieSecure?: boolean; authRateLimits?: AuthRateLimits } = {},
+  overrides: {
+    cookieSecure?: boolean;
+    authRateLimits?: AuthRateLimits;
+    maxUploadBytes?: number;
+  } = {},
 ) {
   return createApp({
     logger: pino({ level: 'silent' }),

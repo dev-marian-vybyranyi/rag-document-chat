@@ -18,6 +18,9 @@ server {
   # with the prefix stripped (trailing slash in proxy_pass), and the generated
   # request id is passed on so one id follows a request through both services.
   location /api/ {
+    # nginx's default of 1 MB would reject uploads long before the API sees them. Slightly above
+    # the API's own 10 MB limit, so oversized files get the API's JSON error, not an HTML page.
+    client_max_body_size 12m;
     proxy_pass ${API_UPSTREAM}/;
     proxy_http_version 1.1;
     # Host is deliberately left at nginx's default ($proxy_host = the upstream's own name):

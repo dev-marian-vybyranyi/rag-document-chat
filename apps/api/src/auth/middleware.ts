@@ -1,4 +1,4 @@
-import type { RequestHandler } from 'express';
+import type { Request, RequestHandler } from 'express';
 import { AppError } from '../http/errors.js';
 import { SESSION_COOKIE } from './cookie.js';
 import type { SessionRepository } from './sessions.js';
@@ -32,3 +32,8 @@ export const requireAuth: RequestHandler = (req, _res, next) => {
   }
   next();
 };
+
+export function userOf(req: Request): AuthUser {
+  if (!req.user) throw new AppError(401, 'unauthenticated', 'Sign in to continue');
+  return req.user;
+}

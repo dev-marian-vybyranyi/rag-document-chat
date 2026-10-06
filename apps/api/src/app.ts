@@ -6,6 +6,9 @@ import { createAuthRouter } from './auth/routes.js';
 import { createSessionRepository } from './auth/sessions.js';
 import { createUserRepository } from './auth/users.js';
 import type { Database } from './db/client.js';
+import { createDocumentRepository } from './documents/repository.js';
+import { createDocumentsRouter } from './documents/routes.js';
+import { DEFAULT_MAX_UPLOAD_BYTES } from './documents/upload.js';
 import { errorHandler, notFoundHandler } from './http/errors.js';
 import { healthRouter } from './http/health.js';
 import {
@@ -20,14 +23,15 @@ interface AppDeps {
   db: Database;
   cookieSecure: boolean;
   authRateLimits?: AuthRateLimits;
+  maxUploadBytes?: number;
 }
 
-/** Builds the Express app without starting a listener, so tests can mount it directly. */
 export function createApp({
   logger,
   db,
   cookieSecure,
   authRateLimits = defaultAuthRateLimits,
+  maxUploadBytes = DEFAULT_MAX_UPLOAD_BYTES,
 }: AppDeps) {
   const users = createUserRepository(db);
   const sessions = createSessionRepository(db);
@@ -48,6 +52,11 @@ export function createApp({
       cookieSecure,
       limiters: createAuthRateLimiters(authRateLimits),
     }),
+  );
+
+  app.use(
+    '/documents',
+    createDocumentsRouter({ documents: createDocumentRepository(db), maxUploadBytes }),
   );
 
   app.use(notFoundHandler);
