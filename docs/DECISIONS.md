@@ -142,3 +142,18 @@ Raw material for the README – not a polished document.
 - Chosen: `client_max_body_size 12m` on `/api/`, API limit 10 MB.
 - Why: nginx's default of 1 MB silently rejects uploads the API would accept (caught while testing through docker compose with a 5 MB file). Staying slightly above the API limit means a 10.6 MB file gets the API's JSON error instead of an HTML page.
 - Trade-offs / when to revisit: anything over 12 MB still gets nginx's HTML 413, which the frontend must treat as "file too large".
+
+### Text extraction: `unpdf` for PDFs, no OCR
+
+- Chosen: `unpdf` (a serverless build of PDF.js) reading page by page; plain text and Markdown are read as UTF-8. PDF lines are joined into running text and words hyphenated across lines are rejoined; a PDF with no selectable text, a damaged one, a password-protected one or one over 500 pages is rejected with a reason the user can read.
+- Considered: `pdf-parse`, `pdfjs-dist` directly.
+- Why: it runs in plain Node and in the Alpine image without native modules (checked in the built container), keeps page numbers (needed for citations) and is actively maintained. PDF.js delivers text hard-wrapped at every visual line with paragraph breaks lost, which is why soft line breaks are turned into spaces before chunking.
+- Trade-offs / when to revisit: scanned PDFs need OCR, which is out of scope. Layout is flattened, so tables and multi-column pages read in PDF order and may interleave. The page limit protects the 512 MB instance.
+
+### Chunking: paragraphs, then sentences, then words; about 400 tokens with 60 overlap
+
+- Chosen: units are paragraphs; a paragraph larger than a chunk is cut at sentence ends and a sentence larger than a chunk between words (inside a word only if it has no spaces). Units are packed up to 400 tokens; the last sentences (up to 60 tokens) of a chunk are repeated at the start of the next. Markdown chunks that do not begin with their section title get it prepended, so a chunk deep inside "## Installation" still says where it is from.
+- Why: ~400 tokens is small enough that one chunk is about one idea (precision) and big enough to hold a full answer; 15 % overlap protects statements that straddle a boundary; never cutting inside a sentence keeps every chunk readable, which matters because chunk text is both embedded and shown as the citation.
+- Page breaks: overlap is also carried across them, and a chunk takes the page number where its own text starts. Found by running a real multi-page PDF: with chunks forbidden to cross pages, a sentence cut by the page break ended up whole in no chunk at all. A chunk may now open with a few sentences from the previous page, which makes the page citation slightly generous for those sentences.
+- Token counts are estimated as characters / 4. There is no Gemini tokenizer for Node, and for English the estimate is close enough to size chunks; the embedding model's input limit (2,048 tokens for `gemini-embedding-001`) leaves a wide margin.
+- Trade-offs / when to revisit: whole paragraphs bigger than the overlap are not repeated (only sentence-level tails are); no semantic chunking (embedding-based boundary detection), which costs an embedding call per sentence; tables and code are not treated specially.
