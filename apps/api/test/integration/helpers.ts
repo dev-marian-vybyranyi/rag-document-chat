@@ -4,7 +4,9 @@ import type { Response } from 'supertest';
 import { afterAll, beforeEach, inject } from 'vitest';
 import { createApp } from '../../src/app.js';
 import { createDb, type Database } from '../../src/db/client.js';
+import type { IngestionService } from '../../src/documents/ingest.js';
 import type { AuthRateLimits } from '../../src/http/rate-limit.js';
+import { createInertIngestion } from '../helpers/ingestion.js';
 
 export function useTestDb() {
   const { db, pool } = createDb(inject('testDatabaseUrl'));
@@ -38,6 +40,7 @@ export function buildTestApp(
     cookieSecure?: boolean;
     authRateLimits?: AuthRateLimits;
     maxUploadBytes?: number;
+    ingestion?: IngestionService;
   } = {},
 ) {
   return createApp({
@@ -45,6 +48,7 @@ export function buildTestApp(
     db,
     cookieSecure: false,
     authRateLimits: generousLimits,
+    ingestion: createInertIngestion(),
     ...overrides,
   });
 }

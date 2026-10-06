@@ -8,6 +8,7 @@ import { createUserRepository } from './auth/users.js';
 import type { Database } from './db/client.js';
 import { createDocumentRepository } from './documents/repository.js';
 import { createDocumentsRouter } from './documents/routes.js';
+import type { IngestionService } from './documents/ingest.js';
 import { DEFAULT_MAX_UPLOAD_BYTES } from './documents/upload.js';
 import { errorHandler, notFoundHandler } from './http/errors.js';
 import { healthRouter } from './http/health.js';
@@ -22,6 +23,7 @@ interface AppDeps {
   logger: Logger;
   db: Database;
   cookieSecure: boolean;
+  ingestion: IngestionService;
   authRateLimits?: AuthRateLimits;
   maxUploadBytes?: number;
 }
@@ -30,6 +32,7 @@ export function createApp({
   logger,
   db,
   cookieSecure,
+  ingestion,
   authRateLimits = defaultAuthRateLimits,
   maxUploadBytes = DEFAULT_MAX_UPLOAD_BYTES,
 }: AppDeps) {
@@ -56,7 +59,11 @@ export function createApp({
 
   app.use(
     '/documents',
-    createDocumentsRouter({ documents: createDocumentRepository(db), maxUploadBytes }),
+    createDocumentsRouter({
+      documents: createDocumentRepository(db),
+      ingestion,
+      maxUploadBytes,
+    }),
   );
 
   app.use(notFoundHandler);

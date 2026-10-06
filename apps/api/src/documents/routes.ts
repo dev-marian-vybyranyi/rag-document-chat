@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth, userOf } from '../auth/middleware.js';
 import { AppError } from '../http/errors.js';
 import { checkContent, detectFileType, sanitizeFilename } from './file-types.js';
+import type { IngestionService } from './ingest.js';
 import type { DocumentRecord, DocumentRepository } from './repository.js';
 import { singleFileUpload } from './upload.js';
 
@@ -20,10 +21,15 @@ function toPublicDocument(document: DocumentRecord) {
 
 interface DocumentsRouterDeps {
   documents: DocumentRepository;
+  ingestion: IngestionService;
   maxUploadBytes: number;
 }
 
-export function createDocumentsRouter({ documents, maxUploadBytes }: DocumentsRouterDeps) {
+export function createDocumentsRouter({
+  documents,
+  ingestion,
+  maxUploadBytes,
+}: DocumentsRouterDeps) {
   const router = Router();
 
   router.use(requireAuth);
@@ -50,6 +56,7 @@ export function createDocumentsRouter({ documents, maxUploadBytes }: DocumentsRo
       mimeType: type.mimeType,
       sizeBytes: file.size,
     });
+    ingestion.enqueue({ document, type, content: file.buffer });
     res.status(202).json({ document: toPublicDocument(document) });
   });
 

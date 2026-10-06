@@ -3,9 +3,15 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { createApp } from '../src/app.js';
 import { createDb } from '../src/db/client.js';
+import { createInertIngestion } from './helpers/ingestion.js';
 
 const { db } = createDb('postgres://unused:unused@localhost:1/unused');
-const app = createApp({ logger: pino({ level: 'silent' }), db, cookieSecure: false });
+const app = createApp({
+  logger: pino({ level: 'silent' }),
+  db,
+  cookieSecure: false,
+  ingestion: createInertIngestion(),
+});
 
 describe('GET /health', () => {
   it('reports the service as ok', async () => {
