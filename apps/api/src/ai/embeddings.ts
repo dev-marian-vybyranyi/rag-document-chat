@@ -40,11 +40,13 @@ export interface EmbedderOptions {
   model: EmbeddingModel;
   dimensions: number;
   maxRetries?: number;
+  queryMaxRetries?: number;
   maxParallelCalls?: number;
   timeoutMs?: number;
 }
 
 const DEFAULT_MAX_RETRIES = 5;
+const DEFAULT_QUERY_MAX_RETRIES = 1;
 const DEFAULT_MAX_PARALLEL_CALLS = 2;
 const DEFAULT_TIMEOUT_MS = 2 * 60 * 1000;
 
@@ -53,6 +55,7 @@ export function createEmbedder(options: EmbedderOptions): Embedder {
     model,
     dimensions,
     maxRetries = DEFAULT_MAX_RETRIES,
+    queryMaxRetries = DEFAULT_QUERY_MAX_RETRIES,
     maxParallelCalls = DEFAULT_MAX_PARALLEL_CALLS,
     timeoutMs = DEFAULT_TIMEOUT_MS,
   } = options;
@@ -102,7 +105,7 @@ export function createEmbedder(options: EmbedderOptions): Embedder {
         const { embedding } = await embed({
           model,
           value: text,
-          maxRetries,
+          maxRetries: queryMaxRetries,
           abortSignal: withLimits(signal),
           providerOptions: providerOptions('RETRIEVAL_QUERY'),
         });

@@ -46,6 +46,7 @@ const app = createApp({
   chat: {
     retriever: createRetriever({ store: createRetrievalStore(db), embedder, logger }),
     rewriter: createQueryRewriterFromEnv(env, logger),
+    relevanceThreshold: env.RELEVANCE_THRESHOLD,
     ...createChatModelFromEnv(env),
   },
 });

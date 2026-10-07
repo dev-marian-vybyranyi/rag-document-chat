@@ -7,7 +7,8 @@ import {
   type UIMessageChunk,
 } from 'ai';
 import type { Logger } from 'pino';
-import { buildChatPrompt, type PromptSource } from '../rag/prompt.js';
+import { buildChatPrompt, NO_ANSWER_PREFIX, type PromptSource } from '../rag/prompt.js';
+import { assessRelevance, DEFAULT_RELEVANCE_THRESHOLD } from '../rag/relevance.js';
 import type { RetrievedChunk } from '../rag/fusion.js';
 import type { QueryRewriter } from '../rag/rewrite.js';
 import type { Retriever } from '../rag/retriever.js';
@@ -15,6 +16,7 @@ import { chatFailureMessage } from './errors.js';
 import { DEFAULT_CHAT_TITLE, type ChatRecord, type ChatRepository } from './repository.js';
 import type { MessageRetrieval, MessageSource } from './types.js';
 
+export const NO_ANSWER_MESSAGE = `${NO_ANSWER_PREFIX} Try rephrasing the question, or upload a document that covers it.`;
 export const MAX_QUESTION_LENGTH = 2000;
 export const MAX_TITLE_FROM_QUESTION = 60;
 export const EXCERPT_LENGTH = 300;
@@ -27,6 +29,7 @@ export interface ChatDeps {
   retriever: Retriever;
   rewriter: QueryRewriter;
   model: LanguageModel | null;
+  relevanceThreshold?: number;
   providerOptions?: ProviderOptions;
 }
 
@@ -73,7 +76,13 @@ export function toMessageSources(
 
 export function createChatResponder(
   chats: ChatRepository,
-  { retriever, rewriter, model, providerOptions }: ChatDeps,
+  {
+    retriever,
+    rewriter,
+    model,
+    providerOptions,
+    relevanceThreshold = DEFAULT_RELEVANCE_THRESHOLD,
+  }: ChatDeps,
   logger: Logger,
 ) {
   return {
@@ -114,14 +123,38 @@ export function createChatResponder(
 
           const rewritten = await rewriter.rewrite(history, question, { signal });
           const result = await retriever.retrieve(userId, rewritten.query);
-          const prompt = buildChatPrompt({ question, history, chunks: result.chunks });
-
-          sources = toMessageSources(prompt.sources, result.chunks);
-          retrieval = {
+          const relevance = assessRelevance(result.chunks, result.mode, relevanceThreshold);
+          const details = {
             query: rewritten.query,
             rewritten: rewritten.rewritten,
             mode: result.mode,
+            bestScore: relevance.bestScore,
           };
+
+          if (!relevance.relevant) {
+            retrieval = { ...details, outcome: 'declined' };
+            logger.info(
+              { chatId: chat.id, bestScore: relevance.bestScore, threshold: relevanceThreshold },
+              'no relevant passages, answering without the model',
+            );
+            await chats.addMessage({
+              chatId: chat.id,
+              role: 'assistant',
+              content: NO_ANSWER_MESSAGE,
+              sources: [],
+              retrieval,
+            });
+            writer.write({ type: 'data-sources', data: { sources: [], retrieval } });
+            writer.write({ type: 'text-start', id: 'no-answer' });
+            writer.write({ type: 'text-delta', id: 'no-answer', delta: NO_ANSWER_MESSAGE });
+            writer.write({ type: 'text-end', id: 'no-answer' });
+            writer.write({ type: 'finish', finishReason: 'stop' });
+            return;
+          }
+
+          const prompt = buildChatPrompt({ question, history, chunks: result.chunks });
+          sources = toMessageSources(prompt.sources, result.chunks);
+          retrieval = { ...details, outcome: 'answered' };
           writer.write({ type: 'data-sources', data: { sources, retrieval } });
           writer.write({ type: 'data-status', data: { stage: 'answering' }, transient: true });
 
@@ -142,6 +175,7 @@ export function createChatResponder(
         onEnd: async ({ responseMessage, finishReason, isAborted, isCancelled }) => {
           const finished = finishReason === 'stop' || finishReason === 'length';
           if (!finished || isAborted || isCancelled) return;
+          if (retrieval?.outcome === 'declined') return;
           const text = responseMessage.parts
             .flatMap((part) => (part.type === 'text' ? [part.text] : []))
             .join('')

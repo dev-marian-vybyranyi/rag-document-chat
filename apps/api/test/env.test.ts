@@ -12,6 +12,7 @@ describe('loadEnv', () => {
       PORT: 3000,
       LOG_LEVEL: 'info',
       EMBEDDING_MODEL: 'gemini-embedding-001',
+      RELEVANCE_THRESHOLD: 0.65,
       CHAT_MODEL: 'gemini-3.5-flash-lite',
       CHAT_THINKING_LEVEL: 'minimal',
       COOKIE_SECURE: false,
@@ -55,6 +56,12 @@ describe('loadEnv', () => {
     expect(loadEnv({ ...base, EMBEDDING_MODEL: 'gemini-embedding-2' }).EMBEDDING_MODEL).toBe(
       'gemini-embedding-2',
     );
+  });
+
+  it('reads the relevance threshold and keeps it between 0 and 1', () => {
+    expect(loadEnv({ ...base, RELEVANCE_THRESHOLD: '0.7' }).RELEVANCE_THRESHOLD).toBe(0.7);
+    expect(() => loadEnv({ ...base, RELEVANCE_THRESHOLD: '1.5' })).toThrow(/RELEVANCE_THRESHOLD/);
+    expect(() => loadEnv({ ...base, RELEVANCE_THRESHOLD: 'high' })).toThrow(/RELEVANCE_THRESHOLD/);
   });
 
   it('only accepts a thinking level the model API knows', () => {

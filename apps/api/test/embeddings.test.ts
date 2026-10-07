@@ -148,6 +148,30 @@ describe('embedDocuments', () => {
       expect(doEmbed).toHaveBeenCalledTimes(2);
     });
 
+    it('retries a query only once by default, so a chat question never waits long', async () => {
+      vi.useFakeTimers();
+      const doEmbed = vi.fn<DoEmbed>().mockRejectedValue(apiError(429));
+      const { embedder } = setup(doEmbed);
+
+      const result = failureOf(embedder.embedQuery('a'));
+      await vi.advanceTimersByTimeAsync(60_000);
+
+      expect(await result).toMatchObject({ kind: 'rate_limited' });
+      expect(doEmbed).toHaveBeenCalledTimes(2);
+    });
+
+    it('lets the query retries be set apart from the document retries', async () => {
+      vi.useFakeTimers();
+      const doEmbed = vi.fn<DoEmbed>().mockRejectedValue(apiError(429));
+      const { embedder } = setup(doEmbed, { maxRetries: 0, queryMaxRetries: 3 });
+
+      const result = failureOf(embedder.embedQuery('a'));
+      await vi.advanceTimersByTimeAsync(60_000);
+
+      await result;
+      expect(doEmbed).toHaveBeenCalledTimes(4);
+    });
+
     it('gives up after the allowed retries and reports the rate limit', async () => {
       vi.useFakeTimers();
       const doEmbed = vi.fn<DoEmbed>().mockRejectedValue(apiError(429));

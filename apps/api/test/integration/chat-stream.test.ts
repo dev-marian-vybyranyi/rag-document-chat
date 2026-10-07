@@ -4,6 +4,8 @@ import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
 import { EmbeddingError, type Embedder } from '../../src/ai/embeddings.js';
 import { CHAT_FAILURE_MESSAGES } from '../../src/chat/errors.js';
+import { NO_ANSWER_MESSAGE } from '../../src/chat/responder.js';
+import { NO_ANSWER_PREFIX } from '../../src/rag/prompt.js';
 import { createChatRepository } from '../../src/chat/repository.js';
 import type { ChatDeps } from '../../src/chat/responder.js';
 import { chunks, documents, messages } from '../../src/db/schema.js';
@@ -51,6 +53,7 @@ describe('POST /chats/:id/messages', () => {
       model?: ChatDeps['model'];
       embedder?: Embedder;
       rewriter?: QueryRewriter;
+      relevanceThreshold?: number;
     } = {},
   ) {
     const fakeEmbedder = createFakeEmbedder();
@@ -59,6 +62,7 @@ describe('POST /chats/:id/messages', () => {
       retriever: createRetriever({ store: createRetrievalStore(db), embedder, logger }),
       rewriter: options.rewriter ?? createPassthroughRewriter(),
       model: options.model === undefined ? modelStreaming('ok') : options.model,
+      relevanceThreshold: options.relevanceThreshold ?? -1,
     };
     return { app: buildTestApp(db, { chat }), embedder: fakeEmbedder };
   }
@@ -190,13 +194,19 @@ describe('POST /chats/:id/messages', () => {
       const sourcesPart = parts.find((p) => p.type === 'data-sources')!;
       expect(sourcesPart.data).toMatchObject({
         sources: [{ id: 1, filename: 'handbook.txt', page: 1, excerpt: HNSW }],
-        retrieval: { query: 'What is HNSW?', rewritten: false, mode: 'hybrid' },
+        retrieval: {
+          query: 'What is HNSW?',
+          rewritten: false,
+          mode: 'hybrid',
+          outcome: 'answered',
+        },
       });
     });
 
     it('tells the client which stage it is in without keeping it in the message', async () => {
       const { app } = setup();
       const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addDocument(userId, 'handbook.txt', [HNSW]);
       const chat = await chats.create(userId);
 
       const { parts } = await ask(agent, chat.id, 'What is HNSW?');
@@ -224,10 +234,11 @@ describe('POST /chats/:id/messages', () => {
       ]);
       expect(stored[0]!.sources).toBeNull();
       expect(stored[1]!.sources).toMatchObject([{ id: 1, filename: 'handbook.txt', page: 1 }]);
-      expect(stored[1]!.retrieval).toEqual({
+      expect(stored[1]!.retrieval).toMatchObject({
         query: 'What is HNSW?',
         rewritten: false,
         mode: 'hybrid',
+        outcome: 'answered',
       });
     });
 
@@ -307,12 +318,162 @@ describe('POST /chats/:id/messages', () => {
       const model = modelStreaming('ok');
       const { app } = setup({ model });
       const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addDocument(userId, 'handbook.txt', [HNSW]);
       const chat = await chats.create(userId);
 
       await ask(agent, chat.id, 'Only once please');
 
       const occurrences = streamedPromptText(model, 'user').split('Only once please').length - 1;
       expect(occurrences).toBe(1);
+    });
+  });
+
+  describe('when the documents do not cover the question', () => {
+    const asksAbout = (passage: string): Embedder => ({
+      embedDocuments: async (texts) => texts.map(fakeVector),
+      embedQuery: async () => fakeVector(passage),
+    });
+
+    const askingUnrelated = (passage: string): Embedder => ({
+      embedDocuments: async (texts) => texts.map(fakeVector),
+      embedQuery: async () => fakeVector(passage).map((x) => -x),
+    });
+
+    it('answers from the documents when the best passage is close enough', async () => {
+      const model = modelStreaming('Grounded [1].');
+      const { app } = setup({ model, embedder: asksAbout(HNSW), relevanceThreshold: 0.65 });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addDocument(userId, 'handbook.txt', [HNSW]);
+      const chat = await chats.create(userId);
+
+      const { parts } = await ask(agent, chat.id, 'What is HNSW?');
+
+      expect(textOf(parts)).toBe('Grounded [1].');
+      expect(model.doStreamCalls).toHaveLength(1);
+      const stored = await savedMessages(chat.id, 2);
+      expect(stored[1]!.retrieval).toMatchObject({ outcome: 'answered' });
+      expect(stored[1]!.retrieval!.bestScore).toBeGreaterThan(0.99);
+    });
+
+    it('says so itself, without calling the model or showing unrelated sources', async () => {
+      const model = modelStreaming('should never be used');
+      const { app } = setup({ model, embedder: askingUnrelated(HNSW), relevanceThreshold: 0.65 });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addDocument(userId, 'handbook.txt', [HNSW]);
+      const chat = await chats.create(userId);
+
+      const { res, parts } = await ask(agent, chat.id, 'Who won the 2018 football world cup?');
+
+      expect(res.status).toBe(200);
+      expect(model.doStreamCalls).toHaveLength(0);
+      expect(textOf(parts)).toBe(NO_ANSWER_MESSAGE);
+      expect(textOf(parts).startsWith(NO_ANSWER_PREFIX)).toBe(true);
+      const sources = parts.find((p) => p.type === 'data-sources')!;
+      expect(sources.data).toMatchObject({
+        sources: [],
+        retrieval: { query: 'Who won the 2018 football world cup?', outcome: 'declined' },
+      });
+      expect(parts.at(-1)).toMatchObject({ type: 'finish' });
+    });
+
+    it('saves the refusal once, with no sources and the score that caused it', async () => {
+      const { app } = setup({ embedder: askingUnrelated(HNSW), relevanceThreshold: 0.65 });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addDocument(userId, 'handbook.txt', [HNSW]);
+      const chat = await chats.create(userId);
+
+      await ask(agent, chat.id, 'Who won the 2018 football world cup?');
+      await settle();
+
+      const stored = await chats.messagesOf(chat.id);
+      expect(stored.map((m) => [m.role, m.content])).toEqual([
+        ['user', 'Who won the 2018 football world cup?'],
+        ['assistant', NO_ANSWER_MESSAGE],
+      ]);
+      expect(stored[1]!.sources).toEqual([]);
+      expect(stored[1]!.retrieval).toMatchObject({ outcome: 'declined', mode: 'hybrid' });
+      expect(typeof stored[1]!.retrieval!.bestScore).toBe('number');
+    });
+
+    it('refuses when the user has no documents at all', async () => {
+      const model = modelStreaming('should never be used');
+      const { app } = setup({ model, relevanceThreshold: 0.65 });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      const chat = await chats.create(userId);
+
+      const { parts } = await ask(agent, chat.id, 'What is HNSW?');
+
+      expect(textOf(parts)).toBe(NO_ANSWER_MESSAGE);
+      expect(model.doStreamCalls).toHaveLength(0);
+      const stored = await savedMessages(chat.id, 2);
+      expect(stored[1]!.retrieval).toMatchObject({ outcome: 'declined', bestScore: null });
+    });
+
+    it("does not count another user's matching document", async () => {
+      const model = modelStreaming('should never be used');
+      const { app } = setup({ model, embedder: asksAbout(HNSW), relevanceThreshold: 0.65 });
+      const ann = await signedIn(app, 'ann@example.com');
+      const bob = await signedIn(app, 'bob@example.com');
+      await addDocument(bob.userId, 'bob.txt', [HNSW]);
+      const chat = await chats.create(ann.userId);
+
+      const { parts } = await ask(ann.agent, chat.id, 'What is HNSW?');
+
+      expect(textOf(parts)).toBe(NO_ANSWER_MESSAGE);
+      expect(model.doStreamCalls).toHaveLength(0);
+    });
+
+    it('lets the model judge when only keyword search is available', async () => {
+      const embedder: Embedder = {
+        embedDocuments: async () => [],
+        embedQuery: async () => {
+          throw new EmbeddingError('rate_limited');
+        },
+      };
+      const model = modelStreaming('From keywords [1].');
+      const { app } = setup({ model, embedder, relevanceThreshold: 0.65 });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addDocument(userId, 'handbook.txt', [HNSW]);
+      const chat = await chats.create(userId);
+
+      const { parts } = await ask(agent, chat.id, 'What is HNSW?');
+
+      expect(textOf(parts)).toBe('From keywords [1].');
+      const stored = await savedMessages(chat.id, 2);
+      expect(stored[1]!.retrieval).toMatchObject({
+        mode: 'keyword-only',
+        bestScore: null,
+        outcome: 'answered',
+      });
+    });
+
+    it('still refuses in keyword-only mode when no passage matches the words', async () => {
+      const embedder: Embedder = {
+        embedDocuments: async () => [],
+        embedQuery: async () => {
+          throw new EmbeddingError('rate_limited');
+        },
+      };
+      const model = modelStreaming('should never be used');
+      const { app } = setup({ model, embedder, relevanceThreshold: 0.65 });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addDocument(userId, 'handbook.txt', [HNSW]);
+      const chat = await chats.create(userId);
+
+      const { parts } = await ask(agent, chat.id, 'Who won the 2018 football world cup?');
+
+      expect(textOf(parts)).toBe(NO_ANSWER_MESSAGE);
+      expect(model.doStreamCalls).toHaveLength(0);
+    });
+
+    it('works without a model key, since no model is needed to refuse', async () => {
+      const { app } = setup({ model: null, relevanceThreshold: 0.65 });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      const chat = await chats.create(userId);
+
+      const { res } = await ask(agent, chat.id, 'What is HNSW?');
+
+      expect(res.status).toBe(503);
     });
   });
 
@@ -350,6 +511,7 @@ describe('POST /chats/:id/messages', () => {
       });
       const { app } = setup({ model: modelStreamFailing(apiError) });
       const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addDocument(userId, 'handbook.txt', [HNSW]);
       const chat = await chats.create(userId);
 
       const { res, parts } = await ask(agent, chat.id, 'What is HNSW?');
@@ -367,6 +529,7 @@ describe('POST /chats/:id/messages', () => {
       const model = modelStreamBreaking(['Partial ans'], new Error('socket hang up'));
       const { app } = setup({ model });
       const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addDocument(userId, 'handbook.txt', [HNSW]);
       const chat = await chats.create(userId);
 
       const { parts } = await ask(agent, chat.id, 'What is HNSW?');
@@ -380,6 +543,7 @@ describe('POST /chats/:id/messages', () => {
       const failing = modelStreamFailing(new Error('boom'));
       const failingApp = setup({ model: failing });
       const { agent, userId } = await signedIn(failingApp.app, 'ann@example.com');
+      await addDocument(userId, 'handbook.txt', [HNSW]);
       const chat = await chats.create(userId);
       await ask(agent, chat.id, 'First try');
 

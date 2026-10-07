@@ -13,4 +13,6 @@ export interface MessageRetrieval {
   query: string;
   rewritten: boolean;
   mode: 'hybrid' | 'keyword-only';
+  bestScore: number | null;
+  outcome: 'answered' | 'declined';
 }

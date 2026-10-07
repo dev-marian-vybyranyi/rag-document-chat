@@ -14,6 +14,7 @@ const envSchema = z
       .transform((key) => key?.trim() || undefined),
     EMBEDDING_MODEL: z.string().min(1).default('gemini-embedding-001'),
     REWRITE_MODEL: z.string().min(1).default('gemini-3.5-flash-lite'),
+    RELEVANCE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.65),
     CHAT_MODEL: z.string().min(1).default('gemini-3.5-flash-lite'),
     CHAT_THINKING_LEVEL: z.enum(['minimal', 'low', 'medium', 'high']).default('minimal'),
     COOKIE_SECURE: z.stringbool().optional(),

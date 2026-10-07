@@ -131,7 +131,13 @@ describe('chats', () => {
         role: 'assistant',
         content: 'A layered graph [1].',
         sources: [source],
-        retrieval: { query: 'What is HNSW?', rewritten: false, mode: 'hybrid' },
+        retrieval: {
+          query: 'What is HNSW?',
+          rewritten: false,
+          mode: 'hybrid',
+          bestScore: 0.78,
+          outcome: 'answered',
+        },
       });
 
       const res = await agent.get(`/chats/${chat.id}`);
@@ -147,7 +153,13 @@ describe('chats', () => {
       expect(res.body.messages[1]).toMatchObject({
         role: 'assistant',
         sources: [source],
-        retrieval: { query: 'What is HNSW?', rewritten: false, mode: 'hybrid' },
+        retrieval: {
+          query: 'What is HNSW?',
+          rewritten: false,
+          mode: 'hybrid',
+          bestScore: 0.78,
+          outcome: 'answered',
+        },
       });
     });
 
