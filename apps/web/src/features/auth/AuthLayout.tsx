@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
+import { ThemeToggle } from '@/features/theme/ThemeToggle';
 import {
   Card,
   CardContent,
@@ -19,7 +20,10 @@ interface AuthLayoutProps {
 /** The centered card around the login and register forms. */
 export function AuthLayout({ title, description, footer, children }: AuthLayoutProps) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-muted/40 p-6">
+    <div className="relative flex min-h-screen flex-col items-center justify-center gap-6 bg-muted/40 p-6">
+      <div className="absolute top-3 right-3">
+        <ThemeToggle />
+      </div>
       <p className="text-xl font-semibold tracking-tight">Document Chat</p>
       <Card className="w-full max-w-sm">
         <CardHeader>

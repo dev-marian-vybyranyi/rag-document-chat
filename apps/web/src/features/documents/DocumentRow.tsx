@@ -2,6 +2,7 @@ import { FileTextIcon, Trash2Icon } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { DocumentItem } from './api';
+import { useStartChat } from '../chats/useStartChat';
 import { useDocuments } from './documents-context';
 import { formatBytes } from './validation';
 
@@ -20,6 +21,7 @@ function describeStatus(document: DocumentItem): string {
 
 export function DocumentRow({ document }: { document: DocumentItem }) {
   const { remove } = useDocuments();
+  const { start, failed: startFailed } = useStartChat();
   const [confirming, setConfirming] = useState(false);
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -84,6 +86,30 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
         >
           <div className="absolute inset-y-0 w-1/3 animate-[indeterminate_1.4s_ease-in-out_infinite] rounded-full bg-primary" />
         </div>
+      )}
+      {document.status === 'ready' && document.suggestions.length > 0 && (
+        <ul
+          className="flex flex-wrap gap-1.5 pt-1"
+          aria-label={`Questions to ask about ${document.filename}`}
+        >
+          {document.suggestions.map((question) => (
+            <li key={question} className="max-w-full">
+              <Button
+                variant="outline"
+                size="xs"
+                className="h-auto max-w-full py-1 text-left whitespace-normal"
+                onClick={() => void start(question)}
+              >
+                {question}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {startFailed && (
+        <p role="alert" className="text-sm text-destructive">
+          Could not start a chat. Try again.
+        </p>
       )}
       {document.status === 'failed' && document.error && (
         <p className="text-sm text-destructive">{document.error}</p>

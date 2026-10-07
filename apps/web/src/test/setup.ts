@@ -10,8 +10,20 @@ class ResizeObserverStub {
   disconnect() {}
 }
 
+function stubMatchMedia(matches = false) {
+  return vi.fn().mockImplementation((query: string) => ({
+    matches,
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+}
+
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+  vi.stubGlobal('matchMedia', stubMatchMedia());
+  localStorage.clear();
+  document.documentElement.classList.remove('dark');
 });
 
 afterEach(() => {

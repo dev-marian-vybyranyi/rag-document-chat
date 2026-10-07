@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CLOSEST_PASSAGES,
   EXCERPT_LENGTH,
+  closestPassages,
   MAX_TITLE_FROM_QUESTION,
   titleFromQuestion,
   toMessageSources,
@@ -37,6 +39,9 @@ describe('toMessageSources', () => {
       content,
       score: 0.03,
       vectorScore,
+      vectorRank: vectorScore === undefined ? null : 2,
+      keywordScore: 0.4,
+      keywordRank: 5,
     }) as RetrievedChunk;
 
   const source = (id: number, chunkId: string): PromptSource => ({
@@ -51,7 +56,17 @@ describe('toMessageSources', () => {
   it('adds an excerpt and the cosine similarity to each source', () => {
     const result = toMessageSources([source(1, 'c1')], [chunk('c1', 'full text', 0.77)]);
 
-    expect(result).toEqual([{ ...source(1, 'c1'), excerpt: 'full text', score: 0.77 }]);
+    expect(result).toEqual([
+      {
+        ...source(1, 'c1'),
+        excerpt: 'full text',
+        score: 0.77,
+        vectorRank: 2,
+        keywordScore: 0.4,
+        keywordRank: 5,
+        fusedScore: 0.03,
+      },
+    ]);
   });
 
   it('cuts the excerpt', () => {
@@ -73,5 +88,38 @@ describe('toMessageSources', () => {
     );
 
     expect(result.map((s) => s.id)).toEqual([1, 3]);
+  });
+});
+
+describe('closestPassages', () => {
+  const chunk = (filename: string, vectorScore: number | null, page: number | null = 1) =>
+    ({ filename, page, vectorScore }) as RetrievedChunk;
+
+  it('lists the best matches first, with where they are from', () => {
+    const result = closestPassages([
+      chunk('a.txt', 0.5),
+      chunk('b.pdf', 0.62, 7),
+      chunk('c.txt', 0.4),
+    ]);
+
+    expect(result).toEqual([
+      { filename: 'b.pdf', page: 7, score: 0.62 },
+      { filename: 'a.txt', page: 1, score: 0.5 },
+      { filename: 'c.txt', page: 1, score: 0.4 },
+    ]);
+  });
+
+  it('keeps only the top few', () => {
+    const many = Array.from({ length: 8 }, (_, i) => chunk(`f${i}.txt`, i / 10));
+
+    expect(closestPassages(many)).toHaveLength(CLOSEST_PASSAGES);
+    expect(closestPassages(many)[0]!.filename).toBe('f7.txt');
+  });
+
+  it('skips passages that only keyword search found, which have no similarity', () => {
+    expect(closestPassages([chunk('a.txt', null), chunk('b.txt', 0.3)])).toEqual([
+      { filename: 'b.txt', page: 1, score: 0.3 },
+    ]);
+    expect(closestPassages([])).toEqual([]);
   });
 });

@@ -5,12 +5,23 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useChats } from '@/features/chats/chats-context';
 import { Composer } from './Composer';
 import { MessageBubble } from './MessageBubble';
+import { SuggestedQuestions } from './SuggestedQuestions';
 import { createChatTransport } from './transport';
 import { textOf, type ChatStage, type ChatUIMessage } from './types';
 
 interface ChatViewProps {
   chatId: string;
   initialMessages?: ChatUIMessage[];
+  initialQuestion?: string;
+  onInitialQuestionSent?: () => void;
+}
+
+function questionBefore(messages: ChatUIMessage[], index: number): string {
+  for (let i = index - 1; i >= 0; i--) {
+    const candidate = messages[i]!;
+    if (candidate.role === 'user') return textOf(candidate);
+  }
+  return '';
 }
 
 const STAGE_LABEL: Record<ChatStage, string> = {
@@ -18,7 +29,12 @@ const STAGE_LABEL: Record<ChatStage, string> = {
   answering: 'Writing the answer…',
 };
 
-export function ChatView({ chatId, initialMessages }: ChatViewProps) {
+export function ChatView({
+  chatId,
+  initialMessages,
+  initialQuestion,
+  onInitialQuestionSent,
+}: ChatViewProps) {
   const { refresh } = useChats();
   const transport = useMemo(() => createChatTransport(chatId), [chatId]);
   const [stage, setStage] = useState<ChatStage>('searching');
@@ -49,18 +65,30 @@ export function ChatView({ chatId, initialMessages }: ChatViewProps) {
     void sendMessage({ text });
   }
 
+  const askedInitial = useRef(false);
+  useEffect(() => {
+    if (!initialQuestion || askedInitial.current) return;
+    askedInitial.current = true;
+    setStage('searching');
+    void sendMessage({ text: initialQuestion });
+    onInitialQuestionSent?.();
+  }, [initialQuestion, sendMessage, onInitialQuestionSent]);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6">
-        {messages.length === 0 && (
-          <p className="mt-16 text-center text-sm text-muted-foreground">
-            Ask a question about your documents to start.
-          </p>
+        {messages.length === 0 && !busy && (
+          <div className="mt-16 text-center">
+            <p className="text-sm text-muted-foreground">
+              Ask a question about your documents to start.
+            </p>
+            <SuggestedQuestions onPick={handleSend} />
+          </div>
         )}
         <ul className="flex flex-col gap-4" aria-label="Conversation">
-          {messages.map((message) => (
+          {messages.map((message, index) => (
             <li key={message.id}>
-              <MessageBubble message={message} />
+              <MessageBubble message={message} question={questionBefore(messages, index)} />
             </li>
           ))}
         </ul>

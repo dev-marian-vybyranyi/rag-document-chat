@@ -5,6 +5,7 @@ import { PG_FOREIGN_KEY_VIOLATION, pgErrorCode } from '../db/errors.js';
 import { chunkSegments, type ChunkOptions } from './chunker.js';
 import { ExtractionError, extractText } from './extract.js';
 import type { FileType } from './file-types.js';
+import { createNoopSuggester, type QuestionSuggester } from '../rag/suggest.js';
 import { createJobQueue } from './queue.js';
 import type { DocumentRepository } from './repository.js';
 
@@ -14,7 +15,7 @@ export const INTERRUPTED_MESSAGE = 'Processing was interrupted. Please upload th
 const UNEXPECTED_MESSAGE = 'Something went wrong while processing the document.';
 
 export interface IngestionJob {
-  document: { id: string; userId: string };
+  document: { id: string; userId: string; filename: string };
   type: FileType;
   content: Buffer;
 }
@@ -35,13 +36,21 @@ export interface IngestionOptions {
   repository: DocumentRepository;
   embedder: Embedder;
   logger: Logger;
+  suggester?: QuestionSuggester;
   chunkOptions?: ChunkOptions;
   maxChunks?: number;
   concurrency?: number;
 }
 
 export function createIngestionService(options: IngestionOptions): IngestionService {
-  const { repository, embedder, logger, chunkOptions, maxChunks = DEFAULT_MAX_CHUNKS } = options;
+  const {
+    repository,
+    embedder,
+    logger,
+    chunkOptions,
+    maxChunks = DEFAULT_MAX_CHUNKS,
+    suggester = createNoopSuggester(),
+  } = options;
 
   const queue = createJobQueue(options.concurrency ?? 1, (error) =>
     logger.error({ err: error }, 'ingestion job crashed'),
@@ -69,10 +78,18 @@ export function createIngestionService(options: IngestionOptions): IngestionServ
 
       const vectors = await embedInGroups(chunks.map((chunk) => chunk.content));
 
+      const suggestions = await suggester
+        .suggest({
+          filename: job.document.filename,
+          passages: chunks.map((chunk) => chunk.content),
+        })
+        .catch(() => []);
+
       await repository.completeWithChunks({
         documentId: job.document.id,
         userId: job.document.userId,
         pageCount: extracted.pageCount,
+        suggestions,
         chunks: chunks.map((chunk, i) => ({ ...chunk, embedding: vectors[i]! })),
       });
       log.info({ chunks: chunks.length, durationMs: Date.now() - startedAt }, 'document indexed');

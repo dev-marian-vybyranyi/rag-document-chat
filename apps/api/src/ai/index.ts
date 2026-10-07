@@ -9,6 +9,11 @@ import {
   type QueryRewriter,
 } from '../rag/rewrite.js';
 import type { ChatDeps } from '../chat/responder.js';
+import {
+  createNoopSuggester,
+  createQuestionSuggester,
+  type QuestionSuggester,
+} from '../rag/suggest.js';
 import { createGeminiEmbedder, createUnconfiguredEmbedder, type Embedder } from './embeddings.js';
 
 export function createEmbedderFromEnv(
@@ -49,4 +54,17 @@ export function createChatModelFromEnv(
     model: google(env.CHAT_MODEL),
     providerOptions: { google: { thinkingConfig: { thinkingLevel: env.CHAT_THINKING_LEVEL } } },
   };
+}
+
+export function createQuestionSuggesterFromEnv(
+  env: Pick<Env, 'GOOGLE_GENERATIVE_AI_API_KEY' | 'REWRITE_MODEL'>,
+  logger: Logger,
+): QuestionSuggester {
+  if (!env.GOOGLE_GENERATIVE_AI_API_KEY) return createNoopSuggester();
+  const google = createGoogle({ apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY });
+  return createQuestionSuggester({
+    model: google(env.REWRITE_MODEL),
+    logger,
+    providerOptions: { google: { thinkingConfig: { thinkingLevel: 'minimal' } } },
+  });
 }

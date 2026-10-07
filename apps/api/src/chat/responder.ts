@@ -14,7 +14,7 @@ import type { QueryRewriter } from '../rag/rewrite.js';
 import type { Retriever } from '../rag/retriever.js';
 import { chatFailureMessage } from './errors.js';
 import { DEFAULT_CHAT_TITLE, type ChatRecord, type ChatRepository } from './repository.js';
-import type { MessageRetrieval, MessageSource } from './types.js';
+import type { ClosestPassage, MessageRetrieval, MessageSource } from './types.js';
 
 export const NO_ANSWER_MESSAGE = `${NO_ANSWER_PREFIX} Try rephrasing the question, or upload a document that covers it.`;
 export const MAX_QUESTION_LENGTH = 2000;
@@ -56,6 +56,19 @@ export function titleFromQuestion(question: string): string {
   return `${flat.slice(0, MAX_TITLE_FROM_QUESTION - 1).trimEnd()}…`;
 }
 
+export const CLOSEST_PASSAGES = 3;
+
+export function closestPassages(chunks: RetrievedChunk[]): ClosestPassage[] {
+  return chunks
+    .flatMap((chunk) =>
+      typeof chunk.vectorScore === 'number'
+        ? [{ filename: chunk.filename, page: chunk.page, score: chunk.vectorScore }]
+        : [],
+    )
+    .sort((a, b) => b.score - a.score)
+    .slice(0, CLOSEST_PASSAGES);
+}
+
 export function toMessageSources(
   sources: PromptSource[],
   chunks: RetrievedChunk[],
@@ -69,6 +82,10 @@ export function toMessageSources(
         ...source,
         excerpt: chunk.content.slice(0, EXCERPT_LENGTH),
         score: chunk.vectorScore ?? null,
+        vectorRank: chunk.vectorRank,
+        keywordScore: chunk.keywordScore,
+        keywordRank: chunk.keywordRank,
+        fusedScore: chunk.score,
       },
     ];
   });
@@ -121,7 +138,9 @@ export function createChatResponder(
           writer.write({ type: 'start' });
           writer.write({ type: 'data-status', data: { stage: 'searching' }, transient: true });
 
+          const rewriteStart = Date.now();
           const rewritten = await rewriter.rewrite(history, question, { signal });
+          const retrievalStart = Date.now();
           const result = await retriever.retrieve(userId, rewritten.query);
           const relevance = assessRelevance(result.chunks, result.mode, relevanceThreshold);
           const details = {
@@ -129,10 +148,19 @@ export function createChatResponder(
             rewritten: rewritten.rewritten,
             mode: result.mode,
             bestScore: relevance.bestScore,
+            threshold: relevanceThreshold,
+            timings: {
+              rewriteMs: retrievalStart - rewriteStart,
+              retrievalMs: Date.now() - retrievalStart,
+            },
           };
 
           if (!relevance.relevant) {
-            retrieval = { ...details, outcome: 'declined' };
+            retrieval = {
+              ...details,
+              outcome: 'declined',
+              closest: closestPassages(result.chunks),
+            };
             logger.info(
               { chatId: chat.id, bestScore: relevance.bestScore, threshold: relevanceThreshold },
               'no relevant passages, answering without the model',
@@ -154,7 +182,7 @@ export function createChatResponder(
 
           const prompt = buildChatPrompt({ question, history, chunks: result.chunks });
           sources = toMessageSources(prompt.sources, result.chunks);
-          retrieval = { ...details, outcome: 'answered' };
+          retrieval = { ...details, outcome: 'answered', closest: [] };
           writer.write({ type: 'data-sources', data: { sources, retrieval } });
           writer.write({ type: 'data-status', data: { stage: 'answering' }, transient: true });
 

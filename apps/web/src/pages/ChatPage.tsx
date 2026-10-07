@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useParams } from 'react-router';
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChatHeader } from '@/features/chat/ChatHeader';
 import { ChatView } from '@/features/chat/ChatView';
 import { SourceViewer } from '@/features/chat/SourceViewer';
+import { WhyThisAnswer } from '@/features/chat/WhyThisAnswer';
 import { SourceViewerProvider } from '@/features/chat/SourceViewerProvider';
 import { toUIMessages } from '@/features/chat/history';
 import type { ChatUIMessage } from '@/features/chat/types';
@@ -26,6 +27,9 @@ export function ChatPage() {
 
 function LoadedChat({ chatId }: { chatId: string }) {
   const { state } = useChats();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const initialQuestion = (location.state as { ask?: string } | null)?.ask;
   const [loaded, setLoaded] = useState<Loaded>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0);
 
@@ -83,9 +87,17 @@ function LoadedChat({ chatId }: { chatId: string }) {
       <div className="flex h-full">
         <div className="mx-auto flex h-full min-w-0 max-w-3xl flex-1 flex-col">
           <ChatHeader chatId={chatId} title={listed?.title ?? loaded.title} />
-          <ChatView chatId={chatId} initialMessages={loaded.messages} />
+          <ChatView
+            chatId={chatId}
+            initialMessages={loaded.messages}
+            initialQuestion={initialQuestion}
+            onInitialQuestionSent={() =>
+              void navigate(location.pathname, { replace: true, state: null })
+            }
+          />
         </div>
         <SourceViewer />
+        <WhyThisAnswer />
       </div>
     </SourceViewerProvider>
   );

@@ -9,6 +9,10 @@ export interface ChatSource {
   ordinal: number;
   excerpt: string;
   score: number | null;
+  vectorRank?: number | null;
+  keywordScore?: number | null;
+  keywordRank?: number | null;
+  fusedScore?: number;
 }
 
 export interface ChatRetrieval {
@@ -17,6 +21,9 @@ export interface ChatRetrieval {
   mode: 'hybrid' | 'keyword-only';
   bestScore: number | null;
   outcome: 'answered' | 'declined';
+  threshold?: number;
+  timings?: { rewriteMs: number; retrievalMs: number };
+  closest?: Array<{ filename: string; page: number | null; score: number }>;
 }
 
 export type ChatStage = 'searching' | 'answering';
@@ -31,6 +38,13 @@ export type ChatUIMessage = UIMessage<
 
 export function textOf(message: ChatUIMessage): string {
   return message.parts.flatMap((part) => (part.type === 'text' ? [part.text] : [])).join('');
+}
+
+export function retrievalOf(message: ChatUIMessage): ChatRetrieval | null {
+  for (const part of message.parts) {
+    if (part.type === 'data-sources') return part.data.retrieval;
+  }
+  return null;
 }
 
 export function sourcesOf(message: ChatUIMessage): ChatSource[] {

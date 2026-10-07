@@ -1,7 +1,7 @@
 import { eq, sql } from 'drizzle-orm';
 import { pino } from 'pino';
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { EmbeddingError, type Embedder } from '../../src/ai/embeddings.js';
 import { chunks, documents } from '../../src/db/schema.js';
 import {
@@ -78,6 +78,51 @@ describe('document ingestion', () => {
         content: 'Embeddings turn text into vectors.',
         tokenCount: 9,
       });
+    });
+
+    it('keeps the suggested questions with the finished document and returns them from the API', async () => {
+      const suggester = {
+        suggest: vi.fn().mockResolvedValue(['What are embeddings?', 'What do vectors do?']),
+      };
+      const { app, ingestion } = setup({ suggester });
+
+      const id = await upload(app, 'Embeddings turn text into vectors.', 'notes.txt');
+      await ingestion.idle();
+
+      expect((await documentRow(id))!.suggestions).toEqual([
+        'What are embeddings?',
+        'What do vectors do?',
+      ]);
+      expect(suggester.suggest).toHaveBeenCalledWith({
+        filename: 'notes.txt',
+        passages: ['Embeddings turn text into vectors.'],
+      });
+      const agent = request.agent(app);
+      await agent.post('/auth/login').send(credentials);
+      const res = await agent.get(`/documents/${id}`);
+      expect(res.body.document.suggestions).toEqual([
+        'What are embeddings?',
+        'What do vectors do?',
+      ]);
+    });
+
+    it('still finishes the document when no questions can be suggested', async () => {
+      const failing = { suggest: vi.fn().mockRejectedValue(new Error('model down')) };
+      const { app, ingestion } = setup({ suggester: failing });
+
+      const id = await upload(app, 'Embeddings turn text into vectors.', 'notes.txt');
+      await ingestion.idle();
+
+      expect(await documentRow(id)).toMatchObject({ status: 'ready', suggestions: [] });
+    });
+
+    it('has no suggestions at all when no suggester is configured', async () => {
+      const { app, ingestion } = setup();
+
+      const id = await upload(app, 'Embeddings turn text into vectors.', 'notes.txt');
+      await ingestion.idle();
+
+      expect((await documentRow(id))!.suggestions).toEqual([]);
     });
 
     it('stores the vector the embedder produced for each chunk', async () => {

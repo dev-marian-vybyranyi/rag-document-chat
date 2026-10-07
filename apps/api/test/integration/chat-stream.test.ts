@@ -217,6 +217,31 @@ describe('POST /chats/:id/messages', () => {
       });
     });
 
+    it('records how the passages were found, so the answer can be explained later', async () => {
+      const { app } = setup({ model: modelStreaming('Grounded [1].') });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addDocument(userId, 'handbook.txt', [HNSW]);
+      const chat = await chats.create(userId);
+
+      const { parts } = await ask(agent, chat.id, HNSW);
+
+      const stored = (await savedMessages(chat.id, 2))[1]!;
+      const [source] = stored.sources!;
+      expect(source).toMatchObject({ id: 1, vectorRank: 1, keywordRank: 1 });
+      expect(source!.score).toBeGreaterThan(0.99);
+      expect(source!.keywordScore).toBeGreaterThan(0);
+      expect(source!.fusedScore).toBeCloseTo(2 / 61, 5);
+      expect(stored.retrieval).toMatchObject({
+        threshold: -1,
+        outcome: 'answered',
+        closest: [],
+        timings: { rewriteMs: expect.any(Number), retrievalMs: expect.any(Number) },
+      });
+      expect(stored.retrieval!.timings.retrievalMs).toBeGreaterThanOrEqual(0);
+      const streamed = parts.find((p) => p.type === 'data-sources')!;
+      expect(streamed.data).toMatchObject({ retrieval: { threshold: -1 } });
+    });
+
     it('tells the client which stage it is in without keeping it in the message', async () => {
       const { app } = setup();
       const { agent, userId } = await signedIn(app, 'ann@example.com');
@@ -407,6 +432,26 @@ describe('POST /chats/:id/messages', () => {
       expect(stored[1]!.sources).toEqual([]);
       expect(stored[1]!.retrieval).toMatchObject({ outcome: 'declined', mode: 'hybrid' });
       expect(typeof stored[1]!.retrieval!.bestScore).toBe('number');
+    });
+
+    it('keeps the closest passages and the threshold with a refusal, so it can be explained', async () => {
+      const { app } = setup({ embedder: askingUnrelated(HNSW), relevanceThreshold: 0.65 });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addDocument(userId, 'handbook.txt', [HNSW]);
+      const chat = await chats.create(userId);
+
+      await ask(agent, chat.id, 'Who won the 2018 football world cup?');
+
+      const stored = (await savedMessages(chat.id, 2))[1]!;
+      expect(stored.retrieval).toMatchObject({ outcome: 'declined', threshold: 0.65 });
+      const closest = stored.retrieval!.closest;
+      expect(closest.length).toBeGreaterThan(0);
+      expect(closest.length).toBeLessThanOrEqual(3);
+      expect(closest.map((c) => c.score)).toEqual(
+        [...closest.map((c) => c.score)].sort((a, b) => b - a),
+      );
+      expect(closest[0]).toMatchObject({ filename: 'handbook.txt' });
+      expect(stored.sources).toEqual([]);
     });
 
     it('refuses when the user has no documents at all', async () => {

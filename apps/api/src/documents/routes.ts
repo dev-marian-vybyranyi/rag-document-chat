@@ -18,6 +18,7 @@ function toPublicDocument(document: DocumentWithChunkCount) {
     error: document.error,
     pageCount: document.pageCount,
     chunkCount: document.chunkCount,
+    suggestions: document.suggestions,
     createdAt: document.createdAt,
   };
 }

@@ -19,6 +19,7 @@ function doc(overrides: Partial<DocumentItem> = {}): DocumentItem {
     error: null,
     pageCount: 12,
     chunkCount: 30,
+    suggestions: [],
     createdAt: '2026-10-07T10:00:00Z',
     ...overrides,
   };

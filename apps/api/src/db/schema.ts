@@ -56,6 +56,7 @@ export const documents = pgTable(
     status: documentStatus().notNull().default('processing'),
     error: text(),
     pageCount: integer(),
+    suggestions: jsonb().$type<string[]>().notNull().default([]),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index('documents_user_id_created_at_idx').on(table.userId, table.createdAt)],

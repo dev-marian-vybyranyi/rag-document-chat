@@ -146,6 +146,7 @@ describe('managing documents', () => {
         'pageCount',
         'sizeBytes',
         'status',
+        'suggestions',
       ]);
     });
   });

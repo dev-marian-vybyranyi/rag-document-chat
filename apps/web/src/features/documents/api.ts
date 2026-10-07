@@ -11,6 +11,7 @@ export interface DocumentItem {
   error: string | null;
   pageCount: number | null;
   chunkCount: number;
+  suggestions: string[];
   createdAt: string;
 }
 

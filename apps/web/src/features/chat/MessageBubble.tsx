@@ -1,12 +1,14 @@
 import { cn } from '@/lib/utils';
 import { Markdown } from './Markdown';
 import { SourceList } from './SourceList';
-import { sourcesOf, textOf, type ChatUIMessage } from './types';
+import { WhyButton } from './WhyButton';
+import { retrievalOf, sourcesOf, textOf, type ChatUIMessage } from './types';
 
-export function MessageBubble({ message }: { message: ChatUIMessage }) {
+export function MessageBubble({ message, question }: { message: ChatUIMessage; question: string }) {
   const isUser = message.role === 'user';
   const text = textOf(message);
   const sources = sourcesOf(message);
+  const retrieval = retrievalOf(message);
 
   return (
     <div className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
@@ -22,6 +24,9 @@ export function MessageBubble({ message }: { message: ChatUIMessage }) {
           <Markdown sources={sources}>{text}</Markdown>
         )}
         {!isUser && <SourceList sources={sources} />}
+        {!isUser && retrieval && (
+          <WhyButton data={{ question, answer: text, sources, retrieval }} />
+        )}
       </div>
     </div>
   );

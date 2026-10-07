@@ -30,6 +30,10 @@ describe('chats', () => {
     ordinal: 2,
     excerpt: 'HNSW builds a layered graph.',
     score: 0.78,
+    vectorRank: 1,
+    keywordScore: 0.4,
+    keywordRank: 2,
+    fusedScore: 0.032,
   };
 
   describe('access', () => {
@@ -136,7 +140,10 @@ describe('chats', () => {
           rewritten: false,
           mode: 'hybrid',
           bestScore: 0.78,
+          threshold: 0.65,
           outcome: 'answered',
+          timings: { rewriteMs: 0, retrievalMs: 12 },
+          closest: [],
         },
       });
 

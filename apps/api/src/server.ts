@@ -3,6 +3,7 @@ import {
   createChatModelFromEnv,
   createEmbedderFromEnv,
   createQueryRewriterFromEnv,
+  createQuestionSuggesterFromEnv,
 } from './ai/index.js';
 import { loadEnv } from './config/env.js';
 import { createDb } from './db/client.js';
@@ -36,6 +37,7 @@ const ingestion = createIngestionService({
   repository: documentRepository,
   embedder,
   logger,
+  suggester: createQuestionSuggesterFromEnv(env, logger),
 });
 
 const app = createApp({

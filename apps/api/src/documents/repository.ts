@@ -91,6 +91,7 @@ export function createDocumentRepository(db: Database) {
       documentId: string;
       userId: string;
       pageCount: number | null;
+      suggestions?: string[];
       chunks: NewChunk[];
     }): Promise<void> {
       await db.transaction(async (tx) => {
@@ -106,7 +107,12 @@ export function createDocumentRepository(db: Database) {
         }
         await tx
           .update(documents)
-          .set({ status: 'ready', error: null, pageCount: input.pageCount })
+          .set({
+            status: 'ready',
+            error: null,
+            pageCount: input.pageCount,
+            suggestions: input.suggestions ?? [],
+          })
           .where(eq(documents.id, input.documentId));
       });
     },

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '../theme/ThemeToggle';
 import { useAuth } from './auth-context';
 
 export function UserMenu() {
@@ -18,7 +19,8 @@ export function UserMenu() {
   }
 
   return (
-    <div className="flex items-center gap-3 text-sm">
+    <div className="flex items-center gap-1 text-sm sm:gap-3">
+      <ThemeToggle />
       {failed && <span className="text-destructive">Could not sign out. Try again.</span>}
       <span className="hidden text-muted-foreground sm:inline">{state.user.email}</span>
       <Button variant="outline" size="sm" onClick={handleLogout}>

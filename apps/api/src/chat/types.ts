@@ -7,6 +7,16 @@ export interface MessageSource {
   ordinal: number;
   excerpt: string;
   score: number | null;
+  vectorRank: number | null;
+  keywordScore: number | null;
+  keywordRank: number | null;
+  fusedScore: number;
+}
+
+export interface ClosestPassage {
+  filename: string;
+  page: number | null;
+  score: number;
 }
 
 export interface MessageRetrieval {
@@ -14,5 +24,8 @@ export interface MessageRetrieval {
   rewritten: boolean;
   mode: 'hybrid' | 'keyword-only';
   bestScore: number | null;
+  threshold: number;
   outcome: 'answered' | 'declined';
+  timings: { rewriteMs: number; retrievalMs: number };
+  closest: ClosestPassage[];
 }
