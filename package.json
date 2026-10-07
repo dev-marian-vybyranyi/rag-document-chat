@@ -39,6 +39,7 @@
       "@esbuild-kit/core-utils": {
         "esbuild": "^0.28.2"
       }
-    }
+    },
+    "shell-quote": "^1.12.0"
   }
 }
