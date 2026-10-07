@@ -18,7 +18,12 @@ type Handler = (request: {
   signal?: AbortSignal | null;
 }) => Response | Promise<Response>;
 
-export function stubApi(routes: Record<string, Handler | Response>) {
+const DEFAULT_ROUTES: Record<string, Handler | Response> = {
+  'GET /api/documents': jsonResponse(200, { documents: [] }),
+};
+
+export function stubApi(overrides: Record<string, Handler | Response>) {
+  const routes = { ...DEFAULT_ROUTES, ...overrides };
   const calls: Array<{ route: string; body: unknown }> = [];
   const fetchMock = stubFetch();
   fetchMock.mockImplementation(async (input, init) => {

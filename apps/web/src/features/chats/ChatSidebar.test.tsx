@@ -180,7 +180,7 @@ describe('chat sidebar', () => {
 
       expect(await screen.findByRole('textbox', { name: 'Your question' })).toBeInTheDocument();
       expect(calls.some((c) => c.route === 'POST /api/chats')).toBe(false);
-      expect(screen.getAllByRole('link')).toHaveLength(2);
+      expect(within(await conversations()).getAllByRole('link')).toHaveLength(2);
     });
 
     it('does create another chat when the existing "New chat" has been used', async () => {
@@ -229,7 +229,7 @@ describe('chat sidebar', () => {
 
       expect(await screen.findByText('Could not start a new chat. Try again.')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'New chat' })).toBeEnabled();
-      expect(screen.getAllByRole('link')).toHaveLength(1);
+      expect(within(await conversations()).getAllByRole('link')).toHaveLength(1);
     });
   });
 

@@ -4,6 +4,7 @@ import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { RedirectIfAuthenticated, RequireAuth } from './features/auth/RouteGuards';
 import { ChatPage } from './pages/ChatPage';
+import { DocumentsPage } from './pages/DocumentsPage';
 import { HomePage } from './pages/HomePage';
 
 export function App() {
@@ -12,6 +13,7 @@ export function App() {
       <Route element={<RequireAuth />}>
         <Route element={<ChatsLayout />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/chats/:chatId" element={<ChatPage />} />
         </Route>
       </Route>

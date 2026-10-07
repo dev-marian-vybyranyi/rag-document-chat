@@ -1,10 +1,11 @@
-import { Loader2Icon, PlusIcon } from 'lucide-react';
+import { FileTextIcon, Loader2Icon, PlusIcon } from 'lucide-react';
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { DEFAULT_CHAT_TITLE, type Chat } from './api';
+import { useDocuments } from '../documents/documents-context';
 import { useChats } from './chats-context';
 
 function isUntouched(chat: Chat): boolean {
@@ -13,6 +14,7 @@ function isUntouched(chat: Chat): boolean {
 
 export function ChatSidebar() {
   const { state, reload, createChat } = useChats();
+  const { anyProcessing } = useDocuments();
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
   const [createFailed, setCreateFailed] = useState(false);
@@ -42,6 +44,28 @@ export function ChatSidebar() {
           Could not start a new chat. Try again.
         </p>
       )}
+
+      <NavLink
+        to="/documents"
+        className={({ isActive }) =>
+          cn(
+            'flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors hover:bg-muted',
+            isActive && 'bg-muted font-medium',
+          )
+        }
+      >
+        <FileTextIcon className="size-4" aria-hidden />
+        Documents
+        {anyProcessing && (
+          <>
+            <Loader2Icon
+              className="ml-auto size-3.5 animate-spin text-muted-foreground"
+              aria-hidden
+            />
+            <span className="sr-only">(processing)</span>
+          </>
+        )}
+      </NavLink>
 
       <nav aria-label="Conversations" className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
         {state.status === 'loading' && (

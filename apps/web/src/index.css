@@ -187,3 +187,12 @@
     @apply font-sans;
   }
 }
+
+@keyframes indeterminate {
+  from {
+    left: -35%;
+  }
+  to {
+    left: 100%;
+  }
+}

@@ -43,8 +43,11 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     response = await fetch(`${BASE_URL}${path}`, {
       method,
       credentials: 'same-origin',
-      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      headers:
+        body === undefined || body instanceof FormData
+          ? undefined
+          : { 'Content-Type': 'application/json' },
+      body: body === undefined || body instanceof FormData ? body : JSON.stringify(body),
       signal,
     });
   } catch (cause) {

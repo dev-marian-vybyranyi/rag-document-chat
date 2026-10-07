@@ -135,10 +135,14 @@ describe('App routing', () => {
     });
 
     it('recovers once the server answers after "Try again"', async () => {
-      stubFetch()
-        .mockResolvedValueOnce(new Response('Bad Gateway', { status: 502 }))
-        .mockResolvedValueOnce(jsonResponse(200, { user: ada }))
-        .mockResolvedValueOnce(jsonResponse(200, { chats: [] }));
+      let attempts = 0;
+      stubApi({
+        ...signedIn,
+        'GET /api/auth/me': () =>
+          ++attempts === 1
+            ? new Response('Bad Gateway', { status: 502 })
+            : jsonResponse(200, { user: ada }),
+      });
       const user = userEvent.setup();
       renderApp('/');
 
