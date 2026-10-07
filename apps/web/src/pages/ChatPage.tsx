@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChatHeader } from '@/features/chat/ChatHeader';
 import { ChatView } from '@/features/chat/ChatView';
+import { SourceViewer } from '@/features/chat/SourceViewer';
+import { SourceViewerProvider } from '@/features/chat/SourceViewerProvider';
 import { toUIMessages } from '@/features/chat/history';
 import type { ChatUIMessage } from '@/features/chat/types';
 import { chatsApi } from '@/features/chats/api';
@@ -77,9 +79,14 @@ function LoadedChat({ chatId }: { chatId: string }) {
   const listed = state.status === 'ready' ? state.chats.find((chat) => chat.id === chatId) : null;
 
   return (
-    <div className="mx-auto flex h-full max-w-3xl flex-col">
-      <ChatHeader chatId={chatId} title={listed?.title ?? loaded.title} />
-      <ChatView chatId={chatId} initialMessages={loaded.messages} />
-    </div>
+    <SourceViewerProvider>
+      <div className="flex h-full">
+        <div className="mx-auto flex h-full min-w-0 max-w-3xl flex-1 flex-col">
+          <ChatHeader chatId={chatId} title={listed?.title ?? loaded.title} />
+          <ChatView chatId={chatId} initialMessages={loaded.messages} />
+        </div>
+        <SourceViewer />
+      </div>
+    </SourceViewerProvider>
   );
 }

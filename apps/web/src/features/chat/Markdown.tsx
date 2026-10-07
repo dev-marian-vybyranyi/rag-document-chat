@@ -1,14 +1,11 @@
 import { useMemo } from 'react';
 import ReactMarkdown, { type Components, type Options } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Citation } from './Citation';
 import { CodeBlock } from './CodeBlock';
 import { normalizeMarkdown } from './normalize-markdown';
 import { remarkCitations } from './remark-citations';
 import type { ChatSource } from './types';
-
-function describe(source: ChatSource): string {
-  return source.page === null ? source.filename : `${source.filename}, page ${source.page}`;
-}
 
 export function Markdown({ children, sources }: { children: string; sources: ChatSource[] }) {
   const plugins = useMemo<NonNullable<Options['remarkPlugins']>>(() => {
@@ -21,15 +18,7 @@ export function Markdown({ children, sources }: { children: string; sources: Cha
       cite: ({ node: _node, ...props }) => {
         const id = Number((props as Record<string, unknown>)['data-source']);
         const source = sources.find((candidate) => candidate.id === id);
-        return (
-          <span
-            className="ml-0.5 inline-block rounded bg-primary/10 px-1 align-baseline text-xs font-medium not-italic text-primary"
-            title={source ? describe(source) : undefined}
-            aria-label={source ? `Source ${id}: ${describe(source)}` : undefined}
-          >
-            {props.children}
-          </span>
-        );
+        return source ? <Citation source={source}>{props.children}</Citation> : props.children;
       },
       a: ({ node: _node, ...props }) => (
         <a

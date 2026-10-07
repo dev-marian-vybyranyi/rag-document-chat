@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { App } from '../../App';
-import { jsonResponse, stubApi } from '../../test/fetch';
+import { deferredResponse, jsonResponse, stubApi } from '../../test/fetch';
 import { AuthProvider } from '../auth/AuthProvider';
 
 const ada = { id: 'u1', email: 'ada@example.com' };
@@ -63,13 +63,11 @@ function setup(path: string, routes: Parameters<typeof stubApi>[0]) {
 
 describe('opening a saved conversation', () => {
   it('says it is loading, then shows the saved messages in order', async () => {
-    let release: (response: Response) => void = () => {};
-    setup('/chats/c1', {
-      'GET /api/chats/c1': () => new Promise<Response>((resolve) => (release = resolve)),
-    });
+    const pending = deferredResponse();
+    setup('/chats/c1', { 'GET /api/chats/c1': pending.handler });
 
     expect(await screen.findByText('Loading conversation…')).toBeInTheDocument();
-    release(
+    pending.release(
       jsonResponse(200, {
         chat: budget,
         messages: [

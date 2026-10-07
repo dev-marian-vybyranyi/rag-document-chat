@@ -121,7 +121,7 @@ describe('Markdown', () => {
 
       const marker = screen.getByLabelText('Source 1: handbook.pdf, page 4');
       expect(marker).toHaveTextContent('[1]');
-      expect(marker).toHaveAttribute('title', 'handbook.pdf, page 4');
+      expect(marker.tagName).toBe('BUTTON');
     });
 
     it('handles several in a row, and a source without a page', () => {

@@ -1,4 +1,4 @@
-import { and, desc, eq, getTableColumns, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, getTableColumns, gte, lte, sql } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import { chunks, documents } from '../db/schema.js';
 
@@ -12,6 +12,12 @@ export interface NewChunk {
   content: string;
   tokenCount: number;
   embedding: number[];
+}
+
+export interface Passage {
+  ordinal: number;
+  page: number | null;
+  content: string;
 }
 
 const CHUNK_INSERT_BATCH_SIZE = 100;
@@ -44,6 +50,33 @@ export function createDocumentRepository(db: Database) {
         .from(documents)
         .where(and(eq(documents.id, id), eq(documents.userId, userId)));
       return document;
+    },
+
+    async passagesAround(
+      id: string,
+      userId: string,
+      ordinal: number,
+      radius: number,
+    ): Promise<{ document: DocumentRecord; passages: Passage[] } | undefined> {
+      const [document] = await db
+        .select()
+        .from(documents)
+        .where(and(eq(documents.id, id), eq(documents.userId, userId)));
+      if (!document) return undefined;
+
+      const passages = await db
+        .select({ ordinal: chunks.ordinal, page: chunks.page, content: chunks.content })
+        .from(chunks)
+        .where(
+          and(
+            eq(chunks.documentId, id),
+            eq(chunks.userId, userId),
+            gte(chunks.ordinal, Math.max(0, ordinal - radius)),
+            lte(chunks.ordinal, ordinal + radius),
+          ),
+        )
+        .orderBy(asc(chunks.ordinal));
+      return { document, passages };
     },
 
     async deleteForUser(id: string, userId: string): Promise<boolean> {

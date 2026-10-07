@@ -100,3 +100,9 @@ export function answerChunks(
     { type: 'finish', finishReason: 'stop' },
   ];
 }
+
+export function deferredResponse() {
+  let resolve: (response: Response) => void = () => {};
+  const promise = new Promise<Response>((r) => (resolve = r));
+  return { handler: () => promise, release: (response: Response) => resolve(response) };
+}

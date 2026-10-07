@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { App } from '../../App';
-import { jsonResponse, stubApi } from '../../test/fetch';
+import { deferredResponse, jsonResponse, stubApi } from '../../test/fetch';
 import { AuthProvider } from '../auth/AuthProvider';
 import type { DocumentItem } from './api';
 
@@ -73,13 +73,11 @@ describe('documents page', () => {
 
   describe('listing', () => {
     it('shows a skeleton while loading, then the documents with size and status', async () => {
-      let release: (response: Response) => void = () => {};
-      setup({
-        'GET /api/documents': () => new Promise<Response>((resolve) => (release = resolve)),
-      });
+      const pending = deferredResponse();
+      setup({ 'GET /api/documents': pending.handler });
 
       expect(await screen.findByText('Loading documents…')).toBeInTheDocument();
-      release(
+      pending.release(
         jsonResponse(200, {
           documents: [
             doc(),
