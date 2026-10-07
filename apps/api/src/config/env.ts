@@ -13,6 +13,7 @@ const envSchema = z
       .optional()
       .transform((key) => key?.trim() || undefined),
     EMBEDDING_MODEL: z.string().min(1).default('gemini-embedding-001'),
+    REWRITE_MODEL: z.string().min(1).default('gemini-3.5-flash-lite'),
     COOKIE_SECURE: z.stringbool().optional(),
   })
   .transform((env) => ({
