@@ -20,7 +20,7 @@ export function UserMenu() {
   return (
     <div className="flex items-center gap-3 text-sm">
       {failed && <span className="text-destructive">Could not sign out. Try again.</span>}
-      <span className="text-muted-foreground">{state.user.email}</span>
+      <span className="hidden text-muted-foreground sm:inline">{state.user.email}</span>
       <Button variant="outline" size="sm" onClick={handleLogout}>
         Sign out
       </Button>

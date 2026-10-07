@@ -257,3 +257,11 @@ Raw material for the README – not a polished document.
 - Checked by mutation: removing the abort wiring, removing the escaping and raising the history limit each fail exactly the test written for them.
 - What this cannot show: how a real model behaves. That was checked by hand against Gemini for the prompt and the rewriter, and is what the evaluation set (later) is for; the mocked model only proves that the application sends the right things and handles what comes back.
 - Left out on purpose: the order of the user and answer messages when two questions overlap in one chat is not guaranteed (each is saved when it finishes); a single user in a single tab does not do that, and ordering by a per-question counter would not make the conversation any more coherent.
+
+### App shell: one layout route owns the chat list, so every page can update it
+
+- Chosen: signed-in pages (`/` and `/chats/:chatId`) share a layout route that holds the header, a sidebar with "New chat" and the conversation list, and the page in the main area. The list lives in a small context provider (load, retry, create) inside that layout, not inside the sidebar component.
+- Why: the list is changed from several places later (a new chat prepends itself, the first question renames a chat, rename and delete in the history step), and the page needs to know which chats exist, for example to send the user home when the address names a conversation they do not have. A context avoids refetching the list on every navigation and keeps the sidebar and the page consistent. React Router `NavLink` marks the open conversation (`aria-current`).
+- Narrow screens: the sidebar is hidden and opened from a menu button in the header; it closes by itself when the user navigates (open state is tied to the router location key, which avoids an effect that resets it). The email moves out of the header below the `sm` breakpoint so the header does not wrap.
+- New chats are created on the server on click ("New chat" button) rather than lazily on the first message, so every open conversation has an id that the stream endpoint can use; an empty chat is kept like any other and is named after its first question.
+- Trade-offs / when to revisit: no paging or search in the list (fine for tens of chats); the chat page is a placeholder showing the title until the chat view is built in the next step.

@@ -4,9 +4,13 @@ import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { App } from './App';
 import { AuthProvider } from './features/auth/AuthProvider';
-import { jsonResponse, stubFetch } from './test/fetch';
+import { jsonResponse, stubApi, stubFetch } from './test/fetch';
 
 const ada = { id: 'u1', email: 'ada@example.com' };
+const signedIn = {
+  'GET /api/auth/me': jsonResponse(200, { user: ada }),
+  'GET /api/chats': jsonResponse(200, { chats: [] }),
+};
 const unauthenticated = { error: { code: 'unauthenticated', message: 'Sign in to continue' } };
 
 function renderApp(path = '/') {
@@ -70,7 +74,7 @@ describe('App routing', () => {
 
   describe('when signed in', () => {
     it('shows the home page with the user and a sign-out button', async () => {
-      stubFetch().mockResolvedValue(jsonResponse(200, { user: ada }));
+      stubApi(signedIn);
 
       renderApp('/');
 
@@ -82,7 +86,7 @@ describe('App routing', () => {
     });
 
     it.each(['/login', '/register'])('keeps the user away from %s', async (path) => {
-      stubFetch().mockResolvedValue(jsonResponse(200, { user: ada }));
+      stubApi(signedIn);
 
       renderApp(path);
 
@@ -92,9 +96,7 @@ describe('App routing', () => {
     });
 
     it('returns to the sign-in page after signing out', async () => {
-      stubFetch()
-        .mockResolvedValueOnce(jsonResponse(200, { user: ada }))
-        .mockResolvedValueOnce(jsonResponse(204));
+      stubApi({ ...signedIn, 'POST /api/auth/logout': jsonResponse(204) });
       const user = userEvent.setup();
       renderApp('/');
 
@@ -104,9 +106,12 @@ describe('App routing', () => {
     });
 
     it('stays on the page and says so when signing out fails', async () => {
-      stubFetch()
-        .mockResolvedValueOnce(jsonResponse(200, { user: ada }))
-        .mockRejectedValueOnce(new TypeError('Failed to fetch'));
+      stubApi({
+        ...signedIn,
+        'POST /api/auth/logout': () => {
+          throw new TypeError('Failed to fetch');
+        },
+      });
       const user = userEvent.setup();
       renderApp('/');
 
@@ -132,7 +137,8 @@ describe('App routing', () => {
     it('recovers once the server answers after "Try again"', async () => {
       stubFetch()
         .mockResolvedValueOnce(new Response('Bad Gateway', { status: 502 }))
-        .mockResolvedValueOnce(jsonResponse(200, { user: ada }));
+        .mockResolvedValueOnce(jsonResponse(200, { user: ada }))
+        .mockResolvedValueOnce(jsonResponse(200, { chats: [] }));
       const user = userEvent.setup();
       renderApp('/');
 
