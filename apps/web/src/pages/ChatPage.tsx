@@ -1,7 +1,7 @@
-import { Loader2Icon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Navigate, useParams } from 'react-router';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ChatHeader } from '@/features/chat/ChatHeader';
 import { ChatView } from '@/features/chat/ChatView';
 import { toUIMessages } from '@/features/chat/history';
@@ -46,10 +46,11 @@ function LoadedChat({ chatId }: { chatId: string }) {
 
   if (loaded.status === 'loading') {
     return (
-      <p role="status" className="flex items-center gap-2 px-6 py-8 text-sm text-muted-foreground">
-        <Loader2Icon className="size-4 animate-spin" aria-hidden />
-        Loading conversation…
-      </p>
+      <div role="status" className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6">
+        <span className="sr-only">Loading conversation…</span>
+        <Skeleton className="ml-auto h-10 w-1/2" />
+        <Skeleton className="h-24 w-4/5" />
+      </div>
     );
   }
 

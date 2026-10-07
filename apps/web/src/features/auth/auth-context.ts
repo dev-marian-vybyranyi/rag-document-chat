@@ -3,7 +3,7 @@ import type { Credentials, User } from './api';
 
 export type AuthState =
   | { status: 'loading' }
-  | { status: 'anonymous' }
+  | { status: 'anonymous'; expired?: true }
   | { status: 'unavailable' }
   | { status: 'authenticated'; user: User };
 

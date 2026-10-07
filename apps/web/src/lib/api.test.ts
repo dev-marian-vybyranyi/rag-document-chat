@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { jsonResponse, stubFetch } from '../test/fetch';
-import { api, ApiError } from './api';
+import { api, ApiError, onUnauthorized } from './api';
 
 describe('api client', () => {
   it('calls the API under /api with the session cookie and returns the JSON body', async () => {
@@ -85,5 +85,57 @@ describe('api client', () => {
     stubFetch().mockRejectedValue(new DOMException('Aborted', 'AbortError'));
 
     await expect(api('/things')).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
+  describe('an expired session', () => {
+    const unauthenticated = { error: { code: 'unauthenticated', message: 'Sign in to continue' } };
+
+    it('is reported once for a request to a protected endpoint, which still fails as usual', async () => {
+      stubFetch().mockResolvedValue(jsonResponse(401, unauthenticated));
+      const handler = vi.fn();
+      const stop = onUnauthorized(handler);
+
+      await expect(api('/chats')).rejects.toMatchObject({ status: 401 });
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      stop();
+    });
+
+    it.each(['/auth/login', '/auth/me', '/auth/logout'])(
+      'is not reported for %s, where a 401 is an ordinary answer',
+      async (path) => {
+        stubFetch().mockResolvedValue(jsonResponse(401, unauthenticated));
+        const handler = vi.fn();
+        const stop = onUnauthorized(handler);
+
+        await expect(api(path)).rejects.toBeInstanceOf(ApiError);
+
+        expect(handler).not.toHaveBeenCalled();
+        stop();
+      },
+    );
+
+    it('is not reported for other errors', async () => {
+      stubFetch().mockResolvedValue(
+        jsonResponse(404, { error: { code: 'not_found', message: 'x' } }),
+      );
+      const handler = vi.fn();
+      const stop = onUnauthorized(handler);
+
+      await expect(api('/chats/x')).rejects.toBeInstanceOf(ApiError);
+
+      expect(handler).not.toHaveBeenCalled();
+      stop();
+    });
+
+    it('stops being reported once the listener is removed', async () => {
+      stubFetch().mockResolvedValue(jsonResponse(401, unauthenticated));
+      const handler = vi.fn();
+      onUnauthorized(handler)();
+
+      await expect(api('/chats')).rejects.toBeInstanceOf(ApiError);
+
+      expect(handler).not.toHaveBeenCalled();
+    });
   });
 });

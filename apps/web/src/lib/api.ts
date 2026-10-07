@@ -22,6 +22,19 @@ interface RequestOptions {
 
 const BASE_URL = '/api';
 
+let unauthorizedHandler: (() => void) | null = null;
+
+export function onUnauthorized(handler: () => void): () => void {
+  unauthorizedHandler = handler;
+  return () => {
+    if (unauthorizedHandler === handler) unauthorizedHandler = null;
+  };
+}
+
+export function reportUnauthorized(): void {
+  unauthorizedHandler?.();
+}
+
 export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, signal } = options;
 
@@ -41,6 +54,7 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
 
   if (response.status === 204) return undefined as T;
 
+  if (response.status === 401 && !path.startsWith('/auth/')) reportUnauthorized();
   if (!response.ok) throw await toApiError(response);
   return (await response.json()) as T;
 }

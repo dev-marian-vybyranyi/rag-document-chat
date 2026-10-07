@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ApiError } from '../../lib/api';
+import { ApiError, onUnauthorized } from '../../lib/api';
 import { authApi, type Credentials } from './api';
 import { AuthContext, type AuthContextValue, type AuthState } from './auth-context';
 
@@ -19,6 +19,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     return () => controller.abort();
   }, [reloadCount]);
+
+  useEffect(
+    () =>
+      onUnauthorized(() =>
+        setState((current) =>
+          current.status === 'authenticated' ? { status: 'anonymous', expired: true } : current,
+        ),
+      ),
+    [],
+  );
 
   const login = useCallback(async (credentials: Credentials) => {
     const user = await authApi.login(credentials);

@@ -2,6 +2,7 @@ import { Loader2Icon, PlusIcon } from 'lucide-react';
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { DEFAULT_CHAT_TITLE, type Chat } from './api';
 import { useChats } from './chats-context';
@@ -44,10 +45,12 @@ export function ChatSidebar() {
 
       <nav aria-label="Conversations" className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
         {state.status === 'loading' && (
-          <p className="flex items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground">
-            <Loader2Icon className="size-4 animate-spin" aria-hidden />
-            Loading conversations…
-          </p>
+          <div role="status" className="flex flex-col gap-1.5 px-2 py-1.5">
+            <span className="sr-only">Loading conversations…</span>
+            <Skeleton className="h-6 w-full" />
+            <Skeleton className="h-6 w-5/6" />
+            <Skeleton className="h-6 w-4/6" />
+          </div>
         )}
 
         {state.status === 'error' && (

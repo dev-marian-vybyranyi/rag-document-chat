@@ -1,9 +1,11 @@
 import { DefaultChatTransport } from 'ai';
+import { reportUnauthorized } from '@/lib/api';
 import { textOf, type ChatUIMessage } from './types';
 
 async function fetchWithReadableErrors(input: RequestInfo | URL, init?: RequestInit) {
   const response = await fetch(input, init);
   if (response.ok) return response;
+  if (response.status === 401) reportUnauthorized();
 
   let message = `Request failed (${response.status})`;
   try {

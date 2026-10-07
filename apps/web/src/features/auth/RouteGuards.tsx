@@ -4,6 +4,7 @@ import { LoadingScreen, UnavailableScreen } from './AuthStatusScreens';
 
 interface RedirectState {
   from?: { pathname: string; search: string };
+  expired?: boolean;
 }
 
 /** Layout route: renders the nested routes only for a signed-in user, otherwise sends them to /login. */
@@ -18,7 +19,13 @@ export function RequireAuth() {
       return <UnavailableScreen />;
     case 'anonymous':
       // Remember where they were heading so signing in can take them back there.
-      return <Navigate to="/login" replace state={{ from: location } satisfies RedirectState} />;
+      return (
+        <Navigate
+          to="/login"
+          replace
+          state={{ from: location, expired: state.expired === true } satisfies RedirectState}
+        />
+      );
     case 'authenticated':
       return <Outlet />;
   }
