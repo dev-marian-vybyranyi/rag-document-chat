@@ -22,6 +22,7 @@ import {
   type AuthRateLimits,
 } from './http/rate-limit.js';
 import { requestLogger } from './http/request-logger.js';
+import { createTraceRecorder } from './observability/traces.js';
 
 const unavailableChat: ChatDeps = {
   retriever: { retrieve: async () => ({ chunks: [], mode: 'hybrid' }) },
@@ -83,7 +84,12 @@ export function createApp({
     '/chats',
     createChatsRouter({
       chats,
-      responder: createChatResponder(chats, chat ?? unavailableChat, logger),
+      responder: createChatResponder(
+        chats,
+        chat ?? unavailableChat,
+        logger,
+        createTraceRecorder(db, logger),
+      ),
     }),
   );
 

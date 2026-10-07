@@ -3,6 +3,7 @@ import {
   streamText,
   toUIMessageStream,
   type LanguageModel,
+  type LanguageModelUsage,
   type UIMessage,
   type UIMessageChunk,
 } from 'ai';
@@ -12,7 +13,9 @@ import { assessRelevance, DEFAULT_RELEVANCE_THRESHOLD } from '../rag/relevance.j
 import type { RetrievedChunk } from '../rag/fusion.js';
 import type { QueryRewriter } from '../rag/rewrite.js';
 import type { Retriever } from '../rag/retriever.js';
-import { chatFailureMessage } from './errors.js';
+import type { TraceRecorder } from '../observability/traces.js';
+import type { RagTrace, TracedChunk } from '../observability/types.js';
+import { CHAT_FAILURE_MESSAGES, classifyChatFailure } from './errors.js';
 import { DEFAULT_CHAT_TITLE, type ChatRecord, type ChatRepository } from './repository.js';
 import type { ClosestPassage, MessageRetrieval, MessageSource } from './types.js';
 
@@ -91,6 +94,22 @@ export function toMessageSources(
   });
 }
 
+export function toTracedChunks(chunks: RetrievedChunk[], sentIds: Set<string>): TracedChunk[] {
+  return chunks.map((chunk) => ({
+    chunkId: chunk.chunkId,
+    documentId: chunk.documentId,
+    filename: chunk.filename,
+    page: chunk.page,
+    ordinal: chunk.ordinal,
+    vectorScore: chunk.vectorScore,
+    vectorRank: chunk.vectorRank,
+    keywordScore: chunk.keywordScore,
+    keywordRank: chunk.keywordRank,
+    fusedScore: chunk.score,
+    sentToModel: sentIds.has(chunk.chunkId),
+  }));
+}
+
 export function createChatResponder(
   chats: ChatRepository,
   {
@@ -101,6 +120,7 @@ export function createChatResponder(
     relevanceThreshold = DEFAULT_RELEVANCE_THRESHOLD,
   }: ChatDeps,
   logger: Logger,
+  traces: TraceRecorder,
 ) {
   return {
     get available(): boolean {
@@ -127,9 +147,56 @@ export function createChatResponder(
       let sources: MessageSource[] = [];
       let retrieval: MessageRetrieval | undefined;
 
+      const startedAt = Date.now();
+      const modelId = typeof model === 'string' ? model : model.modelId;
+      let progress: Partial<RagTrace> = {};
+      let answerStartedAt: number | undefined;
+      let totalUsage: PromiseLike<LanguageModelUsage> | undefined;
+      let recorded = false;
+
+      const record = async (fields: Pick<RagTrace, 'outcome'> & Partial<RagTrace>) => {
+        if (recorded) return;
+        recorded = true;
+        await traces.record({
+          userId,
+          chatId: chat.id,
+          messageId: null,
+          question,
+          rewrittenQuery: null,
+          retrievalMode: null,
+          bestScore: null,
+          threshold: null,
+          retrieved: [],
+          rewriteMs: null,
+          retrievalMs: null,
+          generationMs: answerStartedAt === undefined ? null : Date.now() - answerStartedAt,
+          inputTokens: null,
+          outputTokens: null,
+          model: modelId,
+          errorKind: null,
+          ...progress,
+          ...fields,
+          totalMs: Date.now() - startedAt,
+        });
+      };
+
+      const tokensUsed = async () => {
+        try {
+          const usage = await totalUsage;
+          return {
+            inputTokens: usage?.inputTokens ?? null,
+            outputTokens: usage?.outputTokens ?? null,
+          };
+        } catch {
+          return { inputTokens: null, outputTokens: null };
+        }
+      };
+
       const onError = (error: unknown): string => {
         logger.error({ err: error, chatId: chat.id }, 'chat answer failed');
-        return chatFailureMessage(error);
+        const kind = classifyChatFailure(error);
+        void record({ outcome: kind === 'cancelled' ? 'cancelled' : 'failed', errorKind: kind });
+        return CHAT_FAILURE_MESSAGES[kind];
       };
 
       return createUIMessageStream<ChatUIMessage>({
@@ -155,6 +222,16 @@ export function createChatResponder(
             },
           };
 
+          progress = {
+            rewrittenQuery: details.query,
+            retrievalMode: result.mode,
+            bestScore: relevance.bestScore,
+            threshold: relevanceThreshold,
+            rewriteMs: details.timings.rewriteMs,
+            retrievalMs: details.timings.retrievalMs,
+            retrieved: toTracedChunks(result.chunks, new Set()),
+          };
+
           if (!relevance.relevant) {
             retrieval = {
               ...details,
@@ -165,13 +242,14 @@ export function createChatResponder(
               { chatId: chat.id, bestScore: relevance.bestScore, threshold: relevanceThreshold },
               'no relevant passages, answering without the model',
             );
-            await chats.addMessage({
+            const declined = await chats.addMessage({
               chatId: chat.id,
               role: 'assistant',
               content: NO_ANSWER_MESSAGE,
               sources: [],
               retrieval,
             });
+            await record({ outcome: 'declined', messageId: declined.id });
             writer.write({ type: 'data-sources', data: { sources: [], retrieval } });
             writer.write({ type: 'text-start', id: 'no-answer' });
             writer.write({ type: 'text-delta', id: 'no-answer', delta: NO_ANSWER_MESSAGE });
@@ -183,8 +261,13 @@ export function createChatResponder(
           const prompt = buildChatPrompt({ question, history, chunks: result.chunks });
           sources = toMessageSources(prompt.sources, result.chunks);
           retrieval = { ...details, outcome: 'answered', closest: [] };
+          progress.retrieved = toTracedChunks(
+            result.chunks,
+            new Set(sources.map((source) => source.chunkId)),
+          );
           writer.write({ type: 'data-sources', data: { sources, retrieval } });
           writer.write({ type: 'data-status', data: { stage: 'answering' }, transient: true });
+          answerStartedAt = Date.now();
 
           const answer = streamText({
             model,
@@ -198,24 +281,32 @@ export function createChatResponder(
             abortSignal: signal,
             onError: ({ error }) => logger.error({ err: error }, 'model stream error'),
           });
+          totalUsage = answer.totalUsage;
           writer.merge(toUIMessageStream({ stream: answer.stream, sendStart: false, onError }));
         },
         onEnd: async ({ responseMessage, finishReason, isAborted, isCancelled }) => {
-          const finished = finishReason === 'stop' || finishReason === 'length';
-          if (!finished || isAborted || isCancelled) return;
           if (retrieval?.outcome === 'declined') return;
+          if (isAborted || isCancelled) {
+            await record({ outcome: 'cancelled' });
+            return;
+          }
+          const finished = finishReason === 'stop' || finishReason === 'length';
           const text = responseMessage.parts
             .flatMap((part) => (part.type === 'text' ? [part.text] : []))
             .join('')
             .trim();
-          if (text.length === 0) return;
-          await chats.addMessage({
+          if (!finished || text.length === 0) {
+            await record({ outcome: 'failed', errorKind: 'unexpected' });
+            return;
+          }
+          const saved = await chats.addMessage({
             chatId: chat.id,
             role: 'assistant',
             content: text,
             sources,
             retrieval,
           });
+          await record({ outcome: 'answered', messageId: saved.id, ...(await tokensUsed()) });
         },
       });
     },

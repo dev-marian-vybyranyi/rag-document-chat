@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import {
   bigint,
   customType,
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -14,6 +15,7 @@ import {
   vector,
 } from 'drizzle-orm/pg-core';
 import type { MessageRetrieval, MessageSource } from '../chat/types.js';
+import type { TracedChunk, TraceOutcome } from '../observability/types.js';
 
 export const EMBEDDING_DIMENSIONS = 768;
 
@@ -121,4 +123,45 @@ export const messages = pgTable(
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index('messages_chat_id_seq_idx').on(table.chatId, table.seq)],
+);
+
+export const traceOutcome = pgEnum('trace_outcome', [
+  'answered',
+  'declined',
+  'failed',
+  'cancelled',
+]);
+
+export const ragTraces = pgTable(
+  'rag_traces',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    chatId: uuid()
+      .notNull()
+      .references(() => chats.id, { onDelete: 'cascade' }),
+    messageId: uuid().references(() => messages.id, { onDelete: 'set null' }),
+    outcome: traceOutcome().$type<TraceOutcome>().notNull(),
+    question: text().notNull(),
+    rewrittenQuery: text(),
+    retrievalMode: text().$type<'hybrid' | 'keyword-only'>(),
+    bestScore: doublePrecision(),
+    threshold: doublePrecision(),
+    retrieved: jsonb().$type<TracedChunk[]>().notNull().default([]),
+    rewriteMs: integer(),
+    retrievalMs: integer(),
+    generationMs: integer(),
+    totalMs: integer().notNull(),
+    inputTokens: integer(),
+    outputTokens: integer(),
+    model: text(),
+    errorKind: text(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('rag_traces_user_id_created_at_idx').on(table.userId, table.createdAt),
+    index('rag_traces_chat_id_idx').on(table.chatId),
+  ],
 );

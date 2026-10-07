@@ -36,6 +36,13 @@
       "when": 1791374298284,
       "tag": "0004_document_suggestions",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791379037847,
+      "tag": "0005_rag_traces",
+      "breakpoints": true
     }
   ]
 }
