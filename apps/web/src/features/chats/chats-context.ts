@@ -9,6 +9,8 @@ export interface ChatsContextValue {
   reload: () => void;
   refresh: () => Promise<void>;
   createChat: () => Promise<Chat>;
+  renameChat: (id: string, title: string) => Promise<void>;
+  removeChat: (id: string) => Promise<void>;
 }
 
 export const ChatsContext = createContext<ChatsContextValue | null>(null);

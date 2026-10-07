@@ -48,9 +48,30 @@ export function ChatsProvider({ children }: { children: ReactNode }) {
     return chat;
   }, []);
 
+  const renameChat = useCallback(async (id: string, title: string) => {
+    const renamed = await chatsApi.rename(id, title);
+    setState((current) =>
+      current.status === 'ready'
+        ? {
+            status: 'ready',
+            chats: current.chats.map((chat) => (chat.id === id ? renamed : chat)),
+          }
+        : current,
+    );
+  }, []);
+
+  const removeChat = useCallback(async (id: string) => {
+    await chatsApi.remove(id);
+    setState((current) =>
+      current.status === 'ready'
+        ? { status: 'ready', chats: current.chats.filter((chat) => chat.id !== id) }
+        : current,
+    );
+  }, []);
+
   const value = useMemo<ChatsContextValue>(
-    () => ({ state, reload, refresh, createChat }),
-    [state, reload, refresh, createChat],
+    () => ({ state, reload, refresh, createChat, renameChat, removeChat }),
+    [state, reload, refresh, createChat, renameChat, removeChat],
   );
 
   return <ChatsContext.Provider value={value}>{children}</ChatsContext.Provider>;

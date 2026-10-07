@@ -30,6 +30,7 @@ function setup(messageRoute: Routes[string], extra: Routes = {}) {
   const api = stubApi({
     'GET /api/auth/me': jsonResponse(200, { user: ada }),
     'GET /api/chats': jsonResponse(200, { chats: [chat] }),
+    'GET /api/chats/c1': jsonResponse(200, { chat, messages: [] }),
     'POST /api/chats/c1/messages': messageRoute,
     ...extra,
   });

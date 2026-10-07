@@ -81,7 +81,9 @@ describe('chat sidebar', () => {
   });
 
   it('opens a conversation from the list', async () => {
-    withChats([budget, onboarding]);
+    withChats([budget, onboarding], {
+      'GET /api/chats/c2': jsonResponse(200, { chat: onboarding, messages: [] }),
+    });
     const user = userEvent.setup();
     renderApp();
 
@@ -95,7 +97,11 @@ describe('chat sidebar', () => {
   });
 
   it('sends the user home when the address points at a conversation they do not have', async () => {
-    withChats([budget]);
+    withChats([budget], {
+      'GET /api/chats/someone-elses': jsonResponse(404, {
+        error: { code: 'not_found', message: 'Chat not found' },
+      }),
+    });
 
     renderApp('/chats/someone-elses');
 
@@ -141,6 +147,7 @@ describe('chat sidebar', () => {
       const created = chat('c3', 'New chat');
       const { calls } = withChats([budget], {
         'POST /api/chats': jsonResponse(201, { chat: created }),
+        'GET /api/chats/c3': jsonResponse(200, { chat: created, messages: [] }),
       });
       const user = userEvent.setup();
       renderApp();
@@ -155,10 +162,49 @@ describe('chat sidebar', () => {
       expect(calls.filter((c) => c.route === 'POST /api/chats')).toHaveLength(1);
     });
 
+    it('opens the empty chat it already has instead of piling up more', async () => {
+      const untouched = {
+        id: 'c4',
+        title: 'New chat',
+        createdAt: '2026-10-07T10:00:00Z',
+        updatedAt: '2026-10-07T10:00:00Z',
+      };
+      const { calls } = withChats([untouched, budget], {
+        'GET /api/chats/c4': jsonResponse(200, { chat: untouched, messages: [] }),
+      });
+      const user = userEvent.setup();
+      renderApp();
+      await screen.findByRole('link', { name: 'Budget 2026' });
+
+      await user.click(screen.getByRole('button', { name: 'New chat' }));
+
+      expect(await screen.findByRole('textbox', { name: 'Your question' })).toBeInTheDocument();
+      expect(calls.some((c) => c.route === 'POST /api/chats')).toBe(false);
+      expect(screen.getAllByRole('link')).toHaveLength(2);
+    });
+
+    it('does create another chat when the existing "New chat" has been used', async () => {
+      const used = { ...chat('c4', 'New chat'), updatedAt: '2026-10-07T12:00:00Z' };
+      const created = chat('c5', 'New chat');
+      const { calls } = withChats([used], {
+        'POST /api/chats': jsonResponse(201, { chat: created }),
+        'GET /api/chats/c5': jsonResponse(200, { chat: created, messages: [] }),
+      });
+      const user = userEvent.setup();
+      renderApp();
+      await screen.findByRole('link', { name: 'New chat' });
+
+      await user.click(screen.getByRole('button', { name: 'New chat' }));
+
+      await screen.findByRole('textbox', { name: 'Your question' });
+      expect(calls.filter((c) => c.route === 'POST /api/chats')).toHaveLength(1);
+    });
+
     it('cannot be clicked twice while it is being created', async () => {
       let release: (response: Response) => void = () => {};
       withChats([], {
         'POST /api/chats': () => new Promise<Response>((resolve) => (release = resolve)),
+        'GET /api/chats/c3': jsonResponse(200, { chat: chat('c3', 'New chat'), messages: [] }),
       });
       const user = userEvent.setup();
       renderApp();

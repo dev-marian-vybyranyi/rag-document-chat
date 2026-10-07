@@ -50,7 +50,7 @@ export function ChatView({ chatId, initialMessages }: ChatViewProps) {
   }
 
   return (
-    <div className="mx-auto flex h-full max-w-3xl flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6">
         {messages.length === 0 && (
           <p className="mt-16 text-center text-sm text-muted-foreground">
