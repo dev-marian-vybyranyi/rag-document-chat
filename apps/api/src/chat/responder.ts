@@ -11,6 +11,7 @@ import type { Logger } from 'pino';
 import { buildChatPrompt, NO_ANSWER_PREFIX, type PromptSource } from '../rag/prompt.js';
 import { assessRelevance, DEFAULT_RELEVANCE_THRESHOLD } from '../rag/relevance.js';
 import type { RetrievedChunk } from '../rag/fusion.js';
+import { findInjectionSignals } from '../rag/sanitize.js';
 import type { QueryRewriter } from '../rag/rewrite.js';
 import type { Retriever } from '../rag/retriever.js';
 import type { TraceRecorder } from '../observability/traces.js';
@@ -107,6 +108,7 @@ export function toTracedChunks(chunks: RetrievedChunk[], sentIds: Set<string>): 
     keywordRank: chunk.keywordRank,
     fusedScore: chunk.score,
     sentToModel: sentIds.has(chunk.chunkId),
+    injectionSignals: findInjectionSignals(chunk.content),
   }));
 }
 
@@ -261,10 +263,27 @@ export function createChatResponder(
           const prompt = buildChatPrompt({ question, history, chunks: result.chunks });
           sources = toMessageSources(prompt.sources, result.chunks);
           retrieval = { ...details, outcome: 'answered', closest: [] };
-          progress.retrieved = toTracedChunks(
+          const traced = toTracedChunks(
             result.chunks,
             new Set(sources.map((source) => source.chunkId)),
           );
+          progress.retrieved = traced;
+          const suspicious = traced.filter(
+            (chunk) => chunk.sentToModel && chunk.injectionSignals.length > 0,
+          );
+          if (suspicious.length > 0) {
+            logger.warn(
+              {
+                chatId: chat.id,
+                passages: suspicious.map(({ documentId, ordinal, injectionSignals }) => ({
+                  documentId,
+                  ordinal,
+                  signals: injectionSignals,
+                })),
+              },
+              'retrieved passages look like prompt injection; sent as quoted data',
+            );
+          }
           writer.write({ type: 'data-sources', data: { sources, retrieval } });
           writer.write({ type: 'data-status', data: { stage: 'answering' }, transient: true });
           answerStartedAt = Date.now();

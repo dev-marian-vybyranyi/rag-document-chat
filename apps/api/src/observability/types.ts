@@ -14,6 +14,7 @@ export interface TracedChunk {
   keywordRank: number | null;
   fusedScore: number;
   sentToModel: boolean;
+  injectionSignals: string[];
 }
 
 export interface RagTrace {

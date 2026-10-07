@@ -1,6 +1,9 @@
 import { generateText, type LanguageModel } from 'ai';
 import type { Logger } from 'pino';
 import { escapeMarkup } from './markup.js';
+import { stripInvisibleCharacters } from './sanitize.js';
+
+const LINK = /https?:\/\/|www\./i;
 
 export const SUGGESTION_COUNT = 3;
 export const MAX_SAMPLED_PASSAGES = 4;
@@ -37,7 +40,9 @@ interface SuggesterOptions {
 }
 
 export function samplePassages(passages: string[]): string[] {
-  const usable = passages.filter((passage) => passage.trim().length > 0);
+  const usable = passages
+    .map(stripInvisibleCharacters)
+    .filter((passage) => passage.trim().length > 0);
   if (usable.length <= MAX_SAMPLED_PASSAGES) {
     return usable.map((passage) => passage.slice(0, MAX_CHARS_PER_PASSAGE));
   }
@@ -58,6 +63,7 @@ export function parseSuggestions(raw: string): string[] {
       .replace(/\s+/g, ' ')
       .trim();
     if (question.length < MIN_SUGGESTION_CHARS || question.length > MAX_SUGGESTION_CHARS) continue;
+    if (LINK.test(question)) continue;
     const key = question.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
@@ -72,7 +78,7 @@ function buildPrompt({ filename, passages }: SuggestInput): string {
     .map((passage, i) => `<excerpt number="${i + 1}">\n${escapeMarkup(passage)}\n</excerpt>`)
     .join('\n');
   return [
-    `<document name="${escapeMarkup(filename).replace(/"/g, '&quot;')}">`,
+    `<document name="${escapeMarkup(stripInvisibleCharacters(filename)).replace(/"/g, '&quot;')}">`,
     excerpts,
     '</document>',
   ].join('\n');
