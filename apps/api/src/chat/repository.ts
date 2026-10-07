@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, sql } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import { chats, messages } from '../db/schema.js';
 import type { MessageRetrieval, MessageSource } from './types.js';
@@ -29,6 +29,11 @@ export function createChatRepository(db: Database) {
         .from(chats)
         .where(eq(chats.userId, userId))
         .orderBy(desc(chats.updatedAt), desc(chats.id));
+    },
+
+    async countByUser(userId: string): Promise<number> {
+      const [row] = await db.select({ total: count() }).from(chats).where(eq(chats.userId, userId));
+      return row?.total ?? 0;
     },
 
     async findForUser(id: string, userId: string): Promise<ChatRecord | undefined> {

@@ -14,6 +14,8 @@ import type { RetrievedChunk } from '../rag/fusion.js';
 import { findInjectionSignals } from '../rag/sanitize.js';
 import type { QueryRewriter } from '../rag/rewrite.js';
 import type { Retriever } from '../rag/retriever.js';
+import { AppError } from '../http/errors.js';
+import { defaultUsageLimits } from '../http/limits.js';
 import type { TraceRecorder } from '../observability/traces.js';
 import type { RagTrace, TracedChunk } from '../observability/types.js';
 import { CHAT_FAILURE_MESSAGES, classifyChatFailure } from './errors.js';
@@ -34,6 +36,7 @@ export interface ChatDeps {
   rewriter: QueryRewriter;
   model: LanguageModel | null;
   relevanceThreshold?: number;
+  maxMessagesPerChat?: number;
   providerOptions?: ProviderOptions;
 }
 
@@ -120,6 +123,7 @@ export function createChatResponder(
     model,
     providerOptions,
     relevanceThreshold = DEFAULT_RELEVANCE_THRESHOLD,
+    maxMessagesPerChat = defaultUsageLimits.maxMessagesPerChat,
   }: ChatDeps,
   logger: Logger,
   traces: TraceRecorder,
@@ -141,6 +145,13 @@ export function createChatResponder(
         role,
         content,
       }));
+      if (history.length >= maxMessagesPerChat) {
+        throw new AppError(
+          409,
+          'chat_full',
+          'This conversation has reached its length limit. Start a new chat to continue.',
+        );
+      }
       await chats.addMessage({ chatId: chat.id, role: 'user', content: question });
       if (history.length === 0 && chat.title === DEFAULT_CHAT_TITLE) {
         await chats.rename(chat.id, userId, titleFromQuestion(question));

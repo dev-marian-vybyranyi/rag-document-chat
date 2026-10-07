@@ -6,7 +6,8 @@ import { createApp } from '../../src/app.js';
 import { createDb, type Database } from '../../src/db/client.js';
 import type { ChatDeps } from '../../src/chat/responder.js';
 import type { IngestionService } from '../../src/documents/ingest.js';
-import type { AuthRateLimits } from '../../src/http/rate-limit.js';
+import type { UsageLimits } from '../../src/http/limits.js';
+import type { AuthRateLimits, ChatRateLimits, UploadRateLimit } from '../../src/http/rate-limit.js';
 import { createInertIngestion } from '../helpers/ingestion.js';
 
 export function useTestDb() {
@@ -43,6 +44,9 @@ export function buildTestApp(
     maxUploadBytes?: number;
     ingestion?: IngestionService;
     chat?: ChatDeps;
+    chatRateLimits?: ChatRateLimits;
+    uploadRateLimit?: UploadRateLimit;
+    usageLimits?: UsageLimits;
   } = {},
 ) {
   return createApp({
@@ -50,6 +54,8 @@ export function buildTestApp(
     db,
     cookieSecure: false,
     authRateLimits: generousLimits,
+    chatRateLimits: { perMinute: 10_000, perDay: 100_000 },
+    uploadRateLimit: { perHour: 10_000 },
     ingestion: createInertIngestion(),
     ...overrides,
   });

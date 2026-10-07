@@ -16,10 +16,17 @@ import type { IngestionService } from './documents/ingest.js';
 import { DEFAULT_MAX_UPLOAD_BYTES } from './documents/upload.js';
 import { errorHandler, notFoundHandler } from './http/errors.js';
 import { healthRouter } from './http/health.js';
+import { defaultUsageLimits, type UsageLimits } from './http/limits.js';
 import {
   createAuthRateLimiters,
+  createChatRateLimiters,
+  createUploadRateLimiter,
   defaultAuthRateLimits,
+  defaultChatRateLimits,
+  defaultUploadRateLimit,
   type AuthRateLimits,
+  type ChatRateLimits,
+  type UploadRateLimit,
 } from './http/rate-limit.js';
 import { requestLogger } from './http/request-logger.js';
 import { createTraceRecorder } from './observability/traces.js';
@@ -37,6 +44,9 @@ interface AppDeps {
   ingestion: IngestionService;
   chat?: ChatDeps;
   authRateLimits?: AuthRateLimits;
+  chatRateLimits?: ChatRateLimits;
+  uploadRateLimit?: UploadRateLimit;
+  usageLimits?: UsageLimits;
   maxUploadBytes?: number;
 }
 
@@ -47,6 +57,9 @@ export function createApp({
   ingestion,
   chat,
   authRateLimits = defaultAuthRateLimits,
+  chatRateLimits = defaultChatRateLimits,
+  uploadRateLimit = defaultUploadRateLimit,
+  usageLimits = defaultUsageLimits,
   maxUploadBytes = DEFAULT_MAX_UPLOAD_BYTES,
 }: AppDeps) {
   const users = createUserRepository(db);
@@ -76,6 +89,8 @@ export function createApp({
       documents: createDocumentRepository(db),
       ingestion,
       maxUploadBytes,
+      maxDocumentsPerUser: usageLimits.maxDocumentsPerUser,
+      uploadLimiter: createUploadRateLimiter(uploadRateLimit),
     }),
   );
 
@@ -86,10 +101,12 @@ export function createApp({
       chats,
       responder: createChatResponder(
         chats,
-        chat ?? unavailableChat,
+        { maxMessagesPerChat: usageLimits.maxMessagesPerChat, ...(chat ?? unavailableChat) },
         logger,
         createTraceRecorder(db, logger),
       ),
+      questionLimiters: createChatRateLimiters(chatRateLimits),
+      maxChatsPerUser: usageLimits.maxChatsPerUser,
     }),
   );
 

@@ -44,6 +44,10 @@ const app = createApp({
   logger,
   db,
   cookieSecure: env.COOKIE_SECURE,
+  chatRateLimits: {
+    perMinute: env.CHAT_RATE_LIMIT_PER_MINUTE,
+    perDay: env.CHAT_RATE_LIMIT_PER_DAY,
+  },
   ingestion,
   chat: {
     retriever: createRetriever({ store: createRetrievalStore(db), embedder, logger }),

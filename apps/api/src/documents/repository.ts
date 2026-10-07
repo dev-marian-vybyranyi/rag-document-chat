@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, getTableColumns, gte, lte, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, getTableColumns, gte, lte, sql } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import { chunks, documents } from '../db/schema.js';
 
@@ -34,6 +34,14 @@ export function createDocumentRepository(db: Database) {
     }): Promise<DocumentRecord> {
       const [document] = await db.insert(documents).values(input).returning();
       return document!;
+    },
+
+    async countByUser(userId: string): Promise<number> {
+      const [row] = await db
+        .select({ total: count() })
+        .from(documents)
+        .where(eq(documents.userId, userId));
+      return row?.total ?? 0;
     },
 
     async listByUser(userId: string): Promise<DocumentWithChunkCount[]> {

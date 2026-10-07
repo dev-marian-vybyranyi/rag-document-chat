@@ -17,6 +17,8 @@ const envSchema = z
     RELEVANCE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.65),
     CHAT_MODEL: z.string().min(1).default('gemini-3.5-flash-lite'),
     CHAT_THINKING_LEVEL: z.enum(['minimal', 'low', 'medium', 'high']).default('minimal'),
+    CHAT_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(10),
+    CHAT_RATE_LIMIT_PER_DAY: z.coerce.number().int().positive().default(150),
     COOKIE_SECURE: z.stringbool().optional(),
   })
   .transform((env) => ({

@@ -1,7 +1,8 @@
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 import { z } from 'zod';
 import { requireAuth, userOf } from '../auth/middleware.js';
 import { AppError } from '../http/errors.js';
+import { plural } from '../http/limits.js';
 import { parseQuery } from '../http/validate.js';
 import { checkContent, detectFileType, sanitizeFilename } from './file-types.js';
 import type { IngestionService } from './ingest.js';
@@ -35,12 +36,16 @@ interface DocumentsRouterDeps {
   documents: DocumentRepository;
   ingestion: IngestionService;
   maxUploadBytes: number;
+  maxDocumentsPerUser: number;
+  uploadLimiter?: RequestHandler;
 }
 
 export function createDocumentsRouter({
   documents,
   ingestion,
   maxUploadBytes,
+  maxDocumentsPerUser,
+  uploadLimiter = (_req, _res, next) => next(),
 }: DocumentsRouterDeps) {
   const router = Router();
 
@@ -88,7 +93,7 @@ export function createDocumentsRouter({
     res.status(204).end();
   });
 
-  router.post('/', singleFileUpload(maxUploadBytes), async (req, res) => {
+  router.post('/', uploadLimiter, singleFileUpload(maxUploadBytes), async (req, res) => {
     const file = req.file;
     if (!file) throw new AppError(400, 'file_required', 'Choose a file to upload');
 
@@ -104,8 +109,17 @@ export function createDocumentsRouter({
     const problem = checkContent(type, file.buffer);
     if (problem) throw new AppError(400, 'invalid_file', problem);
 
+    const userId = userOf(req).id;
+    if ((await documents.countByUser(userId)) >= maxDocumentsPerUser) {
+      throw new AppError(
+        409,
+        'document_limit',
+        `You have reached the limit of ${plural(maxDocumentsPerUser, 'document')}. Delete one to add another.`,
+      );
+    }
+
     const document = await documents.create({
-      userId: userOf(req).id,
+      userId,
       filename,
       mimeType: type.mimeType,
       sizeBytes: file.size,

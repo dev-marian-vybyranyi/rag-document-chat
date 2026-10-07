@@ -1,7 +1,8 @@
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 import { z } from 'zod';
 import { requireAuth, userOf } from '../auth/middleware.js';
 import { AppError } from '../http/errors.js';
+import { plural } from '../http/limits.js';
 import { parseBody } from '../http/validate.js';
 import { pipeUIMessageStreamToResponse } from 'ai';
 import type { ChatRecord, ChatRepository, MessageRecord } from './repository.js';
@@ -38,9 +39,13 @@ function toPublicMessage(message: MessageRecord) {
 export function createChatsRouter({
   chats,
   responder,
+  questionLimiters = [],
+  maxChatsPerUser,
 }: {
   chats: ChatRepository;
   responder: ChatResponder;
+  questionLimiters?: RequestHandler[];
+  maxChatsPerUser: number;
 }) {
   const router = Router();
 
@@ -60,7 +65,15 @@ export function createChatsRouter({
 
   router.post('/', async (req, res) => {
     const { title } = parseBody(createChatSchema, req.body ?? {});
-    const chat = await chats.create(userOf(req).id, title);
+    const userId = userOf(req).id;
+    if ((await chats.countByUser(userId)) >= maxChatsPerUser) {
+      throw new AppError(
+        409,
+        'chat_limit',
+        `You have reached the limit of ${plural(maxChatsPerUser, 'conversation')}. Delete one to start another.`,
+      );
+    }
+    const chat = await chats.create(userId, title);
     res.status(201).json({ chat: toPublicChat(chat) });
   });
 
@@ -71,7 +84,7 @@ export function createChatsRouter({
     res.json({ chat: toPublicChat(chat), messages: messages.map(toPublicMessage) });
   });
 
-  router.post('/:id/messages', async (req, res) => {
+  router.post('/:id/messages', ...questionLimiters, async (req, res) => {
     const id = idParam(req.params.id);
     const { content } = parseBody(sendMessageSchema, req.body);
     const user = userOf(req);
