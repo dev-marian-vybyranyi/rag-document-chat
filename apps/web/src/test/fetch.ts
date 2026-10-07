@@ -13,7 +13,10 @@ export function stubFetch() {
   return fetchMock;
 }
 
-type Handler = (request: { body: unknown }) => Response | Promise<Response>;
+type Handler = (request: {
+  body: unknown;
+  signal?: AbortSignal | null;
+}) => Response | Promise<Response>;
 
 export function stubApi(routes: Record<string, Handler | Response>) {
   const calls: Array<{ route: string; body: unknown }> = [];
@@ -25,7 +28,70 @@ export function stubApi(routes: Record<string, Handler | Response>) {
     if (!handler) throw new Error(`Unexpected request: ${route}`);
     const body = typeof init?.body === 'string' ? (JSON.parse(init.body) as unknown) : undefined;
     calls.push({ route, body });
-    return typeof handler === 'function' ? handler({ body }) : handler.clone();
+    return typeof handler === 'function'
+      ? handler({ body, signal: init?.signal })
+      : handler.clone();
   });
   return { fetchMock, calls };
+}
+
+const SSE_HEADERS = {
+  'content-type': 'text/event-stream',
+  'x-vercel-ai-ui-message-stream': 'v1',
+};
+
+const encoder = new TextEncoder();
+const frame = (chunk: object) => encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`);
+
+export function sseResponse(chunks: object[]): Response {
+  const body = [...chunks.map(frame), encoder.encode('data: [DONE]\n\n')];
+  return new Response(
+    new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (const piece of body) controller.enqueue(piece);
+        controller.close();
+      },
+    }),
+    { status: 200, headers: SSE_HEADERS },
+  );
+}
+
+export function openSse() {
+  let controller!: ReadableStreamDefaultController<Uint8Array>;
+  const stream = new ReadableStream<Uint8Array>({
+    start(c) {
+      controller = c;
+    },
+  });
+  return {
+    response: () => new Response(stream, { status: 200, headers: SSE_HEADERS }),
+    send: (chunk: object) => controller.enqueue(frame(chunk)),
+    end: () => {
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.close();
+    },
+  };
+}
+
+export function answerChunks(
+  text: string[],
+  sources: object[] = [],
+  retrieval: object = {
+    query: 'q',
+    rewritten: false,
+    mode: 'hybrid',
+    bestScore: 0.8,
+    outcome: 'answered',
+  },
+): object[] {
+  return [
+    { type: 'start', messageId: 'm-answer' },
+    { type: 'data-status', data: { stage: 'searching' }, transient: true },
+    { type: 'data-sources', data: { sources, retrieval } },
+    { type: 'data-status', data: { stage: 'answering' }, transient: true },
+    { type: 'text-start', id: 't' },
+    ...text.map((delta) => ({ type: 'text-delta', id: 't', delta })),
+    { type: 'text-end', id: 't' },
+    { type: 'finish', finishReason: 'stop' },
+  ];
 }

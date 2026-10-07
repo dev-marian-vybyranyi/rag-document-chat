@@ -31,6 +31,15 @@ export function ChatsProvider({ children }: { children: ReactNode }) {
     setReloadCount((n) => n + 1);
   }, []);
 
+  const refresh = useCallback(async () => {
+    try {
+      const chats = await chatsApi.list();
+      setState({ status: 'ready', chats });
+    } catch {
+      return;
+    }
+  }, []);
+
   const createChat = useCallback(async (): Promise<Chat> => {
     const chat = await chatsApi.create();
     setState((current) =>
@@ -40,8 +49,8 @@ export function ChatsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<ChatsContextValue>(
-    () => ({ state, reload, createChat }),
-    [state, reload, createChat],
+    () => ({ state, reload, refresh, createChat }),
+    [state, reload, refresh, createChat],
   );
 
   return <ChatsContext.Provider value={value}>{children}</ChatsContext.Provider>;

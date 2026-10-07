@@ -87,7 +87,11 @@ describe('chat sidebar', () => {
 
     await user.click(await screen.findByRole('link', { name: 'Onboarding handbook' }));
 
-    expect(await screen.findByRole('heading', { name: 'Onboarding handbook' })).toBeInTheDocument();
+    expect(await screen.findByRole('textbox', { name: 'Your question' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Onboarding handbook' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
   });
 
   it('sends the user home when the address points at a conversation they do not have', async () => {
@@ -164,7 +168,7 @@ describe('chat sidebar', () => {
 
       expect(button).toBeDisabled();
       release(jsonResponse(201, { chat: chat('c3', 'New chat') }));
-      expect(await screen.findByRole('heading', { name: 'New chat' })).toBeInTheDocument();
+      expect(await screen.findByRole('textbox', { name: 'Your question' })).toBeInTheDocument();
     });
 
     it('says so and stays where it is when creating fails', async () => {

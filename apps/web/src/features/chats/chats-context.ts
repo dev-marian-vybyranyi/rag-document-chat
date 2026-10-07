@@ -7,6 +7,7 @@ export type ChatsState =
 export interface ChatsContextValue {
   state: ChatsState;
   reload: () => void;
+  refresh: () => Promise<void>;
   createChat: () => Promise<Chat>;
 }
 
