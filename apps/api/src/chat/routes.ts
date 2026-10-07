@@ -3,13 +3,16 @@ import { z } from 'zod';
 import { requireAuth, userOf } from '../auth/middleware.js';
 import { AppError } from '../http/errors.js';
 import { parseBody } from '../http/validate.js';
+import { pipeUIMessageStreamToResponse } from 'ai';
 import type { ChatRecord, ChatRepository, MessageRecord } from './repository.js';
+import { MAX_QUESTION_LENGTH, type ChatResponder } from './responder.js';
 
 export const MAX_TITLE_LENGTH = 120;
 
 const titleSchema = z.string().trim().min(1).max(MAX_TITLE_LENGTH);
 
 const createChatSchema = z.object({ title: titleSchema.optional() });
+const sendMessageSchema = z.object({ content: z.string().trim().min(1).max(MAX_QUESTION_LENGTH) });
 const renameChatSchema = z.object({ title: titleSchema });
 
 function toPublicChat(chat: ChatRecord) {
@@ -32,7 +35,13 @@ function toPublicMessage(message: MessageRecord) {
   };
 }
 
-export function createChatsRouter({ chats }: { chats: ChatRepository }) {
+export function createChatsRouter({
+  chats,
+  responder,
+}: {
+  chats: ChatRepository;
+  responder: ChatResponder;
+}) {
   const router = Router();
 
   router.use(requireAuth);
@@ -60,6 +69,30 @@ export function createChatsRouter({ chats }: { chats: ChatRepository }) {
     if (!chat) throw notFound();
     const messages = await chats.messagesOf(chat.id);
     res.json({ chat: toPublicChat(chat), messages: messages.map(toPublicMessage) });
+  });
+
+  router.post('/:id/messages', async (req, res) => {
+    const id = idParam(req.params.id);
+    const { content } = parseBody(sendMessageSchema, req.body);
+    const user = userOf(req);
+    const chat = await chats.findForUser(id, user.id);
+    if (!chat) throw notFound();
+    if (!responder.available) {
+      throw new AppError(503, 'chat_unavailable', 'The AI service is not configured');
+    }
+
+    const abort = new AbortController();
+    res.on('close', () => {
+      if (!res.writableFinished) abort.abort();
+    });
+
+    const stream = await responder.respond({
+      chat,
+      userId: user.id,
+      question: content,
+      signal: abort.signal,
+    });
+    await pipeUIMessageStreamToResponse({ response: res, stream });
   });
 
   router.patch('/:id', async (req, res) => {

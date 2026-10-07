@@ -5,7 +5,9 @@ import { loadSession } from './auth/middleware.js';
 import { createAuthRouter } from './auth/routes.js';
 import { createSessionRepository } from './auth/sessions.js';
 import { createUserRepository } from './auth/users.js';
+import { createPassthroughRewriter } from './rag/rewrite.js';
 import { createChatRepository } from './chat/repository.js';
+import { createChatResponder, type ChatDeps } from './chat/responder.js';
 import { createChatsRouter } from './chat/routes.js';
 import type { Database } from './db/client.js';
 import { createDocumentRepository } from './documents/repository.js';
@@ -21,11 +23,18 @@ import {
 } from './http/rate-limit.js';
 import { requestLogger } from './http/request-logger.js';
 
+const unavailableChat: ChatDeps = {
+  retriever: { retrieve: async () => ({ chunks: [], mode: 'hybrid' }) },
+  rewriter: createPassthroughRewriter(),
+  model: null,
+};
+
 interface AppDeps {
   logger: Logger;
   db: Database;
   cookieSecure: boolean;
   ingestion: IngestionService;
+  chat?: ChatDeps;
   authRateLimits?: AuthRateLimits;
   maxUploadBytes?: number;
 }
@@ -35,6 +44,7 @@ export function createApp({
   db,
   cookieSecure,
   ingestion,
+  chat,
   authRateLimits = defaultAuthRateLimits,
   maxUploadBytes = DEFAULT_MAX_UPLOAD_BYTES,
 }: AppDeps) {
@@ -68,7 +78,14 @@ export function createApp({
     }),
   );
 
-  app.use('/chats', createChatsRouter({ chats: createChatRepository(db) }));
+  const chats = createChatRepository(db);
+  app.use(
+    '/chats',
+    createChatsRouter({
+      chats,
+      responder: createChatResponder(chats, chat ?? unavailableChat, logger),
+    }),
+  );
 
   app.use(notFoundHandler);
   app.use(errorHandler);

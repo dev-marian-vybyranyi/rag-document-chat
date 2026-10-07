@@ -1,0 +1,46 @@
+import { APICallError, RetryError } from 'ai';
+import { EmbeddingError } from '../ai/embeddings.js';
+
+export type ChatFailureKind =
+  'rate_limited' | 'overloaded' | 'misconfigured' | 'timeout' | 'cancelled' | 'unexpected';
+
+export const CHAT_FAILURE_MESSAGES: Record<ChatFailureKind, string> = {
+  rate_limited: 'The AI service is busy (rate limit reached). Please try again in a minute.',
+  overloaded: 'The AI model is overloaded right now. Please try again in a moment.',
+  misconfigured: 'The AI service is not configured correctly.',
+  timeout: 'The AI model took too long to respond. Please try again.',
+  cancelled: 'The request was cancelled.',
+  unexpected: 'Something went wrong while generating the answer. Please try again.',
+};
+
+const INVALID_KEY = /API key not valid|API_KEY_INVALID|API key expired/i;
+
+export function classifyChatFailure(error: unknown): ChatFailureKind {
+  if (error instanceof EmbeddingError) {
+    if (error.kind === 'rate_limited') return 'rate_limited';
+    if (error.kind === 'misconfigured') return 'misconfigured';
+    if (error.kind === 'timeout') return 'timeout';
+    if (error.kind === 'cancelled') return 'cancelled';
+    return 'unexpected';
+  }
+
+  const cause = RetryError.isInstance(error) ? error.lastError : error;
+
+  if (APICallError.isInstance(cause)) {
+    const status = cause.statusCode;
+    if (status === 429) return 'rate_limited';
+    if (status === 401 || status === 403) return 'misconfigured';
+    if (INVALID_KEY.test(`${cause.message} ${cause.responseBody ?? ''}`)) return 'misconfigured';
+    if (status === 500 || status === 502 || status === 503 || status === 504) return 'overloaded';
+    return 'unexpected';
+  }
+  if (cause instanceof Error) {
+    if (cause.name === 'TimeoutError') return 'timeout';
+    if (cause.name === 'AbortError') return 'cancelled';
+  }
+  return 'unexpected';
+}
+
+export function chatFailureMessage(error: unknown): string {
+  return CHAT_FAILURE_MESSAGES[classifyChatFailure(error)];
+}

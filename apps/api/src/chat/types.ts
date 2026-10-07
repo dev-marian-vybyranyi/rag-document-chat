@@ -6,7 +6,7 @@ export interface MessageSource {
   page: number | null;
   ordinal: number;
   excerpt: string;
-  score: number;
+  score: number | null;
 }
 
 export interface MessageRetrieval {

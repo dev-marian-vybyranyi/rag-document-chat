@@ -12,6 +12,8 @@ describe('loadEnv', () => {
       PORT: 3000,
       LOG_LEVEL: 'info',
       EMBEDDING_MODEL: 'gemini-embedding-001',
+      CHAT_MODEL: 'gemini-3.5-flash-lite',
+      CHAT_THINKING_LEVEL: 'minimal',
       COOKIE_SECURE: false,
     });
     expect(env.GOOGLE_GENERATIVE_AI_API_KEY).toBeUndefined();
@@ -52,6 +54,13 @@ describe('loadEnv', () => {
   it('lets the embedding model be switched', () => {
     expect(loadEnv({ ...base, EMBEDDING_MODEL: 'gemini-embedding-2' }).EMBEDDING_MODEL).toBe(
       'gemini-embedding-2',
+    );
+  });
+
+  it('only accepts a thinking level the model API knows', () => {
+    expect(loadEnv({ ...base, CHAT_THINKING_LEVEL: 'low' }).CHAT_THINKING_LEVEL).toBe('low');
+    expect(() => loadEnv({ ...base, CHAT_THINKING_LEVEL: 'extreme' })).toThrow(
+      /CHAT_THINKING_LEVEL/,
     );
   });
 });

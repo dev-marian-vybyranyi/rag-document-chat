@@ -1,4 +1,5 @@
 import { createGoogle } from '@ai-sdk/google';
+import type { LanguageModel } from 'ai';
 import type { Logger } from 'pino';
 import type { Env } from '../config/env.js';
 import { EMBEDDING_DIMENSIONS } from '../db/schema.js';
@@ -7,6 +8,7 @@ import {
   createQueryRewriter,
   type QueryRewriter,
 } from '../rag/rewrite.js';
+import type { ChatDeps } from '../chat/responder.js';
 import { createGeminiEmbedder, createUnconfiguredEmbedder, type Embedder } from './embeddings.js';
 
 export function createEmbedderFromEnv(
@@ -31,4 +33,20 @@ export function createQueryRewriterFromEnv(
     logger,
     providerOptions: { google: { thinkingConfig: { thinkingLevel: 'minimal' } } },
   });
+}
+
+export interface ChatModelConfig {
+  model: LanguageModel | null;
+  providerOptions?: ChatDeps['providerOptions'];
+}
+
+export function createChatModelFromEnv(
+  env: Pick<Env, 'GOOGLE_GENERATIVE_AI_API_KEY' | 'CHAT_MODEL' | 'CHAT_THINKING_LEVEL'>,
+): ChatModelConfig {
+  if (!env.GOOGLE_GENERATIVE_AI_API_KEY) return { model: null };
+  const google = createGoogle({ apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY });
+  return {
+    model: google(env.CHAT_MODEL),
+    providerOptions: { google: { thinkingConfig: { thinkingLevel: env.CHAT_THINKING_LEVEL } } },
+  };
 }

@@ -4,6 +4,7 @@ import type { Response } from 'supertest';
 import { afterAll, beforeEach, inject } from 'vitest';
 import { createApp } from '../../src/app.js';
 import { createDb, type Database } from '../../src/db/client.js';
+import type { ChatDeps } from '../../src/chat/responder.js';
 import type { IngestionService } from '../../src/documents/ingest.js';
 import type { AuthRateLimits } from '../../src/http/rate-limit.js';
 import { createInertIngestion } from '../helpers/ingestion.js';
@@ -41,6 +42,7 @@ export function buildTestApp(
     authRateLimits?: AuthRateLimits;
     maxUploadBytes?: number;
     ingestion?: IngestionService;
+    chat?: ChatDeps;
   } = {},
 ) {
   return createApp({
