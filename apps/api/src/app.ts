@@ -5,6 +5,8 @@ import { loadSession } from './auth/middleware.js';
 import { createAuthRouter } from './auth/routes.js';
 import { createSessionRepository } from './auth/sessions.js';
 import { createUserRepository } from './auth/users.js';
+import { createChatRepository } from './chat/repository.js';
+import { createChatsRouter } from './chat/routes.js';
 import type { Database } from './db/client.js';
 import { createDocumentRepository } from './documents/repository.js';
 import { createDocumentsRouter } from './documents/routes.js';
@@ -65,6 +67,8 @@ export function createApp({
       maxUploadBytes,
     }),
   );
+
+  app.use('/chats', createChatsRouter({ chats: createChatRepository(db) }));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

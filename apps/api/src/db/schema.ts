@@ -1,8 +1,10 @@
 import { sql } from 'drizzle-orm';
 import {
+  bigint,
   customType,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -11,6 +13,7 @@ import {
   uuid,
   vector,
 } from 'drizzle-orm/pg-core';
+import type { MessageRetrieval, MessageSource } from '../chat/types.js';
 
 export const EMBEDDING_DIMENSIONS = 768;
 
@@ -84,4 +87,37 @@ export const chunks = pgTable(
     index('chunks_embedding_idx').using('hnsw', table.embedding.op('vector_cosine_ops')),
     index('chunks_search_vector_idx').using('gin', table.searchVector),
   ],
+);
+
+export const messageRole = pgEnum('message_role', ['user', 'assistant']);
+
+export const chats = pgTable(
+  'chats',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    title: text().notNull(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('chats_user_id_updated_at_idx').on(table.userId, table.updatedAt)],
+);
+
+export const messages = pgTable(
+  'messages',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    chatId: uuid()
+      .notNull()
+      .references(() => chats.id, { onDelete: 'cascade' }),
+    seq: bigint({ mode: 'number' }).notNull().generatedAlwaysAsIdentity(),
+    role: messageRole().notNull(),
+    content: text().notNull(),
+    sources: jsonb().$type<MessageSource[]>(),
+    retrieval: jsonb().$type<MessageRetrieval>(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('messages_chat_id_seq_idx').on(table.chatId, table.seq)],
 );
