@@ -68,9 +68,20 @@ describe('chat view', () => {
 
       const list = conversation();
       expect(within(list).getByText('What is HNSW?')).toBeInTheDocument();
-      expect(await within(list).findByText('HNSW is a graph index [1].')).toBeInTheDocument();
+      await waitFor(() => expect(list).toHaveTextContent('HNSW is a graph index [1].'));
       expect(within(list).getByText('handbook.pdf')).toBeInTheDocument();
       expect(within(list).getByText(/p\. 4/)).toBeInTheDocument();
+    });
+
+    it('formats the answer as Markdown but shows the question as typed', async () => {
+      setup(sseResponse(answerChunks(['Use **bold** and `code` [1].'], [handbook])));
+
+      await ask('What does **this** do?');
+
+      const list = conversation();
+      expect(within(list).getByText('What does **this** do?')).toBeInTheDocument();
+      expect((await within(list).findByText('bold')).tagName).toBe('STRONG');
+      expect(within(list).getByLabelText('Source 1: handbook.pdf, page 4')).toBeInTheDocument();
     });
 
     it('sends only the new question to the server, not the whole conversation', async () => {

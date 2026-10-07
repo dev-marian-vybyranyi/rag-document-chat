@@ -1,10 +1,12 @@
 import { cn } from '@/lib/utils';
+import { Markdown } from './Markdown';
 import { SourceList } from './SourceList';
 import { sourcesOf, textOf, type ChatUIMessage } from './types';
 
 export function MessageBubble({ message }: { message: ChatUIMessage }) {
   const isUser = message.role === 'user';
   const text = textOf(message);
+  const sources = sourcesOf(message);
 
   return (
     <div className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
@@ -14,8 +16,12 @@ export function MessageBubble({ message }: { message: ChatUIMessage }) {
           isUser ? 'bg-primary text-primary-foreground' : 'border bg-background',
         )}
       >
-        <p className="break-words whitespace-pre-wrap">{text}</p>
-        {!isUser && <SourceList sources={sourcesOf(message)} />}
+        {isUser ? (
+          <p className="break-words whitespace-pre-wrap">{text}</p>
+        ) : (
+          <Markdown sources={sources}>{text}</Markdown>
+        )}
+        {!isUser && <SourceList sources={sources} />}
       </div>
     </div>
   );
