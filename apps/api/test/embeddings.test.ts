@@ -1,13 +1,15 @@
 import { APICallError } from 'ai';
 import { MockEmbeddingModelV4 } from 'ai/test';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createEmbedderFromEnv } from '../src/ai/index.js';
+import { createAiProvider } from '../src/ai/index.js';
 import {
   createEmbedder,
   createUnconfiguredEmbedder,
   EmbeddingError,
   type EmbedderOptions,
 } from '../src/ai/embeddings.js';
+import { googleEmbeddingOptions } from '../src/ai/providers/google.js';
+import { loadEnv } from '../src/config/env.js';
 import { EMBEDDING_DIMENSIONS } from '../src/db/schema.js';
 
 const DIMENSIONS = 4;
@@ -43,7 +45,12 @@ function setup(
     supportsParallelCalls: true,
     doEmbed,
   });
-  const embedder = createEmbedder({ model, dimensions: DIMENSIONS, ...embedderOptions });
+  const embedder = createEmbedder({
+    model,
+    dimensions: DIMENSIONS,
+    providerOptions: googleEmbeddingOptions(DIMENSIONS),
+    ...embedderOptions,
+  });
   return { model, embedder };
 }
 
@@ -323,7 +330,7 @@ describe('embedQuery', () => {
 
 describe('without an API key', () => {
   it('reports the missing configuration for documents and queries alike', async () => {
-    const embedder = createUnconfiguredEmbedder();
+    const embedder = createUnconfiguredEmbedder('SOME_API_KEY');
 
     expect(await failureOf(embedder.embedDocuments(['a']))).toMatchObject({
       kind: 'misconfigured',
@@ -332,15 +339,49 @@ describe('without an API key', () => {
   });
 
   it('is what the app falls back to when GOOGLE_GENERATIVE_AI_API_KEY is not set', async () => {
-    const embedder = createEmbedderFromEnv({
-      GOOGLE_GENERATIVE_AI_API_KEY: undefined,
-      EMBEDDING_MODEL: 'gemini-embedding-001',
-    });
+    const embedder = createAiProvider(loadEnv({ DATABASE_URL: 'postgres://unused' })).embedder;
 
     expect(await failureOf(embedder.embedQuery('a'))).toMatchObject({ kind: 'misconfigured' });
   });
 
   it('asks the model for vectors that fit the database column', () => {
     expect(EMBEDDING_DIMENSIONS).toBe(768);
+  });
+});
+
+describe('the google provider', () => {
+  const env = loadEnv({
+    DATABASE_URL: 'postgres://unused',
+    GOOGLE_GENERATIVE_AI_API_KEY: 'test-key',
+  });
+
+  it('is the default and is configured once its key is present', () => {
+    const provider = createAiProvider(env);
+
+    expect(env.AI_PROVIDER).toBe('google');
+    expect(provider).toMatchObject({
+      name: 'google',
+      keyVariable: 'GOOGLE_GENERATIVE_AI_API_KEY',
+      configured: true,
+    });
+    expect(provider.chat.model).not.toBeNull();
+  });
+
+  it('is reported as unconfigured, with no chat model, when the key is missing', () => {
+    const provider = createAiProvider(loadEnv({ DATABASE_URL: 'postgres://unused' }));
+
+    expect(provider.configured).toBe(false);
+    expect(provider.chat.model).toBeNull();
+  });
+
+  it('asks google for document and query vectors that fit the column', () => {
+    const options = googleEmbeddingOptions(DIMENSIONS);
+
+    expect(options('document')).toEqual({
+      google: { outputDimensionality: DIMENSIONS, taskType: 'RETRIEVAL_DOCUMENT' },
+    });
+    expect(options('query')).toEqual({
+      google: { outputDimensionality: DIMENSIONS, taskType: 'RETRIEVAL_QUERY' },
+    });
   });
 });

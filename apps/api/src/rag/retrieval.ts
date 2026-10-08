@@ -21,7 +21,14 @@ export interface RetrievalStore {
   keywordSearch(userId: string, queryText: string, limit: number): Promise<RetrievalCandidate[]>;
 }
 
-export function createRetrievalStore(db: Database): RetrievalStore {
+export function createRetrievalStore(
+  db: Database,
+  options: { embeddingModel?: string } = {},
+): RetrievalStore {
+  const sameModel = options.embeddingModel
+    ? eq(documents.embeddingModel, options.embeddingModel)
+    : undefined;
+
   const columns = {
     chunkId: chunks.id,
     documentId: chunks.documentId,
@@ -42,7 +49,7 @@ export function createRetrievalStore(db: Database): RetrievalStore {
           .select({ ...columns, score: sql<number>`1 - (${distance})` })
           .from(chunks)
           .innerJoin(documents, eq(documents.id, chunks.documentId))
-          .where(eq(chunks.userId, userId))
+          .where(and(eq(chunks.userId, userId), sameModel))
           .orderBy(distance, asc(chunks.documentId), asc(chunks.ordinal))
           .limit(limit);
       });
@@ -57,7 +64,7 @@ export function createRetrievalStore(db: Database): RetrievalStore {
         .select({ ...columns, score: rank })
         .from(chunks)
         .innerJoin(documents, eq(documents.id, chunks.documentId))
-        .where(and(eq(chunks.userId, userId), sql`${chunks.searchVector} @@ ${anyTerm}`))
+        .where(and(eq(chunks.userId, userId), sameModel, sql`${chunks.searchVector} @@ ${anyTerm}`))
         .orderBy(desc(rank), asc(chunks.documentId), asc(chunks.ordinal))
         .limit(limit);
     },

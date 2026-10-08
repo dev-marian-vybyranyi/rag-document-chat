@@ -1,4 +1,4 @@
-import { createGoogle } from '@ai-sdk/google';
+import { isInvalidKeyResponse } from './api-errors.js';
 import { quotaInfoOf } from './quota.js';
 import { APICallError, embed, embedMany, RetryError, type EmbeddingModel } from 'ai';
 
@@ -15,8 +15,7 @@ export type EmbeddingErrorKind =
 const USER_MESSAGES: Record<EmbeddingErrorKind, string> = {
   rate_limited:
     'The embedding service is busy (rate limit reached). Please try again in a few minutes.',
-  quota_exhausted:
-    'The daily quota of the embedding service is used up. Please try again tomorrow.',
+  quota_exhausted: 'The quota of the embedding service is used up. Please try again later.',
   misconfigured: 'The embedding service is not configured correctly.',
   unavailable: 'The embedding service is temporarily unavailable. Please try again later.',
   timeout: 'The embedding service took too long to respond. Please try again.',
@@ -40,9 +39,13 @@ export interface Embedder {
   embedQuery(text: string, options?: { signal?: AbortSignal }): Promise<number[]>;
 }
 
+export type EmbeddingTask = 'document' | 'query';
+export type EmbeddingProviderOptions = NonNullable<Parameters<typeof embed>[0]['providerOptions']>;
+
 export interface EmbedderOptions {
   model: EmbeddingModel;
   dimensions: number;
+  providerOptions?: (task: EmbeddingTask) => EmbeddingProviderOptions;
   maxRetries?: number;
   queryMaxRetries?: number;
   maxParallelCalls?: number;
@@ -137,6 +140,7 @@ export function createEmbedder(options: EmbedderOptions): Embedder {
   const {
     model,
     dimensions,
+    providerOptions,
     maxRetries = DEFAULT_MAX_RETRIES,
     queryMaxRetries = DEFAULT_QUERY_MAX_RETRIES,
     maxParallelCalls = DEFAULT_MAX_PARALLEL_CALLS,
@@ -151,9 +155,6 @@ export function createEmbedder(options: EmbedderOptions): Embedder {
     const timeout = AbortSignal.timeout(timeoutMs);
     return signal ? AbortSignal.any([signal, timeout]) : timeout;
   };
-  const providerOptions = (taskType: 'RETRIEVAL_DOCUMENT' | 'RETRIEVAL_QUERY') => ({
-    google: { outputDimensionality: dimensions, taskType },
-  });
 
   const checkVectors = (vectors: number[][], expectedCount: number) => {
     if (vectors.length !== expectedCount || vectors.some((v) => v.length !== dimensions)) {
@@ -183,7 +184,7 @@ export function createEmbedder(options: EmbedderOptions): Embedder {
             maxRetries,
             maxParallelCalls,
             abortSignal: withLimits(signal),
-            providerOptions: providerOptions('RETRIEVAL_DOCUMENT'),
+            providerOptions: providerOptions?.('document'),
           });
           vectors.push(...embeddings);
         }
@@ -202,7 +203,7 @@ export function createEmbedder(options: EmbedderOptions): Embedder {
           value: text,
           maxRetries: queryMaxRetries,
           abortSignal: withLimits(signal),
-          providerOptions: providerOptions('RETRIEVAL_QUERY'),
+          providerOptions: providerOptions?.('query'),
         });
         checkVectors([embedding], 1);
         return embedding;
@@ -213,24 +214,10 @@ export function createEmbedder(options: EmbedderOptions): Embedder {
   };
 }
 
-export function createGeminiEmbedder(options: {
-  apiKey: string;
-  modelId: string;
-  dimensions: number;
-  tokensPerMinute?: number;
-}): Embedder {
-  const google = createGoogle({ apiKey: options.apiKey });
-  return createEmbedder({
-    model: google.embedding(options.modelId),
-    dimensions: options.dimensions,
-    tokensPerMinute: options.tokensPerMinute,
-  });
-}
-
-export function createUnconfiguredEmbedder(): Embedder {
+export function createUnconfiguredEmbedder(keyVariable: string): Embedder {
   const fail = (): never => {
     throw new EmbeddingError('misconfigured', {
-      cause: new Error('GOOGLE_GENERATIVE_AI_API_KEY is not set'),
+      cause: new Error(`${keyVariable} is not set`),
     });
   };
   return { embedDocuments: async () => fail(), embedQuery: async () => fail() };
@@ -240,12 +227,6 @@ function requireText(texts: string[]) {
   if (texts.some((text) => text.trim().length === 0)) {
     throw new EmbeddingError('invalid_input', { cause: new Error('Cannot embed empty text') });
   }
-}
-
-function isInvalidKeyResponse(error: APICallError): boolean {
-  return /API key not valid|API_KEY_INVALID|API key expired/i.test(
-    `${error.message} ${error.responseBody ?? ''}`,
-  );
 }
 
 function toEmbeddingError(error: unknown): EmbeddingError {

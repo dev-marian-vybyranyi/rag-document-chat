@@ -1,12 +1,7 @@
-import { createGoogle } from '@ai-sdk/google';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pino } from 'pino';
-import {
-  createChatModelFromEnv,
-  createEmbedderFromEnv,
-  createQueryRewriterFromEnv,
-} from '../src/ai/index.js';
+import { createAiProvider } from '../src/ai/index.js';
 import { loadEnv } from '../src/config/env.js';
 import { createDb } from '../src/db/client.js';
 import { ensureEvalCorpus, removeEvalUser } from '../src/eval/corpus.js';
@@ -42,8 +37,9 @@ if (flag('help')) {
 }
 
 const env = loadEnv();
-if (!env.GOOGLE_GENERATIVE_AI_API_KEY) {
-  out('GOOGLE_GENERATIVE_AI_API_KEY is not set: the evaluation needs the real models.');
+const ai = createAiProvider(env);
+if (!ai.configured) {
+  out(`${ai.keyVariable} is not set: the evaluation needs the real models.`);
   process.exit(1);
 }
 
@@ -57,7 +53,7 @@ const judgeModelId = env.EVAL_JUDGE_MODEL ?? env.CHAT_MODEL;
 
 const logger = pino({ level: 'warn' });
 const { db, pool } = createDb(env.DATABASE_URL);
-const embedder = createPatientEmbedder(createEmbedderFromEnv(env), {
+const embedder = createPatientEmbedder(ai.embedder, {
   onWait: (ms) => out(`  embedding rate limit reached, waiting ${Math.round(ms / 1000)} s…`),
 });
 const onWait = (ms: number, reason: string) =>
@@ -70,6 +66,7 @@ try {
   const corpus = await ensureEvalCorpus({
     db,
     embedder,
+    embeddingModel: env.EMBEDDING_MODEL,
     logger,
     samplesDir: join(repoRoot, 'samples'),
     reindex: flag('reindex'),
@@ -86,24 +83,22 @@ try {
     `  indexed: ${corpus.indexed.join(', ') || 'none'}; reused: ${corpus.reused.join(', ') || 'none'}`,
   );
 
-  const google = createGoogle({ apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY });
   const judge = createPatientJudge(
-    createJudge({
-      model: google(judgeModelId),
-      providerOptions: {
-        google: { thinkingConfig: { thinkingLevel: env.EVAL_JUDGE_THINKING_LEVEL } },
-      },
-    }),
+    createJudge(ai.createJudgeModel(judgeModelId, env.EVAL_JUDGE_THINKING_LEVEL)),
     { pacingMs, onWait },
   );
   const asker = createResponderAsker({
     db,
     userId: corpus.userId,
     chat: {
-      retriever: createRetriever({ store: createRetrievalStore(db), embedder, logger }),
-      rewriter: createQueryRewriterFromEnv(env, logger),
+      retriever: createRetriever({
+        store: createRetrievalStore(db, { embeddingModel: env.EMBEDDING_MODEL }),
+        embedder,
+        logger,
+      }),
+      rewriter: ai.createRewriter(logger),
       relevanceThreshold: env.RELEVANCE_THRESHOLD,
-      ...createChatModelFromEnv(env),
+      ...ai.chat,
     },
     logger,
     pacingMs,
@@ -132,6 +127,7 @@ try {
     `${JSON.stringify(
       {
         date: new Date().toISOString(),
+        provider: ai.name,
         answerModel: env.CHAT_MODEL,
         answerThinkingLevel: env.CHAT_THINKING_LEVEL,
         judgeModel: judgeModelId,
@@ -153,7 +149,7 @@ try {
   }
 } catch (error) {
   if (error instanceof QuotaExhaustedError) {
-    out('The daily quota of the free tier is used up. Run again tomorrow; nothing is lost.');
+    out('The AI quota is used up. Run again later; nothing is lost.');
     process.exitCode = 1;
   } else {
     throw error;

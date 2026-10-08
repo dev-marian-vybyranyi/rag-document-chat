@@ -1,10 +1,5 @@
 import { createApp } from './app.js';
-import {
-  createChatModelFromEnv,
-  createEmbedderFromEnv,
-  createQueryRewriterFromEnv,
-  createQuestionSuggesterFromEnv,
-} from './ai/index.js';
+import { createAiProvider } from './ai/index.js';
 import { loadEnv } from './config/env.js';
 import { createDb } from './db/client.js';
 import { runMigrations } from './db/migrate.js';
@@ -23,23 +18,31 @@ const { db, pool } = createDb(env.DATABASE_URL);
 await runMigrations(db);
 logger.info('database migrations applied');
 
-if (!env.GOOGLE_GENERATIVE_AI_API_KEY) {
-  logger.warn(
-    'GOOGLE_GENERATIVE_AI_API_KEY is not set: documents cannot be indexed and chat cannot answer',
-  );
+const ai = createAiProvider(env);
+if (!ai.configured) {
+  logger.warn(`${ai.keyVariable} is not set: documents cannot be indexed and chat cannot answer`);
 }
 
 const documentRepository = createDocumentRepository(db);
 const interrupted = await documentRepository.failInterrupted(INTERRUPTED_MESSAGE);
 if (interrupted > 0) logger.warn({ count: interrupted }, 'marked interrupted documents as failed');
 
-const embedder = createEmbedderFromEnv(env);
+const embedder = ai.embedder;
+
+const otherModel = await documentRepository.countIndexedWithOtherModel(env.EMBEDDING_MODEL);
+if (otherModel > 0) {
+  logger.warn(
+    { count: otherModel, embeddingModel: env.EMBEDDING_MODEL },
+    'documents were indexed with a different embedding model and are not searched; upload them again',
+  );
+}
 
 const ingestion = createIngestionService({
   repository: documentRepository,
   embedder,
   logger,
-  suggester: createQuestionSuggesterFromEnv(env, logger),
+  suggester: ai.createSuggester(logger),
+  embeddingModel: env.EMBEDDING_MODEL,
 });
 
 const app = createApp({
@@ -52,10 +55,14 @@ const app = createApp({
   },
   ingestion,
   chat: {
-    retriever: createRetriever({ store: createRetrievalStore(db), embedder, logger }),
-    rewriter: createQueryRewriterFromEnv(env, logger),
+    retriever: createRetriever({
+      store: createRetrievalStore(db, { embeddingModel: env.EMBEDDING_MODEL }),
+      embedder,
+      logger,
+    }),
+    rewriter: ai.createRewriter(logger),
     relevanceThreshold: env.RELEVANCE_THRESHOLD,
-    ...createChatModelFromEnv(env),
+    ...ai.chat,
   },
 });
 

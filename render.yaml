@@ -29,7 +29,12 @@ services:
         fromDatabase:
           name: rag-chat-db
           property: connectionString
+      # google (default) or openai; sync: false so it can be switched in the dashboard.
+      - key: AI_PROVIDER
+        sync: false
       - key: GOOGLE_GENERATIVE_AI_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
         sync: false
 
   - type: web

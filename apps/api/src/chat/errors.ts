@@ -1,4 +1,5 @@
 import { APICallError, RetryError } from 'ai';
+import { isInvalidKeyResponse } from '../ai/api-errors.js';
 import { quotaInfoOf } from '../ai/quota.js';
 import { EmbeddingError } from '../ai/embeddings.js';
 import { describeWait } from '../http/wait.js';
@@ -14,16 +15,13 @@ export type ChatFailureKind =
 
 export const CHAT_FAILURE_MESSAGES: Record<ChatFailureKind, string> = {
   rate_limited: 'The AI service is busy (rate limit reached). Please try again in a minute.',
-  quota_exhausted:
-    'The free AI quota for today is used up. Please try again later; it renews every day.',
+  quota_exhausted: 'The AI quota is used up. Please try again later.',
   overloaded: 'The AI model is overloaded right now. Please try again in a moment.',
   misconfigured: 'The AI service is not configured correctly.',
   timeout: 'The AI model took too long to respond. Please try again.',
   cancelled: 'The request was cancelled.',
   unexpected: 'Something went wrong while generating the answer. Please try again.',
 };
-
-const INVALID_KEY = /API key not valid|API_KEY_INVALID|API key expired/i;
 
 export function classifyChatFailure(error: unknown): ChatFailureKind {
   if (error instanceof EmbeddingError) {
@@ -41,7 +39,7 @@ export function classifyChatFailure(error: unknown): ChatFailureKind {
     const status = cause.statusCode;
     if (status === 429) return quotaInfoOf(cause).daily ? 'quota_exhausted' : 'rate_limited';
     if (status === 401 || status === 403) return 'misconfigured';
-    if (INVALID_KEY.test(`${cause.message} ${cause.responseBody ?? ''}`)) return 'misconfigured';
+    if (isInvalidKeyResponse(cause)) return 'misconfigured';
     if (status === 500 || status === 502 || status === 503 || status === 504) return 'overloaded';
     return 'unexpected';
   }

@@ -99,6 +99,7 @@ export function createDocumentRepository(db: Database) {
       documentId: string;
       userId: string;
       pageCount: number | null;
+      embeddingModel?: string;
       suggestions?: string[];
       chunks: NewChunk[];
     }): Promise<void> {
@@ -119,10 +120,24 @@ export function createDocumentRepository(db: Database) {
             status: 'ready',
             error: null,
             pageCount: input.pageCount,
+            embeddingModel: input.embeddingModel ?? null,
             suggestions: input.suggestions ?? [],
           })
           .where(eq(documents.id, input.documentId));
       });
+    },
+
+    async countIndexedWithOtherModel(embeddingModel: string): Promise<number> {
+      const [row] = await db
+        .select({ total: count() })
+        .from(documents)
+        .where(
+          and(
+            eq(documents.status, 'ready'),
+            sql`${documents.embeddingModel} is distinct from ${embeddingModel}`,
+          ),
+        );
+      return row?.total ?? 0;
     },
 
     async fail(documentId: string, message: string): Promise<void> {

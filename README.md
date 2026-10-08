@@ -24,7 +24,7 @@ Register, open **Documents**, drop in files from `samples/` (a NIST PDF, two RFC
 - Development: `npm install`, `docker compose up -d db`, `npm run dev` (web :5173, API :3000).
 - Checks: `npm run lint && npm run typecheck && npm test && npm run build` (about 1,250 tests; none calls a real model).
 - Quality evaluation, run by hand because it uses Gemini quota: `npm run eval:retrieval -w @rag-chat/api` and `npm run eval:faithfulness -w @rag-chat/api`.
-- Deploy: `render.yaml` is a Render Blueprint (free Postgres + two free Docker services). Create it from the dashboard, give it the Gemini key and set `API_UPSTREAM` to the API's public URL. Migrations run on API start; deploys wait for green CI.
+- Deploy: `render.yaml` is a Render Blueprint (free Postgres + two free Docker services). Create it from the dashboard, give it the model key (`GOOGLE_GENERATIVE_AI_API_KEY`, or `AI_PROVIDER=openai` with `OPENAI_API_KEY`) and set `API_UPSTREAM` to the API's public URL. Migrations run on API start; deploys wait for green CI.
 - All settings are environment variables, documented in `.env.example`.
 
 A step-by-step manual test checklist (in Ukrainian) is in [`docs/MANUAL.uk.md`](docs/MANUAL.uk.md).
@@ -48,7 +48,7 @@ flowchart LR
 
 Each choice, with what else I considered, is in [`docs/DECISIONS.md`](docs/DECISIONS.md). In short:
 
-- **LLM: Gemini 3.5 Flash-Lite.** Free tier was the constraint. The bigger Flash model was often overloaded (answers after 30 to 180 s); Flash-Lite answers in about a second. Model and thinking level are settings.
+- **LLM: Gemini 3.5 Flash-Lite.** Free tier was the constraint. The bigger Flash model was often overloaded (answers after 30 to 180 s); Flash-Lite answers in about a second. Model and thinking level are settings, and `AI_PROVIDER=openai` switches chat and embeddings to OpenAI (`gpt-5-nano`, `text-embedding-3-small` cut to 768 dimensions) without code changes.
 - **Embeddings: `gemini-embedding-001`, 768 dimensions.** Separate passage/query task types improve QA retrieval; a local model wouldn't fit the 512 MB free instance; 768 dims keep rows small. Considered `gemini-embedding-2` and OpenAI.
 - **Vector DB: pgvector in the same Postgres.** Vectors, full-text search and metadata together mean hybrid search is one query and user data goes away with a cascading delete. A dedicated vector store is the step at real scale.
 - **Orchestration: none.** No LangChain/LlamaIndex. The Vercel AI SDK only calls models and streams; retrieval, prompting and context handling are a few hundred explicit lines I can read and test.

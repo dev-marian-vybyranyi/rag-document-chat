@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Logger } from 'pino';
-import type { Embedder } from '../ai/embeddings.js';
+import { EmbeddingError, type Embedder } from '../ai/embeddings.js';
 import type { Database } from '../db/client.js';
 import { chunks, documents, users } from '../db/schema.js';
 import { detectFileType } from '../documents/file-types.js';
@@ -13,7 +13,7 @@ import { createDocumentRepository } from '../documents/repository.js';
 export const EVAL_USER_EMAIL = 'eval@rag-chat.invalid';
 const UNUSABLE_PASSWORD_HASH = 'not-a-password-hash';
 export const DEFAULT_ATTEMPTS = 3;
-const DAILY_QUOTA_MESSAGE = /daily quota/i;
+const QUOTA_EXHAUSTED_MESSAGE = new EmbeddingError('quota_exhausted').message;
 export const DEFAULT_RETRY_DELAY_MS = 65_000;
 
 export interface CorpusResult {
@@ -33,6 +33,7 @@ export function listSampleFiles(samplesDir: string): string[] {
 export async function ensureEvalCorpus(options: {
   db: Database;
   embedder: Embedder;
+  embeddingModel?: string;
   logger: Logger;
   samplesDir: string;
   reindex?: boolean;
@@ -43,6 +44,7 @@ export async function ensureEvalCorpus(options: {
   const {
     db,
     embedder,
+    embeddingModel,
     logger,
     samplesDir,
     reindex = false,
@@ -51,7 +53,7 @@ export async function ensureEvalCorpus(options: {
     onRetry,
   } = options;
   const repository = createDocumentRepository(db);
-  const ingestion = createIngestionService({ repository, embedder, logger });
+  const ingestion = createIngestionService({ repository, embedder, embeddingModel, logger });
 
   const [existing] = await db.select().from(users).where(eq(users.email, EVAL_USER_EMAIL));
   const user =
@@ -73,7 +75,12 @@ export async function ensureEvalCorpus(options: {
       .from(documents)
       .where(and(eq(documents.userId, user.id), eq(documents.filename, filename)));
 
-    const upToDate = current.some((d) => d.status === 'ready' && d.sizeBytes === content.length);
+    const upToDate = current.some(
+      (d) =>
+        d.status === 'ready' &&
+        d.sizeBytes === content.length &&
+        (embeddingModel === undefined || d.embeddingModel === embeddingModel),
+    );
     if (upToDate && !reindex) {
       result.reused.push(filename);
       continue;
@@ -99,7 +106,7 @@ export async function ensureEvalCorpus(options: {
       }
       lastError = after?.error ?? lastError;
       await repository.deleteForUser(document.id, user.id);
-      if (DAILY_QUOTA_MESSAGE.test(lastError)) throw new QuotaExhaustedError();
+      if (lastError === QUOTA_EXHAUSTED_MESSAGE) throw new QuotaExhaustedError();
       if (attempt < attempts) {
         onRetry?.(filename, attempt, lastError);
         await new Promise((resolve) => setTimeout(resolve, retryDelayMs));

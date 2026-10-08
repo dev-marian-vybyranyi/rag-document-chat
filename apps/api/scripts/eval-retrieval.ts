@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pino } from 'pino';
-import { createEmbedderFromEnv, createQueryRewriterFromEnv } from '../src/ai/index.js';
+import { createAiProvider } from '../src/ai/index.js';
 import { loadEnv } from '../src/config/env.js';
 import { createDb } from '../src/db/client.js';
 import { ensureEvalCorpus, passagesByFile, removeEvalUser } from '../src/eval/corpus.js';
@@ -34,8 +34,9 @@ if (flag('help')) {
 }
 
 const env = loadEnv();
-if (!env.GOOGLE_GENERATIVE_AI_API_KEY) {
-  out('GOOGLE_GENERATIVE_AI_API_KEY is not set: the evaluation needs real embeddings.');
+const ai = createAiProvider(env);
+if (!ai.configured) {
+  out(`${ai.keyVariable} is not set: the evaluation needs real embeddings.`);
   process.exit(1);
 }
 
@@ -45,7 +46,7 @@ const reportPath = resolve(option('out') ?? join(repoRoot, 'scripts/eval/results
 
 const logger = pino({ level: 'warn' });
 const { db, pool } = createDb(env.DATABASE_URL);
-const embedder = createEmbedderFromEnv(env);
+const embedder = ai.embedder;
 
 try {
   const golden = loadGoldenSet(join(repoRoot, 'scripts/eval/golden.json'));
@@ -54,6 +55,7 @@ try {
   const corpus = await ensureEvalCorpus({
     db,
     embedder,
+    embeddingModel: env.EMBEDDING_MODEL,
     logger,
     samplesDir,
     reindex: flag('reindex'),
@@ -77,9 +79,9 @@ try {
 
     const searcher = createRetrievalSearcher({
       userId: corpus.userId,
-      store: createRetrievalStore(db),
+      store: createRetrievalStore(db, { embeddingModel: env.EMBEDDING_MODEL }),
       embedder,
-      rewriter: createQueryRewriterFromEnv(env, logger),
+      rewriter: ai.createRewriter(logger),
       logger,
       onWait: (ms) => out(`  embedding rate limit reached, waiting ${Math.round(ms / 1000)} s…`),
     });
@@ -102,6 +104,7 @@ try {
       `${JSON.stringify(
         {
           date: new Date().toISOString(),
+          provider: ai.name,
           embeddingModel: env.EMBEDDING_MODEL,
           rewriteModel: env.REWRITE_MODEL,
           relevanceThreshold: env.RELEVANCE_THRESHOLD,

@@ -168,6 +168,17 @@ describe('EMBEDDING_TOKENS_PER_MINUTE', () => {
     expect(loadEnv(base).EMBEDDING_TOKENS_PER_MINUTE).toBe(25_000);
   });
 
+  it('defaults to a higher value for openai, whose paid plans allow far more', () => {
+    expect(loadEnv({ ...base, AI_PROVIDER: 'openai' }).EMBEDDING_TOKENS_PER_MINUTE).toBe(200_000);
+  });
+
+  it('lets the variable override either provider default', () => {
+    expect(
+      loadEnv({ ...base, AI_PROVIDER: 'openai', EMBEDDING_TOKENS_PER_MINUTE: '40000' })
+        .EMBEDDING_TOKENS_PER_MINUTE,
+    ).toBe(40_000);
+  });
+
   it('can be raised for a paid plan', () => {
     expect(
       loadEnv({ ...base, EMBEDDING_TOKENS_PER_MINUTE: '1000000' }).EMBEDDING_TOKENS_PER_MINUTE,
