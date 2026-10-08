@@ -5,3 +5,4 @@ coverage
 package-lock.json
 PLAN.md
 apps/api/drizzle
+samples

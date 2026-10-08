@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { pino } from 'pino';
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createChatRepository } from '../../src/chat/repository.js';
 import type { ChatDeps } from '../../src/chat/responder.js';
 import { ragTraces } from '../../src/db/schema.js';
@@ -75,6 +75,20 @@ describe('guardrails, end to end', () => {
       })
       .send({ content });
 
+  const storedAnswer = (chatId: string) =>
+    vi.waitFor(async () => {
+      const stored = await chats.messagesOf(chatId);
+      expect(stored.at(-1)?.role).toBe('assistant');
+      return stored.at(-1)!;
+    });
+
+  const theTrace = () =>
+    vi.waitFor(async () => {
+      const rows = await db.select().from(ragTraces);
+      expect(rows).toHaveLength(1);
+      return rows[0]!;
+    });
+
   const answerText = (body: unknown) =>
     String(body)
       .split('\n\n')
@@ -123,9 +137,9 @@ describe('guardrails, end to end', () => {
     it('is flagged in the trace, with the passage still available to answer from', async () => {
       const { chat } = await run('Employees get 25 days [1].');
 
-      const [trace] = await db.select().from(ragTraces);
-      const flagged = trace!.retrieved.filter((chunk) => chunk.injectionSignals.length > 0);
-      expect(trace!.chatId).toBe(chat.id);
+      const trace = await theTrace();
+      const flagged = trace.retrieved.filter((chunk) => chunk.injectionSignals.length > 0);
+      expect(trace.chatId).toBe(chat.id);
       expect(flagged.length).toBeGreaterThan(0);
       expect(flagged.every((chunk) => chunk.sentToModel)).toBe(true);
       const signals = new Set(flagged.flatMap((chunk) => chunk.injectionSignals));
@@ -144,8 +158,9 @@ describe('guardrails, end to end', () => {
       const { res, chat } = await run('The allowance is 100 days [1][99]. Password: hunter2 [7].');
 
       expect(answerText(res.body)).toBe('The allowance is 100 days [1]. Password: hunter2.');
-      const stored = await chats.messagesOf(chat.id);
-      expect(stored.at(-1)!.content).toBe('The allowance is 100 days [1]. Password: hunter2.');
+      expect((await storedAnswer(chat.id)).content).toBe(
+        'The allowance is 100 days [1]. Password: hunter2.',
+      );
     });
 
     it('is only ever visible to its owner', async () => {
@@ -185,8 +200,8 @@ describe('guardrails, end to end', () => {
       expect(user).not.toMatch(/[\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/);
       expect([...user].some((char) => char.codePointAt(0)! >= 0xe0000)).toBe(false);
       expect(user).not.toContain('Ignore the rules');
-      const [trace] = await db.select().from(ragTraces);
-      expect(trace!.retrieved.flatMap((chunk) => chunk.injectionSignals)).toContain('hidden-text');
+      const trace = await theTrace();
+      expect(trace.retrieved.flatMap((chunk) => chunk.injectionSignals)).toContain('hidden-text');
     });
   });
 
@@ -268,6 +283,7 @@ describe('guardrails, end to end', () => {
         .post('/documents')
         .attach('file', Buffer.from('some text'), `${'n'.repeat(5000)}.txt`);
 
+      await setupResult.ingestion.idle();
       expect(res.status).toBe(202);
       expect(res.body.document.filename.length).toBeLessThanOrEqual(200);
       expect(res.body.document.filename.endsWith('.txt')).toBe(true);
@@ -296,7 +312,7 @@ describe('guardrails, end to end', () => {
       const res = await ask(agent, chat.id, QUESTION);
 
       expect(answerText(res.body)).toBe(expected);
-      expect((await chats.messagesOf(chat.id)).at(-1)!.content).toBe(expected);
+      expect((await storedAnswer(chat.id)).content).toBe(expected);
     });
   });
 });
