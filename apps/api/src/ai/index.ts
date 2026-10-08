@@ -3,7 +3,7 @@ import type { AiProvider } from './provider.js';
 import { createGoogleProvider, type GoogleProviderEnv } from './providers/google.js';
 import { createOpenAiProvider, type OpenAiProviderEnv } from './providers/openai.js';
 
-export type { AiProvider, ChatModelConfig } from './provider.js';
+export type { AiProvider, ChatModelConfig, JudgeModel, ThinkingLevel } from './provider.js';
 
 export type AiEnv = GoogleProviderEnv & OpenAiProviderEnv & Pick<Env, 'AI_PROVIDER'>;
 

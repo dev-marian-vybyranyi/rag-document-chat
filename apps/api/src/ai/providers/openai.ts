@@ -37,6 +37,9 @@ export function createOpenAiProvider(env: OpenAiProviderEnv): AiProvider {
       chat: { model: null },
       createRewriter: () => createPassthroughRewriter(),
       createSuggester: () => createNoopSuggester(),
+      createJudgeModel: () => {
+        throw new Error(`${KEY_VARIABLE} is not set`);
+      },
     };
   }
 
@@ -69,5 +72,9 @@ export function createOpenAiProvider(env: OpenAiProviderEnv): AiProvider {
         logger,
         providerOptions: minimalReasoning,
       }),
+    createJudgeModel: (modelId, thinkingLevel) => ({
+      model: openai.chat(modelId),
+      providerOptions: { openai: { reasoningEffort: thinkingLevel } },
+    }),
   };
 }

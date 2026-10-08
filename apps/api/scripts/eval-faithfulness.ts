@@ -1,4 +1,3 @@
-import { createGoogle } from '@ai-sdk/google';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pino } from 'pino';
@@ -38,8 +37,9 @@ if (flag('help')) {
 }
 
 const env = loadEnv();
-if (!env.GOOGLE_GENERATIVE_AI_API_KEY) {
-  out('GOOGLE_GENERATIVE_AI_API_KEY is not set: the evaluation needs the real models.');
+const ai = createAiProvider(env);
+if (!ai.configured) {
+  out(`${ai.keyVariable} is not set: the evaluation needs the real models.`);
   process.exit(1);
 }
 
@@ -53,7 +53,6 @@ const judgeModelId = env.EVAL_JUDGE_MODEL ?? env.CHAT_MODEL;
 
 const logger = pino({ level: 'warn' });
 const { db, pool } = createDb(env.DATABASE_URL);
-const ai = createAiProvider(env);
 const embedder = createPatientEmbedder(ai.embedder, {
   onWait: (ms) => out(`  embedding rate limit reached, waiting ${Math.round(ms / 1000)} s…`),
 });
@@ -84,14 +83,8 @@ try {
     `  indexed: ${corpus.indexed.join(', ') || 'none'}; reused: ${corpus.reused.join(', ') || 'none'}`,
   );
 
-  const google = createGoogle({ apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY });
   const judge = createPatientJudge(
-    createJudge({
-      model: google(judgeModelId),
-      providerOptions: {
-        google: { thinkingConfig: { thinkingLevel: env.EVAL_JUDGE_THINKING_LEVEL } },
-      },
-    }),
+    createJudge(ai.createJudgeModel(judgeModelId, env.EVAL_JUDGE_THINKING_LEVEL)),
     { pacingMs, onWait },
   );
   const asker = createResponderAsker({
@@ -134,6 +127,7 @@ try {
     `${JSON.stringify(
       {
         date: new Date().toISOString(),
+        provider: ai.name,
         answerModel: env.CHAT_MODEL,
         answerThinkingLevel: env.CHAT_THINKING_LEVEL,
         judgeModel: judgeModelId,

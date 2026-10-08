@@ -45,6 +45,9 @@ export function createGoogleProvider(env: GoogleProviderEnv): AiProvider {
       chat: { model: null },
       createRewriter: () => createPassthroughRewriter(),
       createSuggester: () => createNoopSuggester(),
+      createJudgeModel: () => {
+        throw new Error(`${KEY_VARIABLE} is not set`);
+      },
     };
   }
 
@@ -79,5 +82,9 @@ export function createGoogleProvider(env: GoogleProviderEnv): AiProvider {
         logger,
         providerOptions: minimalThinking,
       }),
+    createJudgeModel: (modelId, thinkingLevel) => ({
+      model: google(modelId),
+      providerOptions: { google: { thinkingConfig: { thinkingLevel } } },
+    }),
   };
 }

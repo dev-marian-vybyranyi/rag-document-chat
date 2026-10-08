@@ -95,3 +95,29 @@ describe('the openai provider', () => {
     });
   });
 });
+
+describe('the judge model for the evaluation', () => {
+  it('uses the thinking option of the configured provider', () => {
+    const google = createAiProvider(
+      loadEnv({ ...base, GOOGLE_GENERATIVE_AI_API_KEY: 'google-key' }),
+    );
+    const openai = createAiProvider(
+      loadEnv({ ...base, AI_PROVIDER: 'openai', OPENAI_API_KEY: 'openai-key' }),
+    );
+
+    expect(google.createJudgeModel('judge-model', 'low').providerOptions).toEqual({
+      google: { thinkingConfig: { thinkingLevel: 'low' } },
+    });
+    expect(openai.createJudgeModel('judge-model', 'high').providerOptions).toEqual({
+      openai: { reasoningEffort: 'high' },
+    });
+  });
+
+  it('cannot be created without a key, and says which one is missing', () => {
+    const google = createAiProvider(loadEnv(base));
+    const openai = createAiProvider(loadEnv({ ...base, AI_PROVIDER: 'openai' }));
+
+    expect(() => google.createJudgeModel('m', 'low')).toThrow('GOOGLE_GENERATIVE_AI_API_KEY');
+    expect(() => openai.createJudgeModel('m', 'low')).toThrow('OPENAI_API_KEY');
+  });
+});

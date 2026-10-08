@@ -4,23 +4,16 @@ import { EmbeddingError } from '../src/ai/embeddings.js';
 
 const out = (line = '') => process.stdout.write(`${line}\n`);
 
-const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-if (!apiKey) {
-  out('GOOGLE_GENERATIVE_AI_API_KEY is not set.');
-  out(
-    'Create a key at https://aistudio.google.com/apikey and put it in .env at the repository root.',
-  );
+const env = loadEnv({ DATABASE_URL: 'postgres://unused', ...process.env });
+const ai = createAiProvider(env);
+if (!ai.configured) {
+  out(`${ai.keyVariable} is not set.`);
+  out('Put the key in .env at the repository root (see .env.example).');
   process.exit(1);
 }
 
-const modelId = process.env.EMBEDDING_MODEL ?? 'gemini-embedding-001';
-const embedder = createAiProvider(
-  loadEnv({
-    DATABASE_URL: 'postgres://unused',
-    GOOGLE_GENERATIVE_AI_API_KEY: apiKey,
-    EMBEDDING_MODEL: modelId,
-  }),
-).embedder;
+const modelId = env.EMBEDDING_MODEL;
+const embedder = ai.embedder;
 
 const passages = [
   'HNSW is a graph-based index for approximate nearest neighbour search in vector databases.',

@@ -34,8 +34,9 @@ if (flag('help')) {
 }
 
 const env = loadEnv();
-if (!env.GOOGLE_GENERATIVE_AI_API_KEY) {
-  out('GOOGLE_GENERATIVE_AI_API_KEY is not set: the evaluation needs real embeddings.');
+const ai = createAiProvider(env);
+if (!ai.configured) {
+  out(`${ai.keyVariable} is not set: the evaluation needs real embeddings.`);
   process.exit(1);
 }
 
@@ -45,7 +46,6 @@ const reportPath = resolve(option('out') ?? join(repoRoot, 'scripts/eval/results
 
 const logger = pino({ level: 'warn' });
 const { db, pool } = createDb(env.DATABASE_URL);
-const ai = createAiProvider(env);
 const embedder = ai.embedder;
 
 try {
@@ -104,6 +104,7 @@ try {
       `${JSON.stringify(
         {
           date: new Date().toISOString(),
+          provider: ai.name,
           embeddingModel: env.EMBEDDING_MODEL,
           rewriteModel: env.REWRITE_MODEL,
           relevanceThreshold: env.RELEVANCE_THRESHOLD,
