@@ -1,13 +1,15 @@
 import { z } from 'zod';
 
-const MODEL_DEFAULTS = {
+const PROVIDER_DEFAULTS = {
   google: {
     EMBEDDING_MODEL: 'gemini-embedding-001',
+    EMBEDDING_TOKENS_PER_MINUTE: 25_000,
     REWRITE_MODEL: 'gemini-3.5-flash-lite',
     CHAT_MODEL: 'gemini-3.5-flash-lite',
   },
   openai: {
     EMBEDDING_MODEL: 'text-embedding-3-small',
+    EMBEDDING_TOKENS_PER_MINUTE: 200_000,
     REWRITE_MODEL: 'gpt-5-nano',
     CHAT_MODEL: 'gpt-5-nano',
   },
@@ -30,7 +32,7 @@ const envSchema = z
     GOOGLE_GENERATIVE_AI_API_KEY: optionalSecret,
     OPENAI_API_KEY: optionalSecret,
     EMBEDDING_MODEL: z.string().min(1).optional(),
-    EMBEDDING_TOKENS_PER_MINUTE: z.coerce.number().int().positive().default(25000),
+    EMBEDDING_TOKENS_PER_MINUTE: z.coerce.number().int().positive().optional(),
     REWRITE_MODEL: z.string().min(1).optional(),
     RELEVANCE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.65),
     CHAT_MODEL: z.string().min(1).optional(),
@@ -43,9 +45,12 @@ const envSchema = z
   })
   .transform((env) => ({
     ...env,
-    EMBEDDING_MODEL: env.EMBEDDING_MODEL ?? MODEL_DEFAULTS[env.AI_PROVIDER].EMBEDDING_MODEL,
-    REWRITE_MODEL: env.REWRITE_MODEL ?? MODEL_DEFAULTS[env.AI_PROVIDER].REWRITE_MODEL,
-    CHAT_MODEL: env.CHAT_MODEL ?? MODEL_DEFAULTS[env.AI_PROVIDER].CHAT_MODEL,
+    EMBEDDING_MODEL: env.EMBEDDING_MODEL ?? PROVIDER_DEFAULTS[env.AI_PROVIDER].EMBEDDING_MODEL,
+    EMBEDDING_TOKENS_PER_MINUTE:
+      env.EMBEDDING_TOKENS_PER_MINUTE ??
+      PROVIDER_DEFAULTS[env.AI_PROVIDER].EMBEDDING_TOKENS_PER_MINUTE,
+    REWRITE_MODEL: env.REWRITE_MODEL ?? PROVIDER_DEFAULTS[env.AI_PROVIDER].REWRITE_MODEL,
+    CHAT_MODEL: env.CHAT_MODEL ?? PROVIDER_DEFAULTS[env.AI_PROVIDER].CHAT_MODEL,
     COOKIE_SECURE: env.COOKIE_SECURE ?? env.NODE_ENV === 'production',
   }));
 
