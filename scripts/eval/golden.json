@@ -1,0 +1,906 @@
+{
+  "version": 1,
+  "description": "Golden questions for the sample corpus in samples/. Every quote is verbatim from the named file (and page, for the PDF); tests check this.",
+  "questions": [
+    {
+      "id": "nist-core-functions",
+      "type": "answerable",
+      "question": "What are the four functions of the AI RMF Core?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "the Core is composed of four functions",
+          "page": 25
+        }
+      ],
+      "answer": "GOVERN, MAP, MEASURE and MANAGE.",
+      "tags": ["list"]
+    },
+    {
+      "id": "nist-trustworthy-characteristics",
+      "type": "answerable",
+      "question": "Which characteristics make an AI system trustworthy according to the framework?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "valid and reliable, safe, secure and resilient, accountable and transparent, explainable and interpretable, privacy-enhanced, and fair with harmful bias managed",
+          "page": 17
+        }
+      ],
+      "answer": "Valid and reliable, safe, secure and resilient, accountable and transparent, explainable and interpretable, privacy-enhanced, and fair with harmful bias managed.",
+      "tags": ["list"]
+    },
+    {
+      "id": "nist-risk-definition",
+      "type": "answerable",
+      "question": "How does the AI RMF define risk?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "risk refers to the composite measure of an event’s probability of occurring and the magnitude or degree of the consequences of the corresponding event",
+          "page": 9
+        }
+      ],
+      "answer": "Risk is the composite measure of an event’s probability of occurring and the magnitude or degree of its consequences.",
+      "tags": ["definition"]
+    },
+    {
+      "id": "nist-review-2028",
+      "type": "answerable",
+      "question": "When is the first formal review of the AI RMF expected to take place?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "expected to take place no later than 2028",
+          "page": 3
+        }
+      ],
+      "answer": "No later than 2028.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "nist-versioning",
+      "type": "answerable",
+      "question": "How does NIST version the framework?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "The Framework will employ a two-number versioning system",
+          "page": 3
+        }
+      ],
+      "answer": "With a two-number system: the first number is the generation (e.g. 1.0) and changes only with major revisions; minor revisions are tracked with “.n”.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "nist-ai-system-definition",
+      "type": "answerable",
+      "question": "How does the AI RMF define an AI system?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "an engineered or machine-based system that can, for a given set of objectives, generate outputs such as predictions, recommendations, or decisions influencing real or virtual environments",
+          "page": 6
+        }
+      ],
+      "answer": "An engineered or machine-based system that can, for a given set of objectives, generate outputs such as predictions, recommendations or decisions influencing real or virtual environments.",
+      "tags": ["definition"]
+    },
+    {
+      "id": "nist-govern-cross-cutting",
+      "type": "answerable",
+      "question": "Which function of the Core runs through all the others?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "GOVERN is a cross-cutting function that is infused throughout AI risk management",
+          "page": 27
+        },
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "Governance is designed to be a cross-cutting function to inform and be infused throughout the other three functions",
+          "page": 5
+        }
+      ],
+      "answer": "GOVERN is a cross-cutting function that is infused throughout AI risk management and enables the other functions.",
+      "tags": ["concept"]
+    },
+    {
+      "id": "nist-valid-reliable-base",
+      "type": "answerable",
+      "question": "Which trustworthiness characteristic is a necessary condition for the others?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "Valid & Reliable is a necessary condition of trustworthiness",
+          "page": 17
+        },
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "Valid & Reliable is a necessary condition of trustworthiness",
+          "page": 5
+        }
+      ],
+      "answer": "Valid and reliable is a necessary condition of trustworthiness and is the base for the other characteristics.",
+      "tags": ["concept"]
+    },
+    {
+      "id": "nist-profiles",
+      "type": "answerable",
+      "question": "What is an AI RMF use-case profile?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "AI RMF use-case profiles are implementations of the AI RMF functions, categories, and subcategories for a specific setting or application",
+          "page": 38
+        }
+      ],
+      "answer": "An implementation of the AI RMF functions, categories and subcategories for a specific setting or application, based on the requirements, risk tolerance and resources of the user, for example a hiring profile.",
+      "tags": ["definition"]
+    },
+    {
+      "id": "nist-measure-function",
+      "type": "answerable",
+      "question": "What does the MEASURE function do?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "The MEASURE function employs quantitative, qualitative, or mixed-method tools, techniques, and methodologies to analyze, assess, benchmark, and monitor AI risk and related impacts",
+          "page": 33
+        }
+      ],
+      "answer": "It uses quantitative, qualitative or mixed-method tools and techniques to analyze, assess, benchmark and monitor AI risk and related impacts.",
+      "tags": ["concept"]
+    },
+    {
+      "id": "nist-manage-function",
+      "type": "answerable",
+      "question": "What does the MANAGE function entail?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "The MANAGE function entails allocating risk resources to mapped and measured risks",
+          "page": 36
+        }
+      ],
+      "answer": "Allocating risk resources to mapped and measured risks on a regular basis, as defined by the GOVERN function, including plans to respond to, recover from and communicate about incidents.",
+      "tags": ["concept"]
+    },
+    {
+      "id": "nist-safe-definition",
+      "type": "answerable",
+      "question": "When should an AI system be considered safe?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "not under defined conditions, lead to a state in which human life, health, property, or the environment is endangered",
+          "page": 19
+        }
+      ],
+      "answer": "When it does not, under defined conditions, lead to a state in which human life, health, property or the environment is endangered.",
+      "tags": ["definition"]
+    },
+    {
+      "id": "nist-explainability-vs-interpretability",
+      "type": "answerable",
+      "question": "What is the difference between explainability and interpretability?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "Explainability refers to a representation of the mechanisms underlying AI systems’ operation, whereas interpretability refers to the meaning of AI systems’ output",
+          "page": 21
+        }
+      ],
+      "answer": "Explainability is a representation of the mechanisms underlying the system’s operation; interpretability is the meaning of its output in the context of its designed purpose.",
+      "tags": ["concept"]
+    },
+    {
+      "id": "nist-privacy",
+      "type": "answerable",
+      "question": "What does privacy refer to in the framework?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "Privacy refers generally to the norms and practices that help to safeguard human autonomy, identity, and dignity",
+          "page": 22
+        }
+      ],
+      "answer": "The norms and practices that help to safeguard human autonomy, identity and dignity.",
+      "tags": ["definition"]
+    },
+    {
+      "id": "nist-risk-tolerance",
+      "type": "answerable",
+      "question": "Does the AI RMF tell organizations what their risk tolerance should be?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "it does not prescribe risk tolerance",
+          "page": 12
+        }
+      ],
+      "answer": "No. It can be used to prioritize risk but does not prescribe risk tolerance.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "nist-resilient",
+      "type": "answerable",
+      "question": "When can an AI system be said to be resilient?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "may be said to be resilient if they can withstand unexpected adverse events or unexpected changes in their environment or use",
+          "page": 20
+        }
+      ],
+      "answer": "If it can withstand unexpected adverse events or changes in its environment or use, or maintain its function and structure in the face of change and degrade safely and gracefully.",
+      "tags": ["concept"]
+    },
+    {
+      "id": "nist-playbook-comments",
+      "type": "answerable",
+      "question": "Where can comments on the AI RMF Playbook be sent?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "Comments on the AI RMF Playbook may be sent via email to AIframework@nist.gov",
+          "page": 3
+        }
+      ],
+      "answer": "By email to AIframework@nist.gov.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "nist-third-party-risk",
+      "type": "answerable",
+      "question": "Why is third-party software, hardware and data a challenge for risk measurement?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "Risks related to third-party software, hardware, and data",
+          "page": 10
+        }
+      ],
+      "answer": "It can speed up development but complicates risk measurement: risk can come from the third-party data, software or hardware itself and from how it is used.",
+      "tags": ["concept"]
+    },
+    {
+      "id": "nist-fairness",
+      "type": "answerable",
+      "question": "What does fairness in AI include?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "Fairness in AI includes concerns for equality and equity by addressing issues such as harmful bias and discrimination",
+          "page": 22
+        }
+      ],
+      "answer": "Concerns for equality and equity, by addressing issues such as harmful bias and discrimination.",
+      "tags": ["definition"]
+    },
+    {
+      "id": "nist-not-a-checklist",
+      "type": "answerable",
+      "question": "Are the actions in the Core a checklist?",
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "Actions do not constitute a checklist, nor are they necessarily an ordered set of steps",
+          "page": 25
+        }
+      ],
+      "answer": "No. Actions are not a checklist and not necessarily an ordered set of steps.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "json-value-types",
+      "type": "answerable",
+      "question": "Which types can JSON represent?",
+      "expected": [
+        {
+          "file": "rfc8259-json.txt",
+          "quote": "JSON can represent four primitive types (strings, numbers, booleans, and null) and two structured types (objects and arrays)"
+        }
+      ],
+      "answer": "Four primitive types (strings, numbers, booleans and null) and two structured types (objects and arrays).",
+      "tags": ["list"]
+    },
+    {
+      "id": "json-encoding",
+      "type": "answerable",
+      "question": "What character encoding must JSON exchanged between systems use?",
+      "expected": [
+        {
+          "file": "rfc8259-json.txt",
+          "quote": "MUST be encoded using UTF-8"
+        }
+      ],
+      "answer": "UTF-8.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "json-media-type",
+      "type": "answerable",
+      "question": "What is the media type for JSON text?",
+      "expected": [
+        {
+          "file": "rfc8259-json.txt",
+          "quote": "The media type for JSON text is application/json"
+        }
+      ],
+      "answer": "application/json.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "json-bom",
+      "type": "answerable",
+      "question": "May an implementation add a byte order mark to JSON text sent over the network?",
+      "expected": [
+        {
+          "file": "rfc8259-json.txt",
+          "quote": "Implementations MUST NOT add a byte order mark (U+FEFF) to the beginning of a networked-transmitted JSON text"
+        }
+      ],
+      "answer": "No. Implementations must not add a byte order mark; parsers may ignore one.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "json-structural-characters",
+      "type": "answerable",
+      "question": "Which are the six structural characters of JSON?",
+      "expected": [
+        {
+          "file": "rfc8259-json.txt",
+          "quote": "These are the six structural characters"
+        }
+      ],
+      "answer": "Left and right square brackets, left and right curly brackets, colon and comma: [ ] { } : ,",
+      "tags": ["list"]
+    },
+    {
+      "id": "json-leading-zeros",
+      "type": "answerable",
+      "question": "Are leading zeros allowed in JSON numbers?",
+      "expected": [
+        {
+          "file": "rfc8259-json.txt",
+          "quote": "Leading zeros are not allowed"
+        }
+      ],
+      "answer": "No.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "json-unique-names",
+      "type": "answerable",
+      "question": "Should the names within a JSON object be unique?",
+      "expected": [
+        {
+          "file": "rfc8259-json.txt",
+          "quote": "The names within an object SHOULD be unique"
+        }
+      ],
+      "answer": "Yes, they should be unique; an object whose names are all unique is interoperable.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "json-whitespace",
+      "type": "answerable",
+      "question": "Where is whitespace allowed in a JSON text?",
+      "expected": [
+        {
+          "file": "rfc8259-json.txt",
+          "quote": "Insignificant whitespace is allowed before or after any of the six structural characters"
+        }
+      ],
+      "answer": "Before or after any of the six structural characters.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "json-literal-names",
+      "type": "answerable",
+      "question": "Which literal names does JSON have, and in what case?",
+      "expected": [
+        {
+          "file": "rfc8259-json.txt",
+          "quote": "The literal names MUST be lowercase"
+        }
+      ],
+      "answer": "false, null and true, which must be lowercase.",
+      "tags": ["list"]
+    },
+    {
+      "id": "json-obsoletes",
+      "type": "answerable",
+      "question": "Which earlier RFC does RFC 8259 obsolete?",
+      "expected": [
+        {
+          "file": "rfc8259-json.txt",
+          "quote": "Obsoletes: 7159"
+        }
+      ],
+      "answer": "RFC 7159.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "oauth-roles",
+      "type": "answerable",
+      "question": "Which roles does OAuth define?",
+      "expected": [
+        {
+          "file": "rfc6749-oauth2.txt",
+          "quote": "OAuth defines four roles"
+        }
+      ],
+      "answer": "Resource owner, resource server, client and authorization server.",
+      "tags": ["list"]
+    },
+    {
+      "id": "oauth-grant-types",
+      "type": "answerable",
+      "question": "Which grant types does the OAuth 2.0 specification define?",
+      "expected": [
+        {
+          "file": "rfc6749-oauth2.txt",
+          "quote": "This specification defines four grant types -- authorization code, implicit, resource owner password credentials, and client credentials"
+        }
+      ],
+      "answer": "Authorization code, implicit, resource owner password credentials and client credentials.",
+      "tags": ["list"]
+    },
+    {
+      "id": "oauth-code-lifetime",
+      "type": "answerable",
+      "question": "What maximum lifetime is recommended for an authorization code?",
+      "expected": [
+        {
+          "file": "rfc6749-oauth2.txt",
+          "quote": "A maximum authorization code lifetime of 10 minutes is RECOMMENDED"
+        }
+      ],
+      "answer": "10 minutes.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "oauth-code-single-use",
+      "type": "answerable",
+      "question": "Can a client use an authorization code more than once?",
+      "expected": [
+        {
+          "file": "rfc6749-oauth2.txt",
+          "quote": "If an authorization code is used more than once, the authorization server MUST deny the request"
+        }
+      ],
+      "answer": "No. If a code is used more than once the authorization server must deny the request.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "oauth-token-request-method",
+      "type": "answerable",
+      "question": "Which HTTP method must a client use to request an access token?",
+      "expected": [
+        {
+          "file": "rfc6749-oauth2.txt",
+          "quote": "The client MUST use the HTTP \"POST\" method when making access token requests"
+        }
+      ],
+      "answer": "POST.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "oauth-token-endpoint-tls",
+      "type": "answerable",
+      "question": "Must the authorization server require TLS at the token endpoint?",
+      "expected": [
+        {
+          "file": "rfc6749-oauth2.txt",
+          "quote": "the authorization server MUST require the use of TLS as described in Section 1.6 when sending requests to the token endpoint"
+        }
+      ],
+      "answer": "Yes, it must require TLS for requests to the token endpoint.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "oauth-refresh-token",
+      "type": "answerable",
+      "question": "What is a refresh token used for?",
+      "expected": [
+        {
+          "file": "rfc6749-oauth2.txt",
+          "quote": "Refresh tokens are credentials used to obtain access tokens"
+        }
+      ],
+      "answer": "Refresh tokens are credentials used to obtain access tokens, in particular a new one when the current access token expires or becomes invalid.",
+      "tags": ["definition"]
+    },
+    {
+      "id": "oauth-state-parameter",
+      "type": "answerable",
+      "question": "What is the state parameter in an authorization request for?",
+      "expected": [
+        {
+          "file": "rfc6749-oauth2.txt",
+          "quote": "An opaque value used by the client to maintain state between the request and callback"
+        }
+      ],
+      "answer": "It is an opaque value the client uses to maintain state between the request and the callback; it should be used to prevent cross-site request forgery.",
+      "tags": ["concept"]
+    },
+    {
+      "id": "oauth-client-credentials-grant-type",
+      "type": "answerable",
+      "question": "What value must grant_type have for the client credentials grant?",
+      "expected": [
+        {
+          "file": "rfc6749-oauth2.txt",
+          "quote": "Value MUST be set to \"client_credentials\""
+        }
+      ],
+      "answer": "client_credentials.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "oauth-invalid-client",
+      "type": "answerable",
+      "question": "When does the authorization server return the error invalid_client?",
+      "expected": [
+        {
+          "file": "rfc6749-oauth2.txt",
+          "quote": "Client authentication failed (e.g., unknown client, no client authentication included, or unsupported authentication method)"
+        }
+      ],
+      "answer": "When client authentication failed, e.g. an unknown client, no client authentication included or an unsupported authentication method.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "oauth-client-types",
+      "type": "answerable",
+      "question": "What client types does OAuth define?",
+      "expected": [
+        {
+          "file": "rfc6749-oauth2.txt",
+          "quote": "OAuth defines two client types"
+        }
+      ],
+      "answer": "Two: confidential and public, based on the client’s ability to keep its credentials confidential.",
+      "tags": ["list"]
+    },
+    {
+      "id": "rust-ownership-rules",
+      "type": "answerable",
+      "question": "What are the ownership rules in Rust?",
+      "expected": [
+        {
+          "file": "rust-book-ownership.md",
+          "quote": "There can only be one owner at a time"
+        }
+      ],
+      "answer": "Each value has an owner; there can only be one owner at a time; when the owner goes out of scope the value is dropped.",
+      "tags": ["list"]
+    },
+    {
+      "id": "rust-drop",
+      "type": "answerable",
+      "question": "What does Rust call when a variable goes out of scope?",
+      "expected": [
+        {
+          "file": "rust-book-ownership.md",
+          "quote": "Rust calls `drop` automatically at the closing curly bracket"
+        }
+      ],
+      "answer": "The `drop` function, automatically, at the closing curly bracket.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "rust-stack-vs-heap-speed",
+      "type": "answerable",
+      "question": "Why is pushing to the stack faster than allocating on the heap?",
+      "expected": [
+        {
+          "file": "rust-book-ownership.md",
+          "quote": "Pushing to the stack is faster than allocating on the heap"
+        }
+      ],
+      "answer": "The allocator never has to search for a place to store new data on the stack; the location is always at the top.",
+      "tags": ["concept"]
+    },
+    {
+      "id": "rust-move",
+      "type": "answerable",
+      "question": "What does it mean that a value was moved?",
+      "expected": [
+        {
+          "file": "rust-book-ownership.md",
+          "quote": "we would say that `s1` was _moved_ into `s2`"
+        }
+      ],
+      "answer": "Copying the pointer, length and capacity without copying the heap data and invalidating the first variable is called a move.",
+      "tags": ["concept"]
+    },
+    {
+      "id": "rust-clone",
+      "type": "answerable",
+      "question": "How can I make a deep copy of a String’s heap data?",
+      "expected": [
+        {
+          "file": "rust-book-ownership.md",
+          "quote": "we can use a common method called `clone`"
+        }
+      ],
+      "answer": "With the `clone` method.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "rust-copy-integers",
+      "type": "answerable",
+      "question": "Why can integers be copied without a move?",
+      "expected": [
+        {
+          "file": "rust-book-ownership.md",
+          "quote": "integers are simple values with a known, fixed size, and these two `5` values are pushed onto the stack"
+        }
+      ],
+      "answer": "Integers have a known, fixed size and live entirely on the stack, so copies are cheap and both variables stay valid.",
+      "tags": ["concept"]
+    },
+    {
+      "id": "rust-monomorphization",
+      "type": "answerable",
+      "question": "What is monomorphization?",
+      "expected": [
+        {
+          "file": "rust-book-generics.md",
+          "quote": "is the process of turning generic code into specific code by filling in the concrete types that are used when compiled"
+        }
+      ],
+      "answer": "The compile-time process of turning generic code into specific code by filling in the concrete types that are used.",
+      "tags": ["definition"]
+    },
+    {
+      "id": "rust-generics-runtime-cost",
+      "type": "answerable",
+      "question": "Do generics make a Rust program slower?",
+      "expected": [
+        {
+          "file": "rust-book-generics.md",
+          "quote": "using generic types won’t make your program run any slower than it would with concrete types"
+        }
+      ],
+      "answer": "No; monomorphization at compile time means no runtime cost compared to concrete types.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "rust-type-parameter-name",
+      "type": "answerable",
+      "question": "Why is the type parameter usually called T?",
+      "expected": [
+        {
+          "file": "rust-book-generics.md",
+          "quote": "by convention, type parameter names in Rust are short, often just one letter"
+        }
+      ],
+      "answer": "By convention type parameter names are short, often one letter, and T is short for type.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "rust-partialord",
+      "type": "answerable",
+      "question": "Why does the generic largest function not compile without a trait bound?",
+      "expected": [
+        {
+          "file": "rust-book-generics.md",
+          "quote": "The help text mentions `std::cmp::PartialOrd`, which is a trait"
+        }
+      ],
+      "answer": "The body only works for types that can be compared, which requires the std::cmp::PartialOrd trait.",
+      "tags": ["concept"]
+    },
+    {
+      "id": "rust-option-enum",
+      "type": "answerable",
+      "question": "Which generic enum does the standard library provide to represent an optional value?",
+      "expected": [
+        {
+          "file": "rust-book-generics.md",
+          "quote": "Let’s take another look at the `Option<T>` enum that the standard library provides"
+        }
+      ],
+      "answer": "Option<T>, with the variants Some(T) and None.",
+      "tags": ["fact"]
+    },
+    {
+      "id": "followup-nist-cross-cutting",
+      "type": "answerable",
+      "question": "Which one of them runs through all the others?",
+      "history": [
+        {
+          "role": "user",
+          "content": "What are the four functions of the AI RMF Core?"
+        },
+        {
+          "role": "assistant",
+          "content": "GOVERN, MAP, MEASURE and MANAGE [1]."
+        }
+      ],
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "GOVERN is a cross-cutting function that is infused throughout AI risk management",
+          "page": 27
+        },
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "Governance is designed to be a cross-cutting function to inform and be infused throughout the other three functions",
+          "page": 5
+        }
+      ],
+      "answer": "GOVERN.",
+      "tags": ["followup"]
+    },
+    {
+      "id": "followup-oauth-method",
+      "type": "answerable",
+      "question": "Which HTTP method must it use?",
+      "history": [
+        {
+          "role": "user",
+          "content": "How does a client get an access token in OAuth 2.0?"
+        },
+        {
+          "role": "assistant",
+          "content": "It sends an access token request to the token endpoint of the authorization server [1]."
+        }
+      ],
+      "expected": [
+        {
+          "file": "rfc6749-oauth2.txt",
+          "quote": "The client MUST use the HTTP \"POST\" method when making access token requests"
+        }
+      ],
+      "answer": "POST.",
+      "tags": ["followup"]
+    },
+    {
+      "id": "followup-rust-drop",
+      "type": "answerable",
+      "question": "What function is called when that happens?",
+      "history": [
+        {
+          "role": "user",
+          "content": "What does it mean when the owner goes out of scope in Rust?"
+        },
+        {
+          "role": "assistant",
+          "content": "The value owned by that variable will be dropped and its memory freed [1]."
+        }
+      ],
+      "expected": [
+        {
+          "file": "rust-book-ownership.md",
+          "quote": "Rust calls `drop` automatically at the closing curly bracket"
+        }
+      ],
+      "answer": "`drop`.",
+      "tags": ["followup"]
+    },
+    {
+      "id": "followup-json-bom",
+      "type": "answerable",
+      "question": "Can I add a byte order mark to it?",
+      "history": [
+        {
+          "role": "user",
+          "content": "What encoding does JSON use between systems?"
+        },
+        {
+          "role": "assistant",
+          "content": "UTF-8 [1]."
+        }
+      ],
+      "expected": [
+        {
+          "file": "rfc8259-json.txt",
+          "quote": "Implementations MUST NOT add a byte order mark (U+FEFF) to the beginning of a networked-transmitted JSON text"
+        }
+      ],
+      "answer": "No.",
+      "tags": ["followup"]
+    },
+    {
+      "id": "followup-nist-tolerance",
+      "type": "answerable",
+      "question": "Does the framework tell me what mine should be?",
+      "history": [
+        {
+          "role": "user",
+          "content": "What is risk tolerance in the AI RMF?"
+        },
+        {
+          "role": "assistant",
+          "content": "The organization’s or AI actor’s readiness to bear risk in order to achieve its objectives [1]."
+        }
+      ],
+      "expected": [
+        {
+          "file": "nist-ai-rmf-1.0.pdf",
+          "quote": "it does not prescribe risk tolerance",
+          "page": 12
+        }
+      ],
+      "answer": "No, it does not prescribe risk tolerance.",
+      "tags": ["followup"]
+    },
+    {
+      "id": "none-capital-france",
+      "type": "unanswerable",
+      "question": "What is the capital of France?",
+      "note": "Off-topic general knowledge.",
+      "absentTerms": ["Paris"]
+    },
+    {
+      "id": "none-world-cup",
+      "type": "unanswerable",
+      "question": "Who won the 2022 FIFA World Cup?",
+      "note": "Off-topic general knowledge.",
+      "absentTerms": ["FIFA"]
+    },
+    {
+      "id": "none-boiling-point",
+      "type": "unanswerable",
+      "question": "At what temperature does water boil at sea level?",
+      "note": "Off-topic general knowledge.",
+      "absentTerms": ["boil"]
+    },
+    {
+      "id": "none-nist-quantum",
+      "type": "unanswerable",
+      "question": "What does the NIST AI RMF say about quantum computing hardware?",
+      "note": "Plausible for the domain, but the document never mentions it.",
+      "absentTerms": ["quantum"]
+    },
+    {
+      "id": "none-playbook-price",
+      "type": "unanswerable",
+      "question": "How much does the AI RMF Playbook cost?",
+      "note": "The Playbook is mentioned, its price is not.",
+      "absentTerms": ["price", "pricing"]
+    },
+    {
+      "id": "none-rust-async",
+      "type": "unanswerable",
+      "question": "How does async/await work in Rust?",
+      "note": "Not in the two chapters of the Rust Book in the corpus.",
+      "absentTerms": ["async", "await"]
+    },
+    {
+      "id": "none-json-library",
+      "type": "unanswerable",
+      "question": "Which JSON library does RFC 8259 recommend for Rust?",
+      "note": "The RFC names no libraries.",
+      "absentTerms": ["serde"]
+    },
+    {
+      "id": "none-oauth-token-max-lifetime",
+      "type": "unanswerable",
+      "question": "What is the maximum lifetime of an OAuth 2.0 access token?",
+      "note": "Hard negative: expires_in is mentioned but the specification sets no maximum.",
+      "absentTerms": ["maximum access token lifetime"],
+      "hard": true
+    },
+    {
+      "id": "none-rfc-vote",
+      "type": "unanswerable",
+      "question": "How many votes did RFC 8259 receive when the IETF approved it?",
+      "note": "Retrieval finds the status section, which says nothing about votes.",
+      "absentTerms": ["votes"],
+      "hard": true
+    },
+    {
+      "id": "none-rust-cloud",
+      "type": "unanswerable",
+      "question": "Which cloud provider hosts the Rust Book website?",
+      "note": "Not in the corpus.",
+      "absentTerms": ["Cloudflare", "Netlify"]
+    }
+  ]
+}
