@@ -207,7 +207,7 @@ describe('embedding failures caused by the quota', () => {
 
     expect(failure).toBeInstanceOf(EmbeddingError);
     expect(failure).toMatchObject({ kind: 'quota_exhausted' });
-    expect((failure as Error).message).toContain('daily quota');
+    expect((failure as Error).message).toContain('quota of the embedding service');
   });
 
   it('stay a plain rate limit when the quota is per minute', async () => {
@@ -216,5 +216,122 @@ describe('embedding failures caused by the quota', () => {
       .catch((e: unknown) => e);
 
     expect(failure).toMatchObject({ kind: 'rate_limited' });
+  });
+});
+
+function openAiError(
+  body: { message?: string; code?: string; type?: string },
+  options: { headers?: Record<string, string>; status?: number } = {},
+) {
+  return new APICallError({
+    message: body.message ?? 'Rate limit reached',
+    url: 'https://api.openai.com/v1/chat/completions',
+    requestBodyValues: {},
+    statusCode: options.status ?? 429,
+    responseHeaders: options.headers,
+    responseBody: JSON.stringify({
+      error: { message: body.message, code: body.code, type: body.type },
+    }),
+    isRetryable: false,
+  });
+}
+
+describe('quotaInfoOf with openai errors', () => {
+  it('treats insufficient_quota as an exhausted quota, not a short rate limit', () => {
+    const error = openAiError({
+      message: 'You exceeded your current quota, please check your plan and billing details.',
+      code: 'insufficient_quota',
+      type: 'insufficient_quota',
+    });
+
+    expect(quotaInfoOf(error)).toEqual({ daily: true, retryAfterMs: null });
+    expect(classifyChatFailure(error)).toBe('quota_exhausted');
+  });
+
+  it('treats a per-day limit as exhausted', () => {
+    const error = openAiError({
+      message: 'Rate limit reached for gpt-5-nano on requests per day (RPD): Limit 200.',
+      code: 'rate_limit_exceeded',
+    });
+
+    expect(quotaInfoOf(error).daily).toBe(true);
+  });
+
+  it('keeps a per-minute limit retryable and reads the wait from the message', () => {
+    const error = openAiError({
+      message:
+        'Rate limit reached for text-embedding-3-small on tokens per min (TPM): Limit 40000. Please try again in 1.5s.',
+      code: 'rate_limit_exceeded',
+    });
+
+    expect(quotaInfoOf(error)).toEqual({ daily: false, retryAfterMs: 1_500 });
+    expect(classifyChatFailure(error)).toBe('rate_limited');
+  });
+
+  it.each([
+    ['20ms', 20],
+    ['6m0s', 360_000],
+    ['1h2m3s', 3_723_000],
+    ['2.5s', 2_500],
+  ])('understands the duration %s', (duration, expected) => {
+    const error = openAiError({ message: `Please try again in ${duration}.` });
+
+    expect(quotaInfoOf(error).retryAfterMs).toBe(expected);
+  });
+
+  it('prefers retry-after-ms, then retry-after, over the message', () => {
+    const message = 'Please try again in 30s.';
+
+    expect(
+      quotaInfoOf(openAiError({ message }, { headers: { 'retry-after-ms': '250' } })).retryAfterMs,
+    ).toBe(250);
+    expect(
+      quotaInfoOf(openAiError({ message }, { headers: { 'retry-after': '7' } })).retryAfterMs,
+    ).toBe(7_000);
+  });
+
+  it('ignores a malformed duration', () => {
+    expect(
+      quotaInfoOf(openAiError({ message: 'Please try again in 3parsecs.' })).retryAfterMs,
+    ).toBeNull();
+  });
+
+  it('recognises an incorrect key as a configuration problem', () => {
+    const error = openAiError(
+      { message: 'Incorrect API key provided: sk-xxxx.', code: 'invalid_api_key' },
+      { status: 401 },
+    );
+
+    expect(classifyChatFailure(error)).toBe('misconfigured');
+  });
+
+  it('maps openai embedding failures like any other provider', async () => {
+    const failing = (error: unknown) =>
+      createEmbedder({
+        model: new MockEmbeddingModelV4({
+          doEmbed: async () => {
+            throw error;
+          },
+        }),
+        dimensions: 4,
+        maxRetries: 0,
+        queryMaxRetries: 0,
+      });
+
+    const exhausted = await failing(openAiError({ code: 'insufficient_quota' }))
+      .embedQuery('a')
+      .catch((e: unknown) => e);
+    const busy = await failing(
+      openAiError({ message: 'try again in 2s', code: 'rate_limit_exceeded' }),
+    )
+      .embedQuery('a')
+      .catch((e: unknown) => e);
+    const badKey = await failing(openAiError({ code: 'invalid_api_key' }, { status: 401 }))
+      .embedQuery('a')
+      .catch((e: unknown) => e);
+
+    expect(exhausted).toMatchObject({ kind: 'quota_exhausted' });
+    expect(busy).toMatchObject({ kind: 'rate_limited' });
+    expect(badKey).toMatchObject({ kind: 'misconfigured' });
   });
 });

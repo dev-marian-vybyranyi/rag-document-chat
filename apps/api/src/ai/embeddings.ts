@@ -1,3 +1,4 @@
+import { isInvalidKeyResponse } from './api-errors.js';
 import { quotaInfoOf } from './quota.js';
 import { APICallError, embed, embedMany, RetryError, type EmbeddingModel } from 'ai';
 
@@ -14,8 +15,7 @@ export type EmbeddingErrorKind =
 const USER_MESSAGES: Record<EmbeddingErrorKind, string> = {
   rate_limited:
     'The embedding service is busy (rate limit reached). Please try again in a few minutes.',
-  quota_exhausted:
-    'The daily quota of the embedding service is used up. Please try again tomorrow.',
+  quota_exhausted: 'The quota of the embedding service is used up. Please try again later.',
   misconfigured: 'The embedding service is not configured correctly.',
   unavailable: 'The embedding service is temporarily unavailable. Please try again later.',
   timeout: 'The embedding service took too long to respond. Please try again.',
@@ -227,12 +227,6 @@ function requireText(texts: string[]) {
   if (texts.some((text) => text.trim().length === 0)) {
     throw new EmbeddingError('invalid_input', { cause: new Error('Cannot embed empty text') });
   }
-}
-
-function isInvalidKeyResponse(error: APICallError): boolean {
-  return /API key not valid|API_KEY_INVALID|API key expired/i.test(
-    `${error.message} ${error.responseBody ?? ''}`,
-  );
 }
 
 function toEmbeddingError(error: unknown): EmbeddingError {

@@ -150,7 +150,7 @@ try {
   }
 } catch (error) {
   if (error instanceof QuotaExhaustedError) {
-    out('The daily quota of the free tier is used up. Run again tomorrow; nothing is lost.');
+    out('The AI quota is used up. Run again later; nothing is lost.');
     process.exitCode = 1;
   } else {
     throw error;

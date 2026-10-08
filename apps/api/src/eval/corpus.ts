@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Logger } from 'pino';
-import type { Embedder } from '../ai/embeddings.js';
+import { EmbeddingError, type Embedder } from '../ai/embeddings.js';
 import type { Database } from '../db/client.js';
 import { chunks, documents, users } from '../db/schema.js';
 import { detectFileType } from '../documents/file-types.js';
@@ -13,7 +13,7 @@ import { createDocumentRepository } from '../documents/repository.js';
 export const EVAL_USER_EMAIL = 'eval@rag-chat.invalid';
 const UNUSABLE_PASSWORD_HASH = 'not-a-password-hash';
 export const DEFAULT_ATTEMPTS = 3;
-const DAILY_QUOTA_MESSAGE = /daily quota/i;
+const QUOTA_EXHAUSTED_MESSAGE = new EmbeddingError('quota_exhausted').message;
 export const DEFAULT_RETRY_DELAY_MS = 65_000;
 
 export interface CorpusResult {
@@ -99,7 +99,7 @@ export async function ensureEvalCorpus(options: {
       }
       lastError = after?.error ?? lastError;
       await repository.deleteForUser(document.id, user.id);
-      if (DAILY_QUOTA_MESSAGE.test(lastError)) throw new QuotaExhaustedError();
+      if (lastError === QUOTA_EXHAUSTED_MESSAGE) throw new QuotaExhaustedError();
       if (attempt < attempts) {
         onRetry?.(filename, attempt, lastError);
         await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
