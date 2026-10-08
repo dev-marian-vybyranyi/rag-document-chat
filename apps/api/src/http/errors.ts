@@ -1,9 +1,10 @@
-import type { ErrorRequestHandler, RequestHandler } from 'express';
+import type { ErrorRequestHandler, Request, RequestHandler } from 'express';
+import type { ErrorCode } from './error-codes.js';
 
 export class AppError extends Error {
   constructor(
     readonly status: number,
-    readonly code: string,
+    readonly code: ErrorCode,
     message: string,
     readonly details?: unknown,
   ) {
@@ -13,12 +14,34 @@ export class AppError extends Error {
 }
 
 export interface ErrorBody {
-  error: { code: string; message: string; details?: unknown };
+  error: { code: ErrorCode; message: string; details?: unknown; requestId?: string };
 }
 
 export const notFoundHandler: RequestHandler = (_req, _res, next) => {
   next(new AppError(404, 'not_found', 'Route not found'));
 };
+
+function requestIdOf(req: Request): string | undefined {
+  return typeof req.id === 'string' ? req.id : undefined;
+}
+
+function errorBody(req: Request, code: ErrorCode, message: string, details?: unknown): ErrorBody {
+  return { error: { code, message, details, requestId: requestIdOf(req) } };
+}
+
+function fromParser(err: unknown): AppError | undefined {
+  const { type, status } = err as { type?: unknown; status?: unknown };
+  if (type === 'entity.too.large') {
+    return new AppError(413, 'payload_too_large', 'The request is too large');
+  }
+  if (type === 'entity.parse.failed') {
+    return new AppError(400, 'invalid_json', 'The request body is not valid JSON');
+  }
+  if (typeof status === 'number' && status >= 400 && status < 500) {
+    return new AppError(status, 'bad_request', 'Malformed request');
+  }
+  return undefined;
+}
 
 export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   if (res.headersSent) {
@@ -26,22 +49,12 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     return;
   }
 
-  if (err instanceof AppError) {
-    const body: ErrorBody = {
-      error: { code: err.code, message: err.message, details: err.details },
-    };
-    res.status(err.status).json(body);
-    return;
-  }
-
-  const status = (err as { status?: unknown }).status;
-  if (typeof status === 'number' && status >= 400 && status < 500) {
-    const body: ErrorBody = { error: { code: 'bad_request', message: 'Malformed request' } };
-    res.status(status).json(body);
+  const known = err instanceof AppError ? err : fromParser(err);
+  if (known) {
+    res.status(known.status).json(errorBody(req, known.code, known.message, known.details));
     return;
   }
 
   req.log.error({ err }, 'unhandled error');
-  const body: ErrorBody = { error: { code: 'internal_error', message: 'Internal server error' } };
-  res.status(500).json(body);
+  res.status(500).json(errorBody(req, 'internal_error', 'Internal server error'));
 };

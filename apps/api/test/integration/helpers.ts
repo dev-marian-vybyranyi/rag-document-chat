@@ -69,3 +69,7 @@ export function sessionCookie(res: Response): string | undefined {
 export function tokenOf(cookie: string): string {
   return cookie.split(';')[0]!.slice('sid='.length);
 }
+
+export function withoutRequestId(body: { error: Record<string, unknown> }) {
+  return { error: { ...body.error, requestId: undefined } };
+}

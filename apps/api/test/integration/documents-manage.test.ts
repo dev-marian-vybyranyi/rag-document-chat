@@ -3,7 +3,7 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { chunks, documents } from '../../src/db/schema.js';
 import { fakeVector } from '../helpers/embedder.js';
-import { buildTestApp, useTestDb } from './helpers.js';
+import { buildTestApp, useTestDb, withoutRequestId } from './helpers.js';
 
 const password = 'correct horse battery';
 const MISSING_ID = '3f0c6f6e-8d2a-4b7e-9a51-5c1d2e7f9a10';
@@ -180,7 +180,7 @@ describe('managing documents', () => {
       const missing = await grace.agent.get(`/documents/${MISSING_ID}`);
 
       expect(foreign.status).toBe(404);
-      expect(foreign.body).toEqual(missing.body);
+      expect(withoutRequestId(foreign.body)).toEqual(withoutRequestId(missing.body));
     });
 
     it.each(['not-a-uuid', '123', 'DROP TABLE documents'])(

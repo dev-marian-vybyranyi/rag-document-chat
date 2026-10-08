@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { users } from '../../src/db/schema.js';
-import { buildTestApp, useTestDb } from './helpers.js';
+import { buildTestApp, useTestDb, withoutRequestId } from './helpers.js';
 
 describe('auth endpoints', () => {
   const db = useTestDb();
@@ -56,7 +56,7 @@ describe('auth endpoints', () => {
         .send('{"email":');
 
       expect(res.status).toBe(400);
-      expect(res.body.error.code).toBe('bad_request');
+      expect(res.body.error.code).toBe('invalid_json');
     });
 
     it('answers 409 when the email is already registered, ignoring letter case', async () => {
@@ -96,7 +96,7 @@ describe('auth endpoints', () => {
       const unknownEmail = await login({ ...credentials, email: 'nobody@example.com' });
 
       expect(unknownEmail.status).toBe(wrongPassword.status);
-      expect(unknownEmail.body).toEqual(wrongPassword.body);
+      expect(withoutRequestId(unknownEmail.body)).toEqual(withoutRequestId(wrongPassword.body));
     });
 
     it('rejects a request without a password', async () => {

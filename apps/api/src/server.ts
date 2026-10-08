@@ -13,9 +13,11 @@ import { createDocumentRepository } from './documents/repository.js';
 import { createRetriever } from './rag/retriever.js';
 import { createRetrievalStore } from './rag/retrieval.js';
 import { createLogger } from './observability/logger.js';
+import { installProcessErrorHandlers } from './observability/process-errors.js';
 
 const env = loadEnv();
 const logger = createLogger(env);
+installProcessErrorHandlers(logger, process.exit);
 const { db, pool } = createDb(env.DATABASE_URL);
 
 await runMigrations(db);
