@@ -1,10 +1,14 @@
 export interface ImportLimits {
+  maxArchiveBytes: number;
+  maxEntries: number;
   maxFiles: number;
   maxFileBytes: number;
   maxTotalBytes: number;
 }
 
 export const defaultImportLimits: ImportLimits = {
+  maxArchiveBytes: 20_000_000,
+  maxEntries: 5_000,
   maxFiles: 300,
   maxFileBytes: 200_000,
   maxTotalBytes: 5_000_000,
@@ -14,6 +18,7 @@ export type SkipReason =
   | 'ignored-directory'
   | 'secret'
   | 'lockfile'
+  | 'symlink'
   | 'unsupported-type'
   | 'too-large'
   | 'empty'
@@ -115,6 +120,7 @@ const PROSE_LANGUAGES = new Set(['markdown', 'restructuredtext', 'text']);
 
 const IGNORED_DIRECTORIES = new Set([
   '.git',
+  '__macosx',
   '.hg',
   '.svn',
   'node_modules',
