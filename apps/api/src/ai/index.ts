@@ -17,13 +17,15 @@ import {
 import { createGeminiEmbedder, createUnconfiguredEmbedder, type Embedder } from './embeddings.js';
 
 export function createEmbedderFromEnv(
-  env: Pick<Env, 'GOOGLE_GENERATIVE_AI_API_KEY' | 'EMBEDDING_MODEL'>,
+  env: Pick<Env, 'GOOGLE_GENERATIVE_AI_API_KEY' | 'EMBEDDING_MODEL'> &
+    Partial<Pick<Env, 'EMBEDDING_TOKENS_PER_MINUTE'>>,
 ): Embedder {
   if (!env.GOOGLE_GENERATIVE_AI_API_KEY) return createUnconfiguredEmbedder();
   return createGeminiEmbedder({
     apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY,
     modelId: env.EMBEDDING_MODEL,
     dimensions: EMBEDDING_DIMENSIONS,
+    tokensPerMinute: env.EMBEDDING_TOKENS_PER_MINUTE,
   });
 }
 

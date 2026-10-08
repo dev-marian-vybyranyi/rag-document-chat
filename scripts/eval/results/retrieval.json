@@ -1,0 +1,2800 @@
+{
+  "date": "2026-10-08T08:21:34.318Z",
+  "embeddingModel": "gemini-embedding-001",
+  "rewriteModel": "gemini-3.5-flash-lite",
+  "relevanceThreshold": 0.65,
+  "uncoveredQuotes": [],
+  "cutoff": 6,
+  "ks": [1, 3, 6],
+  "rewrite": true,
+  "summary": {
+    "all": {
+      "hybrid": {
+        "questions": 57,
+        "hitAt": {
+          "1": 0.7192982456140351,
+          "3": 0.8947368421052632,
+          "6": 0.9473684210526315
+        },
+        "mrr": 0.8119883040935674
+      },
+      "vector": {
+        "questions": 57,
+        "hitAt": {
+          "1": 0.7017543859649122,
+          "3": 0.9122807017543859,
+          "6": 1
+        },
+        "mrr": 0.8076023391812865
+      },
+      "keyword": {
+        "questions": 57,
+        "hitAt": {
+          "1": 0.6666666666666666,
+          "3": 0.8245614035087719,
+          "6": 0.9298245614035088
+        },
+        "mrr": 0.7590643274853801
+      }
+    },
+    "standalone": {
+      "hybrid": {
+        "questions": 52,
+        "hitAt": {
+          "1": 0.6923076923076923,
+          "3": 0.8846153846153846,
+          "6": 0.9423076923076923
+        },
+        "mrr": 0.7939102564102565
+      },
+      "vector": {
+        "questions": 52,
+        "hitAt": {
+          "1": 0.6730769230769231,
+          "3": 0.9038461538461539,
+          "6": 1
+        },
+        "mrr": 0.7891025641025641
+      },
+      "keyword": {
+        "questions": 52,
+        "hitAt": {
+          "1": 0.6538461538461539,
+          "3": 0.8076923076923077,
+          "6": 0.9230769230769231
+        },
+        "mrr": 0.7487179487179486
+      }
+    },
+    "followUps": {
+      "hybrid": {
+        "questions": 5,
+        "hitAt": {
+          "1": 1,
+          "3": 1,
+          "6": 1
+        },
+        "mrr": 1
+      },
+      "vector": {
+        "questions": 5,
+        "hitAt": {
+          "1": 1,
+          "3": 1,
+          "6": 1
+        },
+        "mrr": 1
+      },
+      "keyword": {
+        "questions": 5,
+        "hitAt": {
+          "1": 0.8,
+          "3": 1,
+          "6": 1
+        },
+        "mrr": 0.8666666666666666
+      }
+    }
+  },
+  "rows": [
+    {
+      "id": "nist-core-functions",
+      "question": "What are the four functions of the AI RMF Core?",
+      "query": "What are the four functions of the AI RMF Core?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 25,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 8,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 38,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 26,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 4,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 37,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7766365986134196
+    },
+    {
+      "id": "nist-trustworthy-characteristics",
+      "question": "Which characteristics make an AI system trustworthy according to the framework?",
+      "query": "Which characteristics make an AI system trustworthy according to the framework?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 17,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 20,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 8,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 17,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 18,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 7,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7626210684073167
+    },
+    {
+      "id": "nist-risk-definition",
+      "question": "How does the AI RMF define risk?",
+      "query": "How does the AI RMF define risk?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": null,
+        "vector": 1,
+        "keyword": null
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 12,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 31,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 13,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 37,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 4,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 8,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7642502403776548
+    },
+    {
+      "id": "nist-review-2028",
+      "question": "When is the first formal review of the AI RMF expected to take place?",
+      "query": "When is the first formal review of the AI RMF expected to take place?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 2,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 3,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 33,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 24,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 28,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 26,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 47,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7459450674204879
+    },
+    {
+      "id": "nist-versioning",
+      "question": "How does NIST version the framework?",
+      "query": "How does NIST version the framework?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 3,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 8,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 2,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 8,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 7,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 26,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7034885366342013
+    },
+    {
+      "id": "nist-ai-system-definition",
+      "question": "How does the AI RMF define an AI system?",
+      "query": "How does the AI RMF define an AI system?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 5,
+        "vector": 1,
+        "keyword": null
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 19,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 7,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 7,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 13,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 6,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 8,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7436892270191201
+    },
+    {
+      "id": "nist-govern-cross-cutting",
+      "question": "Which function of the Core runs through all the others?",
+      "query": "Which function of the Core runs through all the others?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 25,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 26,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 30,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 8,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 26,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 30,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6537232814971152
+    },
+    {
+      "id": "nist-valid-reliable-base",
+      "question": "Which trustworthiness characteristic is a necessary condition for the others?",
+      "query": "Which trustworthiness characteristic is a necessary condition for the others?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 17,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 17,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 18,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 18,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 19,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 34,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7058183407537648
+    },
+    {
+      "id": "nist-profiles",
+      "question": "What is an AI RMF use-case profile?",
+      "query": "What is an AI RMF use-case profile?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 3,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 38,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 39,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 38,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 31,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 7,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 4,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.8065582647304407
+    },
+    {
+      "id": "nist-measure-function",
+      "question": "What does the MEASURE function do?",
+      "query": "What does the MEASURE function do?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 2,
+        "vector": 3,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 34,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 33,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 33,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 35,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 36,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 35,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6662772147150656
+    },
+    {
+      "id": "nist-manage-function",
+      "question": "What does the MANAGE function entail?",
+      "query": "What does the MANAGE function entail?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 2,
+        "vector": 5,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 37,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 36,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 36,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 25,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 38,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 27,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7120698826803092
+    },
+    {
+      "id": "nist-safe-definition",
+      "question": "When should an AI system be considered safe?",
+      "query": "When should an AI system be considered safe?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 4
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 19,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 35,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 20,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 13,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 19,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 10,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7524052912386054
+    },
+    {
+      "id": "nist-explainability-vs-interpretability",
+      "question": "What is the difference between explainability and interpretability?",
+      "query": "What is the difference between explainability and interpretability?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 2,
+        "vector": 4,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 21,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 21,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 22,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 18,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 17,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 11,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7119345392936322
+    },
+    {
+      "id": "nist-privacy",
+      "question": "What does privacy refer to in the framework?",
+      "query": "What does privacy refer to in the framework?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 3,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 22,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 44,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 8,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 7,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 44,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 13,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6908288010451917
+    },
+    {
+      "id": "nist-risk-tolerance",
+      "question": "Does the AI RMF tell organizations what their risk tolerance should be?",
+      "query": "Does the AI RMF tell organizations what their risk tolerance should be?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 12,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 12,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 31,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 14,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 38,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 8,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.8160725804485596
+    },
+    {
+      "id": "nist-resilient",
+      "question": "When can an AI system be said to be resilient?",
+      "query": "When can an AI system be said to be resilient?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 2,
+        "vector": 6,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 20,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 20,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 35,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 17,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 6,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 18,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7347183822990873
+    },
+    {
+      "id": "nist-playbook-comments",
+      "question": "Where can comments on the AI RMF Playbook be sent?",
+      "query": "Where can comments on the AI RMF Playbook be sent?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 3,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 26,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 8,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 8,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 37,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 34,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7710506016028981
+    },
+    {
+      "id": "nist-third-party-risk",
+      "question": "Why is third-party software, hardware and data a challenge for risk measurement?",
+      "query": "Why is third-party software, hardware and data a challenge for risk measurement?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 10,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 44,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 10,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 13,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 29,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 32,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7157481592464564
+    },
+    {
+      "id": "nist-fairness",
+      "question": "What does fairness in AI include?",
+      "query": "What does fairness in AI include?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 2,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 22,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 23,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 21,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 21,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 19,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 41,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7187624329759215
+    },
+    {
+      "id": "nist-not-a-checklist",
+      "question": "Are the actions in the Core a checklist?",
+      "query": "Are the actions in the Core a checklist?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 25,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 8,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 26,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 31,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 12,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 38,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6346129139538539
+    },
+    {
+      "id": "json-value-types",
+      "question": "Which types can JSON represent?",
+      "query": "Which types can JSON represent?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7529514884791031
+    },
+    {
+      "id": "json-encoding",
+      "question": "What character encoding must JSON exchanged between systems use?",
+      "query": "What character encoding must JSON exchanged between systems use?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7803831978489827
+    },
+    {
+      "id": "json-media-type",
+      "question": "What is the media type for JSON text?",
+      "query": "What is the media type for JSON text?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.770457879606768
+    },
+    {
+      "id": "json-bom",
+      "question": "May an implementation add a byte order mark to JSON text sent over the network?",
+      "query": "May an implementation add a byte order mark to JSON text sent over the network?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7690713202756034
+    },
+    {
+      "id": "json-structural-characters",
+      "question": "Which are the six structural characters of JSON?",
+      "query": "Which are the six structural characters of JSON?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7774679475524026
+    },
+    {
+      "id": "json-leading-zeros",
+      "question": "Are leading zeros allowed in JSON numbers?",
+      "query": "Are leading zeros allowed in JSON numbers?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 2,
+        "vector": 2,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7604994292711466
+    },
+    {
+      "id": "json-unique-names",
+      "question": "Should the names within a JSON object be unique?",
+      "query": "Should the names within a JSON object be unique?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7356938294205686
+    },
+    {
+      "id": "json-whitespace",
+      "question": "Where is whitespace allowed in a JSON text?",
+      "query": "Where is whitespace allowed in a JSON text?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7753432421993905
+    },
+    {
+      "id": "json-literal-names",
+      "question": "Which literal names does JSON have, and in what case?",
+      "query": "Which literal names does JSON have, and in what case?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7724266141266954
+    },
+    {
+      "id": "json-obsoletes",
+      "question": "Which earlier RFC does RFC 8259 obsolete?",
+      "query": "Which earlier RFC does RFC 8259 obsolete?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7093514528533803
+    },
+    {
+      "id": "oauth-roles",
+      "question": "Which roles does OAuth define?",
+      "query": "Which roles does OAuth define?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7626889933688599
+    },
+    {
+      "id": "oauth-grant-types",
+      "question": "Which grant types does the OAuth 2.0 specification define?",
+      "query": "Which grant types does the OAuth 2.0 specification define?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": null,
+        "vector": 1,
+        "keyword": null
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7362333711241007
+    },
+    {
+      "id": "oauth-code-lifetime",
+      "question": "What maximum lifetime is recommended for an authorization code?",
+      "query": "What maximum lifetime is recommended for an authorization code?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 2,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7502896955598974
+    },
+    {
+      "id": "oauth-code-single-use",
+      "question": "Can a client use an authorization code more than once?",
+      "query": "Can a client use an authorization code more than once?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 2,
+        "vector": 3,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.740630485816565
+    },
+    {
+      "id": "oauth-token-request-method",
+      "question": "Which HTTP method must a client use to request an access token?",
+      "query": "Which HTTP method must a client use to request an access token?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.780723448511805
+    },
+    {
+      "id": "oauth-token-endpoint-tls",
+      "question": "Must the authorization server require TLS at the token endpoint?",
+      "query": "Must the authorization server require TLS at the token endpoint?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 4,
+        "vector": 3,
+        "keyword": 5
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7869204378872944
+    },
+    {
+      "id": "oauth-refresh-token",
+      "question": "What is a refresh token used for?",
+      "query": "What is a refresh token used for?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7517389109910968
+    },
+    {
+      "id": "oauth-state-parameter",
+      "question": "What is the state parameter in an authorization request for?",
+      "query": "What is the state parameter in an authorization request for?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 2,
+        "vector": 2,
+        "keyword": 4
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.741197240494847
+    },
+    {
+      "id": "oauth-client-credentials-grant-type",
+      "question": "What value must grant_type have for the client credentials grant?",
+      "query": "What value must grant_type have for the client credentials grant?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7605484009984264
+    },
+    {
+      "id": "oauth-invalid-client",
+      "question": "When does the authorization server return the error invalid_client?",
+      "query": "When does the authorization server return the error invalid_client?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 3
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7504716597295024
+    },
+    {
+      "id": "oauth-client-types",
+      "question": "What client types does OAuth define?",
+      "query": "What client types does OAuth define?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 3,
+        "keyword": 5
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7465137257395658
+    },
+    {
+      "id": "rust-ownership-rules",
+      "question": "What are the ownership rules in Rust?",
+      "query": "What are the ownership rules in Rust?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 2,
+        "vector": 1,
+        "keyword": 3
+      },
+      "hybridTop": [
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.772262416321223
+    },
+    {
+      "id": "rust-drop",
+      "question": "What does Rust call when a variable goes out of scope?",
+      "query": "What does Rust call when a variable goes out of scope?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7508053744316349
+    },
+    {
+      "id": "rust-stack-vs-heap-speed",
+      "question": "Why is pushing to the stack faster than allocating on the heap?",
+      "query": "Why is pushing to the stack faster than allocating on the heap?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.736581339105779
+    },
+    {
+      "id": "rust-move",
+      "question": "What does it mean that a value was moved?",
+      "query": "What does it mean that a value was moved?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": null,
+        "vector": 1,
+        "keyword": null
+      },
+      "hybridTop": [
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7031271642085374
+    },
+    {
+      "id": "rust-clone",
+      "question": "How can I make a deep copy of a String’s heap data?",
+      "query": "How can I make a deep copy of a String’s heap data?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 3,
+        "vector": 2,
+        "keyword": 6
+      },
+      "hybridTop": [
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.718694827638669
+    },
+    {
+      "id": "rust-copy-integers",
+      "question": "Why can integers be copied without a move?",
+      "query": "Why can integers be copied without a move?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 6,
+        "vector": 6,
+        "keyword": 5
+      },
+      "hybridTop": [
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": true
+        }
+      ],
+      "bestScore": 0.766801155495452
+    },
+    {
+      "id": "rust-monomorphization",
+      "question": "What is monomorphization?",
+      "query": "What is monomorphization?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6685211280446873
+    },
+    {
+      "id": "rust-generics-runtime-cost",
+      "question": "Do generics make a Rust program slower?",
+      "query": "Do generics make a Rust program slower?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7859491287764748
+    },
+    {
+      "id": "rust-type-parameter-name",
+      "question": "Why is the type parameter usually called T?",
+      "query": "Why is the type parameter usually called T?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.678919149962909
+    },
+    {
+      "id": "rust-partialord",
+      "question": "Why does the generic largest function not compile without a trait bound?",
+      "query": "Why does the generic largest function not compile without a trait bound?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7446943378465027
+    },
+    {
+      "id": "rust-option-enum",
+      "question": "Which generic enum does the standard library provide to represent an optional value?",
+      "query": "Which generic enum does the standard library provide to represent an optional value?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 3,
+        "vector": 4,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-generics.md",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7331117076950928
+    },
+    {
+      "id": "followup-nist-cross-cutting",
+      "question": "Which one of them runs through all the others?",
+      "query": "Which one of the four functions of the AI RMF Core runs through all the others?",
+      "rewritten": true,
+      "followUp": true,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 25,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 8,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 30,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 26,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 38,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 4,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7624550271963821
+    },
+    {
+      "id": "followup-oauth-method",
+      "question": "Which HTTP method must it use?",
+      "query": "Which HTTP method must a client use to get an access token in OAuth 2.0?",
+      "rewritten": true,
+      "followUp": true,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 3
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc6749-oauth2.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7805161457470017
+    },
+    {
+      "id": "followup-rust-drop",
+      "question": "What function is called when that happens?",
+      "query": "What function is called when a variable goes out of scope in Rust?",
+      "rewritten": true,
+      "followUp": true,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rust-book-ownership.md",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7513205403639431
+    },
+    {
+      "id": "followup-json-bom",
+      "question": "Can I add a byte order mark to it?",
+      "query": "Can I add a byte order mark to JSON?",
+      "rewritten": true,
+      "followUp": true,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "rfc8259-json.txt",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7381247664888637
+    },
+    {
+      "id": "followup-nist-tolerance",
+      "question": "Does the framework tell me what mine should be?",
+      "query": "Does the AI RMF tell me what my risk tolerance should be?",
+      "rewritten": true,
+      "followUp": true,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 12,
+          "relevant": true
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 12,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 4,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 31,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 38,
+          "relevant": false
+        },
+        {
+          "filename": "nist-ai-rmf-1.0.pdf",
+          "page": 8,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7714359272949898
+    }
+  ],
+  "unanswerable": [
+    {
+      "id": "none-capital-france",
+      "question": "What is the capital of France?",
+      "query": "What is the capital of France?",
+      "hard": false,
+      "bestScore": 0.49323587804507274
+    },
+    {
+      "id": "none-world-cup",
+      "question": "Who won the 2022 FIFA World Cup?",
+      "query": "Who won the 2022 FIFA World Cup?",
+      "hard": false,
+      "bestScore": 0.4638592183237681
+    },
+    {
+      "id": "none-boiling-point",
+      "question": "At what temperature does water boil at sea level?",
+      "query": "At what temperature does water boil at sea level?",
+      "hard": false,
+      "bestScore": 0.4953860709893029
+    },
+    {
+      "id": "none-nist-quantum",
+      "question": "What does the NIST AI RMF say about quantum computing hardware?",
+      "query": "What does the NIST AI RMF say about quantum computing hardware?",
+      "hard": false,
+      "bestScore": 0.7205874338081956
+    },
+    {
+      "id": "none-playbook-price",
+      "question": "How much does the AI RMF Playbook cost?",
+      "query": "How much does the AI RMF Playbook cost?",
+      "hard": false,
+      "bestScore": 0.7169680032518713
+    },
+    {
+      "id": "none-rust-async",
+      "question": "How does async/await work in Rust?",
+      "query": "How does async/await work in Rust?",
+      "hard": false,
+      "bestScore": 0.6073348187503224
+    },
+    {
+      "id": "none-json-library",
+      "question": "Which JSON library does RFC 8259 recommend for Rust?",
+      "query": "Which JSON library does RFC 8259 recommend for Rust?",
+      "hard": false,
+      "bestScore": 0.7550087350772305
+    },
+    {
+      "id": "none-oauth-token-max-lifetime",
+      "question": "What is the maximum lifetime of an OAuth 2.0 access token?",
+      "query": "What is the maximum lifetime of an OAuth 2.0 access token?",
+      "hard": true,
+      "bestScore": 0.7177304708673365
+    },
+    {
+      "id": "none-rfc-vote",
+      "question": "How many votes did RFC 8259 receive when the IETF approved it?",
+      "query": "How many votes did RFC 8259 receive when the IETF approved it?",
+      "hard": true,
+      "bestScore": 0.6840770238662427
+    },
+    {
+      "id": "none-rust-cloud",
+      "question": "Which cloud provider hosts the Rust Book website?",
+      "query": "Which cloud provider hosts the Rust Book website?",
+      "hard": false,
+      "bestScore": 0.6163024506154166
+    }
+  ],
+  "thresholds": [
+    {
+      "threshold": 0.5,
+      "answered": 1,
+      "refused": 0.3
+    },
+    {
+      "threshold": 0.55,
+      "answered": 1,
+      "refused": 0.3
+    },
+    {
+      "threshold": 0.6,
+      "answered": 1,
+      "refused": 0.3
+    },
+    {
+      "threshold": 0.62,
+      "answered": 1,
+      "refused": 0.5
+    },
+    {
+      "threshold": 0.64,
+      "answered": 0.9824561403508771,
+      "refused": 0.5
+    },
+    {
+      "threshold": 0.65,
+      "answered": 0.9824561403508771,
+      "refused": 0.5
+    },
+    {
+      "threshold": 0.66,
+      "answered": 0.9649122807017544,
+      "refused": 0.5
+    },
+    {
+      "threshold": 0.68,
+      "answered": 0.9122807017543859,
+      "refused": 0.5
+    },
+    {
+      "threshold": 0.7,
+      "answered": 0.8947368421052632,
+      "refused": 0.6
+    },
+    {
+      "threshold": 0.72,
+      "answered": 0.7368421052631579,
+      "refused": 0.8
+    },
+    {
+      "threshold": 0.75,
+      "answered": 0.5263157894736842,
+      "refused": 0.9
+    },
+    {
+      "threshold": 0.8,
+      "answered": 0.03508771929824561,
+      "refused": 1
+    }
+  ]
+}

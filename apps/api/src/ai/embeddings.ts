@@ -47,12 +47,91 @@ export interface EmbedderOptions {
   queryMaxRetries?: number;
   maxParallelCalls?: number;
   timeoutMs?: number;
+  tokensPerMinute?: number;
+  maxTokensPerRequest?: number;
+  clock?: Clock;
+}
+
+export interface Clock {
+  now(): number;
+  sleep(ms: number, signal?: AbortSignal): Promise<void>;
+}
+
+export const realClock: Clock = {
+  now: () => Date.now(),
+  sleep: (ms, signal) =>
+    new Promise((resolve, reject) => {
+      if (signal?.aborted) return reject(signal.reason);
+      const timer = setTimeout(() => {
+        signal?.removeEventListener('abort', onAbort);
+        resolve();
+      }, ms);
+      const onAbort = () => {
+        clearTimeout(timer);
+        reject(signal!.reason);
+      };
+      signal?.addEventListener('abort', onAbort, { once: true });
+    }),
+};
+
+const CHARS_PER_TOKEN_ESTIMATE = 3.5;
+const WINDOW_MS = 60 * 1000;
+
+export function estimateTokens(text: string): number {
+  return Math.ceil(text.length / CHARS_PER_TOKEN_ESTIMATE);
+}
+
+function createTokenWindow(limit: number, clock: Clock) {
+  const entries: Array<{ at: number; tokens: number }> = [];
+
+  return {
+    async acquire(tokens: number, signal?: AbortSignal): Promise<void> {
+      const need = Math.min(tokens, limit);
+      for (;;) {
+        const now = clock.now();
+        while (entries.length > 0 && entries[0]!.at <= now - WINDOW_MS) entries.shift();
+        const used = entries.reduce((sum, entry) => sum + entry.tokens, 0);
+        if (used + need <= limit) {
+          entries.push({ at: now, tokens: need });
+          return;
+        }
+        let freed = 0;
+        let freeAt = now;
+        for (const entry of entries) {
+          freed += entry.tokens;
+          freeAt = entry.at + WINDOW_MS;
+          if (used - freed + need <= limit) break;
+        }
+        await clock.sleep(Math.max(freeAt - now, 0) + 5, signal);
+      }
+    },
+  };
+}
+
+function groupByTokens(texts: string[], maxTokens: number): string[][] {
+  const groups: string[][] = [];
+  let current: string[] = [];
+  let tokens = 0;
+  for (const text of texts) {
+    const size = estimateTokens(text);
+    if (current.length > 0 && tokens + size > maxTokens) {
+      groups.push(current);
+      current = [];
+      tokens = 0;
+    }
+    current.push(text);
+    tokens += size;
+  }
+  if (current.length > 0) groups.push(current);
+  return groups;
 }
 
 const DEFAULT_MAX_RETRIES = 5;
 const DEFAULT_QUERY_MAX_RETRIES = 1;
 const DEFAULT_MAX_PARALLEL_CALLS = 2;
 const DEFAULT_TIMEOUT_MS = 2 * 60 * 1000;
+export const DEFAULT_TOKENS_PER_MINUTE = 25_000;
+export const DEFAULT_MAX_TOKENS_PER_REQUEST = 10_000;
 
 export function createEmbedder(options: EmbedderOptions): Embedder {
   const {
@@ -62,7 +141,11 @@ export function createEmbedder(options: EmbedderOptions): Embedder {
     queryMaxRetries = DEFAULT_QUERY_MAX_RETRIES,
     maxParallelCalls = DEFAULT_MAX_PARALLEL_CALLS,
     timeoutMs = DEFAULT_TIMEOUT_MS,
+    tokensPerMinute = DEFAULT_TOKENS_PER_MINUTE,
+    maxTokensPerRequest = DEFAULT_MAX_TOKENS_PER_REQUEST,
+    clock = realClock,
   } = options;
+  const tokenWindow = createTokenWindow(tokensPerMinute, clock);
 
   const withLimits = (signal?: AbortSignal) => {
     const timeout = AbortSignal.timeout(timeoutMs);
@@ -88,16 +171,24 @@ export function createEmbedder(options: EmbedderOptions): Embedder {
       if (texts.length === 0) return [];
       requireText(texts);
       try {
-        const { embeddings } = await embedMany({
-          model,
-          values: texts,
-          maxRetries,
-          maxParallelCalls,
-          abortSignal: withLimits(signal),
-          providerOptions: providerOptions('RETRIEVAL_DOCUMENT'),
-        });
-        checkVectors(embeddings, texts.length);
-        return embeddings;
+        const vectors: number[][] = [];
+        for (const group of groupByTokens(texts, maxTokensPerRequest)) {
+          await tokenWindow.acquire(
+            group.reduce((sum, text) => sum + estimateTokens(text), 0),
+            signal,
+          );
+          const { embeddings } = await embedMany({
+            model,
+            values: group,
+            maxRetries,
+            maxParallelCalls,
+            abortSignal: withLimits(signal),
+            providerOptions: providerOptions('RETRIEVAL_DOCUMENT'),
+          });
+          vectors.push(...embeddings);
+        }
+        checkVectors(vectors, texts.length);
+        return vectors;
       } catch (error) {
         throw toEmbeddingError(error);
       }
@@ -126,11 +217,13 @@ export function createGeminiEmbedder(options: {
   apiKey: string;
   modelId: string;
   dimensions: number;
+  tokensPerMinute?: number;
 }): Embedder {
   const google = createGoogle({ apiKey: options.apiKey });
   return createEmbedder({
     model: google.embedding(options.modelId),
     dimensions: options.dimensions,
+    tokensPerMinute: options.tokensPerMinute,
   });
 }
 

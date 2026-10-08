@@ -13,6 +13,7 @@ const envSchema = z
       .optional()
       .transform((key) => key?.trim() || undefined),
     EMBEDDING_MODEL: z.string().min(1).default('gemini-embedding-001'),
+    EMBEDDING_TOKENS_PER_MINUTE: z.coerce.number().int().positive().default(25000),
     REWRITE_MODEL: z.string().min(1).default('gemini-3.5-flash-lite'),
     RELEVANCE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.65),
     CHAT_MODEL: z.string().min(1).default('gemini-3.5-flash-lite'),
