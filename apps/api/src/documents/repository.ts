@@ -6,7 +6,17 @@ export type DocumentRecord = typeof documents.$inferSelect;
 
 export type DocumentWithChunkCount = DocumentRecord & { chunkCount: number };
 
-export interface NewChunk {
+export type DocumentKind = DocumentRecord['kind'];
+
+export interface CodeLocation {
+  path: string | null;
+  language: string | null;
+  startLine: number | null;
+  endLine: number | null;
+  symbol: string | null;
+}
+
+export interface NewChunk extends Partial<CodeLocation> {
   ordinal: number;
   page: number | null;
   content: string;
@@ -28,6 +38,7 @@ export function createDocumentRepository(db: Database) {
   return {
     async create(input: {
       userId: string;
+      kind?: DocumentKind;
       filename: string;
       mimeType: string;
       sizeBytes: number;

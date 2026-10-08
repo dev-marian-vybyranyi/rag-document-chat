@@ -2,6 +2,7 @@ import { cosineDistance, eq, sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { PG_FOREIGN_KEY_VIOLATION, PG_UNIQUE_VIOLATION, pgErrorCode } from '../../src/db/errors.js';
 import { chunks, documents, EMBEDDING_DIMENSIONS, users } from '../../src/db/schema.js';
+import { createDocumentRepository } from '../../src/documents/repository.js';
 import { useTestDb } from './helpers.js';
 
 function axisVector(axis: number): number[] {
@@ -63,6 +64,39 @@ describe('documents and chunks schema', () => {
       await expect(bogus).rejects.toThrow();
     });
 
+    it('are plain documents unless created as a repository', async () => {
+      const user = await createUser();
+
+      const plain = await createDocument(user.id);
+      const [repo] = await db
+        .insert(documents)
+        .values({
+          userId: user.id,
+          kind: 'repository',
+          filename: 'acme/api',
+          mimeType: 'application/zip',
+          sizeBytes: 1,
+        })
+        .returning();
+
+      expect(plain.kind).toBe('document');
+      expect(repo!.kind).toBe('repository');
+    });
+
+    it('only accept the known kinds', async () => {
+      const user = await createUser();
+
+      const bogus = db.insert(documents).values({
+        userId: user.id,
+        kind: 'wiki' as never,
+        filename: 'a.txt',
+        mimeType: 'text/plain',
+        sizeBytes: 1,
+      });
+
+      await expect(bogus).rejects.toThrow();
+    });
+
     it('are deleted together with their owner', async () => {
       const user = await createUser();
       await createDocument(user.id);
@@ -114,6 +148,21 @@ describe('documents and chunks schema', () => {
 
       await expect(duplicate).rejects.toSatisfy((e) => pgErrorCode(e) === PG_UNIQUE_VIOLATION);
       await expect(db.insert(chunks).values(chunkFor(second, 0))).resolves.toBeDefined();
+    });
+
+    it('have no code location unless one is given', async () => {
+      const user = await createUser();
+      const doc = await createDocument(user.id);
+
+      const [chunk] = await db.insert(chunks).values(chunkFor(doc, 0)).returning();
+
+      expect(chunk).toMatchObject({
+        path: null,
+        language: null,
+        startLine: null,
+        endLine: null,
+        symbol: null,
+      });
     });
 
     it('reject an embedding of the wrong dimensionality', async () => {
@@ -174,6 +223,66 @@ describe('documents and chunks schema', () => {
 
       expect(definitions['chunks_embedding_idx']).toMatch(/USING hnsw .*vector_cosine_ops/);
       expect(definitions['chunks_search_vector_idx']).toMatch(/USING gin/);
+    });
+  });
+
+  describe('repository sources', () => {
+    it('keep the code location of each chunk', async () => {
+      const user = await createUser();
+      const repository = createDocumentRepository(db);
+      const repo = await repository.create({
+        userId: user.id,
+        kind: 'repository',
+        filename: 'acme/api',
+        mimeType: 'application/zip',
+        sizeBytes: 1,
+      });
+
+      await repository.completeWithChunks({
+        documentId: repo.id,
+        userId: user.id,
+        pageCount: null,
+        chunks: [
+          {
+            ordinal: 0,
+            page: null,
+            content: 'export function login() {}',
+            tokenCount: 6,
+            embedding: axisVector(0),
+            path: 'src/auth/login.ts',
+            language: 'typescript',
+            startLine: 10,
+            endLine: 24,
+            symbol: 'login',
+          },
+          { ordinal: 1, page: null, content: 'plain', tokenCount: 1, embedding: axisVector(1) },
+        ],
+      });
+
+      const stored = await db.select().from(chunks).orderBy(chunks.ordinal);
+      expect(stored[0]).toMatchObject({
+        path: 'src/auth/login.ts',
+        language: 'typescript',
+        startLine: 10,
+        endLine: 24,
+        symbol: 'login',
+      });
+      expect(stored[1]).toMatchObject({ path: null, startLine: null });
+      expect((await repository.findForUser(repo.id, user.id))?.kind).toBe('repository');
+    });
+
+    it('create plain documents by default', async () => {
+      const user = await createUser();
+      const repository = createDocumentRepository(db);
+
+      const doc = await repository.create({
+        userId: user.id,
+        filename: 'notes.txt',
+        mimeType: 'text/plain',
+        sizeBytes: 1,
+      });
+
+      expect(doc.kind).toBe('document');
     });
   });
 });

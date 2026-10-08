@@ -45,6 +45,8 @@ export const sessions = pgTable(
 
 export const documentStatus = pgEnum('document_status', ['processing', 'ready', 'failed']);
 
+export const documentKind = pgEnum('document_kind', ['document', 'repository']);
+
 export const documents = pgTable(
   'documents',
   {
@@ -52,6 +54,7 @@ export const documents = pgTable(
     userId: uuid()
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    kind: documentKind().notNull().default('document'),
     filename: text().notNull(),
     mimeType: text().notNull(),
     sizeBytes: integer().notNull(),
@@ -77,6 +80,11 @@ export const chunks = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     ordinal: integer().notNull(),
     page: integer(),
+    path: text(),
+    language: text(),
+    startLine: integer(),
+    endLine: integer(),
+    symbol: text(),
     content: text().notNull(),
     tokenCount: integer().notNull(),
     embedding: vector({ dimensions: EMBEDDING_DIMENSIONS }).notNull(),

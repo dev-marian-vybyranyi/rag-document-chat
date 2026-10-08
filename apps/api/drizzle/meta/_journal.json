@@ -57,6 +57,13 @@
       "when": 1791458888978,
       "tag": "0007_embedding_model",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791463241656,
+      "tag": "0008_source_kind_and_code_metadata",
+      "breakpoints": true
     }
   ]
 }
