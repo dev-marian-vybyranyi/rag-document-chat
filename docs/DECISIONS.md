@@ -56,6 +56,7 @@ Raw material for the README – not a polished document.
 - Chosen: one Blueprint with `rag-chat-db` (free Postgres 17), `rag-chat-api` and `rag-chat-web` (free Docker web services), all in `frankfurt`.
 - Why: free web services can only talk to the database over the private network inside one region; pgvector is supported on Render Postgres (`CREATE EXTENSION vector`).
 - Trade-offs / when to revisit: free Postgres is deleted 30 days after creation (1 GB, one per workspace); free web services idle out after 15 min. Fine for a demo, not for production.
+- Superseded for the database: see "Database on Neon instead of Render Postgres" below.
 
 ### Auto-deploy only after CI passes
 
@@ -448,3 +449,24 @@ Raw material for the README – not a polished document.
 - Faults found by writing them, all small: a duration of 999.6 ms was shown as "1000 ms" instead of "1.0 s"; a refusal at a similarity of 64.9% against a threshold of 65% read "Best match 65%, at least 65% is needed", which looks like a tie and explains nothing, so the numbers now get a decimal when rounding would hide the difference; and closing a side panel dropped keyboard focus to the top of the page. Focus now goes back to the button that opened the panel, and when one panel is replaced by the other it goes back to the button of the last one, so the first trigger is not stale (remembered by the provider at the moment of the click, because a panel that restored focus by itself would return to the trigger of the panel it replaced).
 - Not changed: the conversation scrolls to the newest text on every update even if the reader scrolled up to look at something earlier. A test pins that behaviour as it is; stopping the automatic scroll after a manual one is a feature of its own.
 - Not done: tests of the layout at different widths (jsdom has no layout, so the overlay-versus-side-by-side behaviour was checked in a real browser) and a browser end-to-end run, which was optional in the plan.
+
+### Model provider chosen by configuration: one interface, Gemini and OpenAI behind it
+
+- Chosen: `AI_PROVIDER` (`google` by default, or `openai`) selects an `AiProvider` that builds everything that talks to a model: the embedder, the chat model, the query rewriter, the question suggester and the evaluation judge. Provider-specific details (`taskType` and `thinkingConfig` for Google, `dimensions` and `reasoningEffort` for OpenAI) live only in `src/ai/providers/`; the rest of the code sees one interface.
+- Why: the free Gemini quota is the weakest part of the demo (a daily cap on embeddings), and indexing a code repository later needs far more embeddings than documents do. With the provider in configuration, development and tests stay on Gemini and the deployment can use OpenAI by changing environment variables.
+- OpenAI defaults: `gpt-5-nano` for answers and rewriting (the cheapest chat model on the pricing page when this was written), `text-embedding-3-small` asked for 768 dimensions so the database column does not change. Model names, thinking level and tokens per minute are overridable; the tokens-per-minute default is 25,000 for Google and 200,000 for OpenAI (free accounts allow 40,000, paid ones 1,000,000).
+- Quota and error classification understands both: Google's `RetryInfo` and quota ids, OpenAI's `insufficient_quota`, per-day limits, `retry-after-ms` and durations such as `6m0s`. The "quota used up" messages no longer promise a daily reset, because for OpenAI it means the credit ran out.
+- Trade-offs / when to revisit: the relevance threshold (0.65) was measured with Gemini vectors; OpenAI similarities sit on another scale, so after switching run `npm run eval:retrieval` and set `RELEVANCE_THRESHOLD`. Reasoning options are mapped one to one from a single level setting, which hides provider differences that could matter for larger models.
+
+### The embedding model is stored per document, and only matching documents are searched
+
+- Chosen: `documents.embedding_model` records the model that indexed each document; vector and keyword search both ignore documents indexed with another model, and the API logs at start how many there are. The migration marks existing ready documents as `gemini-embedding-001`, the only model used before.
+- Why: vectors of different models can have the same length (768) and still mean nothing to each other, so a mixed index would silently return wrong passages. Keyword search skips them too, otherwise a switched deployment would half work and be confusing.
+- The evaluation corpus is reused only when it was indexed with the configured model, so a provider switch cannot be measured against stale vectors; reports record the provider.
+- Trade-offs / when to revisit: after a switch documents must be uploaded again (the app does not re-embed on its own and the UI does not flag them yet). Re-embedding from stored chunk text would avoid the upload; it is not built.
+
+### Database on Neon instead of Render Postgres
+
+- Chosen: the deployment uses a free Neon Postgres (pgvector available) and `DATABASE_URL` is entered by hand in the Render dashboard; `render.yaml` now describes only the two web services.
+- Why: Render's free Postgres is deleted 30 days after creation, which would take the demo's data (and the review window) with it.
+- Trade-offs / when to revisit: the API and database are no longer in one private network, so connections go over TLS on the public internet (`sslmode=require`) and add a little latency; Neon's free storage is small and the compute suspends when idle.

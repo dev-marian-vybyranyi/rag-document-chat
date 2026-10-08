@@ -1,16 +1,6 @@
-# Render Blueprint: one free Postgres and two free Docker web services.
+# Render Blueprint: two free Docker web services. The database is an external Postgres with
+# pgvector (Neon free tier in this deployment), so DATABASE_URL is entered by hand.
 # Create it from the dashboard: New > Blueprint > pick this repository.
-#
-# All three resources share a region: free web services can only reach the database
-# over Render's private network when they live in the same one.
-
-databases:
-  - name: rag-chat-db
-    plan: free # expires 30 days after creation; see README for the trade-off
-    region: frankfurt
-    databaseName: ragchat
-    user: ragchat
-    postgresMajorVersion: '17'
 
 services:
   - type: web
@@ -25,11 +15,15 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Connection string of the external Postgres, e.g. a Neon one ending in ?sslmode=require.
       - key: DATABASE_URL
-        fromDatabase:
-          name: rag-chat-db
-          property: connectionString
+        sync: false
+      # google (default) or openai; sync: false so it can be switched in the dashboard.
+      - key: AI_PROVIDER
+        sync: false
       - key: GOOGLE_GENERATIVE_AI_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
         sync: false
 
   - type: web
