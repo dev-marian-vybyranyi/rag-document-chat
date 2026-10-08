@@ -1,3 +1,5 @@
+import { ImportRejectedError } from './errors.js';
+
 export interface ImportLimits {
   maxArchiveBytes: number;
   maxEntries: number;
@@ -43,13 +45,6 @@ export interface SkippedFile {
 export interface ImportPlan {
   accepted: AcceptedFile[];
   skipped: SkippedFile[];
-}
-
-export class ImportRejectedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ImportRejectedError';
-  }
 }
 
 const MAX_PATH_LENGTH = 300;
@@ -111,6 +106,7 @@ const LANGUAGE_BY_FILENAME: Record<string, string> = {
   dockerfile: 'dockerfile',
   makefile: 'makefile',
   procfile: 'procfile',
+  readme: 'text',
   'go.mod': 'go',
   gemfile: 'ruby',
   pipfile: 'toml',

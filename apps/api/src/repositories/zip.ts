@@ -1,9 +1,9 @@
 import { buffer as readAll } from 'node:stream/consumers';
 import yauzl from 'yauzl';
+import { ImportRejectedError } from './errors.js';
 import {
   checkFileContent,
   defaultImportLimits,
-  ImportRejectedError,
   normalizeRepoPath,
   planImport,
   type CandidateFile,

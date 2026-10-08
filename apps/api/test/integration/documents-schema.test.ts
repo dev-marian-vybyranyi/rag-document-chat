@@ -271,6 +271,28 @@ describe('documents and chunks schema', () => {
       expect((await repository.findForUser(repo.id, user.id))?.kind).toBe('repository');
     });
 
+    it('remember where a repository came from', async () => {
+      const user = await createUser();
+      const repository = createDocumentRepository(db);
+
+      const repo = await repository.create({
+        userId: user.id,
+        kind: 'repository',
+        filename: 'acme/api',
+        mimeType: 'application/zip',
+        sizeBytes: 1,
+        repoUrl: 'https://github.com/acme/api',
+        repoRef: null,
+        commitSha: '7fd1a60b01f91b314f59955a4e4d4e80d8edf11d',
+      });
+
+      expect(await repository.findForUser(repo.id, user.id)).toMatchObject({
+        repoUrl: 'https://github.com/acme/api',
+        repoRef: null,
+        commitSha: '7fd1a60b01f91b314f59955a4e4d4e80d8edf11d',
+      });
+    });
+
     it('create plain documents by default', async () => {
       const user = await createUser();
       const repository = createDocumentRepository(db);
@@ -283,6 +305,7 @@ describe('documents and chunks schema', () => {
       });
 
       expect(doc.kind).toBe('document');
+      expect(doc).toMatchObject({ repoUrl: null, repoRef: null, commitSha: null });
     });
   });
 });

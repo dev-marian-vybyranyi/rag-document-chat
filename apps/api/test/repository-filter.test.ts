@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { ImportRejectedError } from '../src/repositories/errors.js';
 import {
   checkFileContent,
   classifyFile,
   defaultImportLimits,
-  ImportRejectedError,
   isSecretPath,
   languageOf,
   normalizeRepoPath,
@@ -56,6 +56,7 @@ describe('languageOf', () => {
     ['Dockerfile', 'dockerfile'],
     ['deploy/dockerfile', 'dockerfile'],
     ['Makefile', 'makefile'],
+    ['README', 'text'],
     ['config/settings.yml', 'yaml'],
   ])('knows %s', (path, language) => {
     expect(languageOf(path)).toBe(language);

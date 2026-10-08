@@ -39,6 +39,9 @@ export function createDocumentRepository(db: Database) {
     async create(input: {
       userId: string;
       kind?: DocumentKind;
+      repoUrl?: string;
+      repoRef?: string | null;
+      commitSha?: string;
       filename: string;
       mimeType: string;
       sizeBytes: number;

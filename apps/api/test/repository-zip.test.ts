@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { defaultImportLimits, ImportRejectedError } from '../src/repositories/filter.js';
+import { ImportRejectedError } from '../src/repositories/errors.js';
+import { defaultImportLimits } from '../src/repositories/filter.js';
 import { importZipArchive } from '../src/repositories/zip.js';
 import { buildZip } from './helpers/zip.js';
 
