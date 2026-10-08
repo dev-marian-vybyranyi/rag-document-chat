@@ -2,11 +2,7 @@ import { createGoogle } from '@ai-sdk/google';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pino } from 'pino';
-import {
-  createChatModelFromEnv,
-  createEmbedderFromEnv,
-  createQueryRewriterFromEnv,
-} from '../src/ai/index.js';
+import { createAiProvider } from '../src/ai/index.js';
 import { loadEnv } from '../src/config/env.js';
 import { createDb } from '../src/db/client.js';
 import { ensureEvalCorpus, removeEvalUser } from '../src/eval/corpus.js';
@@ -57,7 +53,8 @@ const judgeModelId = env.EVAL_JUDGE_MODEL ?? env.CHAT_MODEL;
 
 const logger = pino({ level: 'warn' });
 const { db, pool } = createDb(env.DATABASE_URL);
-const embedder = createPatientEmbedder(createEmbedderFromEnv(env), {
+const ai = createAiProvider(env);
+const embedder = createPatientEmbedder(ai.embedder, {
   onWait: (ms) => out(`  embedding rate limit reached, waiting ${Math.round(ms / 1000)} s…`),
 });
 const onWait = (ms: number, reason: string) =>
@@ -101,9 +98,9 @@ try {
     userId: corpus.userId,
     chat: {
       retriever: createRetriever({ store: createRetrievalStore(db), embedder, logger }),
-      rewriter: createQueryRewriterFromEnv(env, logger),
+      rewriter: ai.createRewriter(logger),
       relevanceThreshold: env.RELEVANCE_THRESHOLD,
-      ...createChatModelFromEnv(env),
+      ...ai.chat,
     },
     logger,
     pacingMs,

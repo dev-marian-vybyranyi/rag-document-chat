@@ -1,4 +1,5 @@
-import { createEmbedderFromEnv } from '../src/ai/index.js';
+import { createAiProvider } from '../src/ai/index.js';
+import { loadEnv } from '../src/config/env.js';
 import { EmbeddingError } from '../src/ai/embeddings.js';
 
 const out = (line = '') => process.stdout.write(`${line}\n`);
@@ -13,10 +14,13 @@ if (!apiKey) {
 }
 
 const modelId = process.env.EMBEDDING_MODEL ?? 'gemini-embedding-001';
-const embedder = createEmbedderFromEnv({
-  GOOGLE_GENERATIVE_AI_API_KEY: apiKey,
-  EMBEDDING_MODEL: modelId,
-});
+const embedder = createAiProvider(
+  loadEnv({
+    DATABASE_URL: 'postgres://unused',
+    GOOGLE_GENERATIVE_AI_API_KEY: apiKey,
+    EMBEDDING_MODEL: modelId,
+  }),
+).embedder;
 
 const passages = [
   'HNSW is a graph-based index for approximate nearest neighbour search in vector databases.',

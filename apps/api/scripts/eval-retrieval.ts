@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pino } from 'pino';
-import { createEmbedderFromEnv, createQueryRewriterFromEnv } from '../src/ai/index.js';
+import { createAiProvider } from '../src/ai/index.js';
 import { loadEnv } from '../src/config/env.js';
 import { createDb } from '../src/db/client.js';
 import { ensureEvalCorpus, passagesByFile, removeEvalUser } from '../src/eval/corpus.js';
@@ -45,7 +45,8 @@ const reportPath = resolve(option('out') ?? join(repoRoot, 'scripts/eval/results
 
 const logger = pino({ level: 'warn' });
 const { db, pool } = createDb(env.DATABASE_URL);
-const embedder = createEmbedderFromEnv(env);
+const ai = createAiProvider(env);
+const embedder = ai.embedder;
 
 try {
   const golden = loadGoldenSet(join(repoRoot, 'scripts/eval/golden.json'));
@@ -79,7 +80,7 @@ try {
       userId: corpus.userId,
       store: createRetrievalStore(db),
       embedder,
-      rewriter: createQueryRewriterFromEnv(env, logger),
+      rewriter: ai.createRewriter(logger),
       logger,
       onWait: (ms) => out(`  embedding rate limit reached, waiting ${Math.round(ms / 1000)} s…`),
     });

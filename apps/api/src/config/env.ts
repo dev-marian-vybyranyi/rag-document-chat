@@ -8,6 +8,7 @@ const envSchema = z
     LOG_LEVEL: z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default('info'),
+    AI_PROVIDER: z.enum(['google']).default('google'),
     GOOGLE_GENERATIVE_AI_API_KEY: z
       .string()
       .optional()
