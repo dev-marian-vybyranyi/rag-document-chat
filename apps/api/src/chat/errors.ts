@@ -1,11 +1,21 @@
 import { APICallError, RetryError } from 'ai';
+import { quotaInfoOf } from '../ai/quota.js';
 import { EmbeddingError } from '../ai/embeddings.js';
+import { describeWait } from '../http/wait.js';
 
 export type ChatFailureKind =
-  'rate_limited' | 'overloaded' | 'misconfigured' | 'timeout' | 'cancelled' | 'unexpected';
+  | 'rate_limited'
+  | 'quota_exhausted'
+  | 'overloaded'
+  | 'misconfigured'
+  | 'timeout'
+  | 'cancelled'
+  | 'unexpected';
 
 export const CHAT_FAILURE_MESSAGES: Record<ChatFailureKind, string> = {
   rate_limited: 'The AI service is busy (rate limit reached). Please try again in a minute.',
+  quota_exhausted:
+    'The free AI quota for today is used up. Please try again later; it renews every day.',
   overloaded: 'The AI model is overloaded right now. Please try again in a moment.',
   misconfigured: 'The AI service is not configured correctly.',
   timeout: 'The AI model took too long to respond. Please try again.',
@@ -18,6 +28,7 @@ const INVALID_KEY = /API key not valid|API_KEY_INVALID|API key expired/i;
 export function classifyChatFailure(error: unknown): ChatFailureKind {
   if (error instanceof EmbeddingError) {
     if (error.kind === 'rate_limited') return 'rate_limited';
+    if (error.kind === 'quota_exhausted') return 'quota_exhausted';
     if (error.kind === 'misconfigured') return 'misconfigured';
     if (error.kind === 'timeout') return 'timeout';
     if (error.kind === 'cancelled') return 'cancelled';
@@ -28,7 +39,7 @@ export function classifyChatFailure(error: unknown): ChatFailureKind {
 
   if (APICallError.isInstance(cause)) {
     const status = cause.statusCode;
-    if (status === 429) return 'rate_limited';
+    if (status === 429) return quotaInfoOf(cause).daily ? 'quota_exhausted' : 'rate_limited';
     if (status === 401 || status === 403) return 'misconfigured';
     if (INVALID_KEY.test(`${cause.message} ${cause.responseBody ?? ''}`)) return 'misconfigured';
     if (status === 500 || status === 502 || status === 503 || status === 504) return 'overloaded';
@@ -43,4 +54,24 @@ export function classifyChatFailure(error: unknown): ChatFailureKind {
 
 export function chatFailureMessage(error: unknown): string {
   return CHAT_FAILURE_MESSAGES[classifyChatFailure(error)];
+}
+
+export interface ChatFailure {
+  kind: ChatFailureKind;
+  message: string;
+  retryAfterMs: number | null;
+}
+
+export function describeChatFailure(error: unknown): ChatFailure {
+  const kind = classifyChatFailure(error);
+  const retryAfterMs = kind === 'rate_limited' ? quotaInfoOf(error).retryAfterMs : null;
+  const message =
+    retryAfterMs === null
+      ? CHAT_FAILURE_MESSAGES[kind]
+      : rateLimitedMessage(Math.ceil(retryAfterMs / 1000));
+  return { kind, message, retryAfterMs };
+}
+
+export function rateLimitedMessage(seconds: number): string {
+  return `The AI service is busy (rate limit reached). Please try again in ${describeWait(seconds)}.`;
 }

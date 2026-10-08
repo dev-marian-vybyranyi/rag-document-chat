@@ -14,12 +14,13 @@ import type { RetrievedChunk } from '../rag/fusion.js';
 import { findInjectionSignals } from '../rag/sanitize.js';
 import type { QueryRewriter } from '../rag/rewrite.js';
 import type { Retriever } from '../rag/retriever.js';
+import { createCooldown, type Cooldown } from '../ai/cooldown.js';
 import { AppError } from '../http/errors.js';
 import { defaultUsageLimits } from '../http/limits.js';
 import type { TraceRecorder } from '../observability/traces.js';
 import type { RagTrace, TracedChunk } from '../observability/types.js';
 import { createCitationStream, type CitationStats } from './citations.js';
-import { CHAT_FAILURE_MESSAGES, classifyChatFailure } from './errors.js';
+import { CHAT_FAILURE_MESSAGES, describeChatFailure, rateLimitedMessage } from './errors.js';
 import { DEFAULT_CHAT_TITLE, type ChatRecord, type ChatRepository } from './repository.js';
 import type { ClosestPassage, MessageRetrieval, MessageSource } from './types.js';
 
@@ -28,6 +29,9 @@ export const MAX_QUESTION_LENGTH = 2000;
 export const MAX_TITLE_FROM_QUESTION = 60;
 export const EXCERPT_LENGTH = 300;
 export const MAX_ANSWER_TOKENS = 1024;
+export const RATE_LIMIT_COOLDOWN_MS = 15_000;
+export const MAX_RATE_LIMIT_COOLDOWN_MS = 2 * 60 * 1000;
+export const QUOTA_COOLDOWN_MS = 10 * 60 * 1000;
 export const ANSWER_TIMEOUT = { totalMs: 60_000, chunkMs: 20_000 };
 
 type ProviderOptions = NonNullable<Parameters<typeof streamText>[0]['providerOptions']>;
@@ -38,6 +42,7 @@ export interface ChatDeps {
   model: LanguageModel | null;
   relevanceThreshold?: number;
   maxMessagesPerChat?: number;
+  cooldown?: Cooldown;
   providerOptions?: ProviderOptions;
 }
 
@@ -125,6 +130,7 @@ export function createChatResponder(
     providerOptions,
     relevanceThreshold = DEFAULT_RELEVANCE_THRESHOLD,
     maxMessagesPerChat = defaultUsageLimits.maxMessagesPerChat,
+    cooldown = createCooldown(),
   }: ChatDeps,
   logger: Logger,
   traces: TraceRecorder,
@@ -141,6 +147,20 @@ export function createChatResponder(
       signal,
     }: RespondInput): Promise<ReadableStream<UIMessageChunk>> {
       if (model === null) throw new Error('Chat model is not configured');
+
+      const cooling = cooldown.state();
+      if (cooling) {
+        const seconds = Math.ceil(cooling.remainingMs / 1000);
+        throw new AppError(
+          503,
+          'ai_busy',
+          cooling.reason === 'rate_limited'
+            ? rateLimitedMessage(seconds)
+            : CHAT_FAILURE_MESSAGES.quota_exhausted,
+          undefined,
+          seconds,
+        );
+      }
 
       const history = (await chats.messagesOf(chat.id)).map(({ role, content }) => ({
         role,
@@ -211,9 +231,20 @@ export function createChatResponder(
 
       const onError = (error: unknown): string => {
         logger.error({ err: error, chatId: chat.id }, 'chat answer failed');
-        const kind = classifyChatFailure(error);
+        const { kind, message, retryAfterMs } = describeChatFailure(error);
+        if (kind === 'rate_limited') {
+          cooldown.trip(
+            Math.min(
+              Math.max(retryAfterMs ?? RATE_LIMIT_COOLDOWN_MS, 1000),
+              MAX_RATE_LIMIT_COOLDOWN_MS,
+            ),
+            'rate_limited',
+          );
+        } else if (kind === 'quota_exhausted') {
+          cooldown.trip(QUOTA_COOLDOWN_MS, 'quota_exhausted');
+        }
         void record({ outcome: kind === 'cancelled' ? 'cancelled' : 'failed', errorKind: kind });
-        return CHAT_FAILURE_MESSAGES[kind];
+        return message;
       };
 
       return createUIMessageStream<ChatUIMessage>({

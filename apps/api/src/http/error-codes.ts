@@ -17,6 +17,7 @@ export const ERROR_CODES = [
   'chat_limit',
   'chat_full',
   'chat_unavailable',
+  'ai_busy',
   'internal_error',
 ] as const;
 

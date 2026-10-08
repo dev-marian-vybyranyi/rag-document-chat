@@ -1,8 +1,10 @@
 import { createGoogle } from '@ai-sdk/google';
+import { quotaInfoOf } from './quota.js';
 import { APICallError, embed, embedMany, RetryError, type EmbeddingModel } from 'ai';
 
 export type EmbeddingErrorKind =
   | 'rate_limited'
+  | 'quota_exhausted'
   | 'misconfigured'
   | 'unavailable'
   | 'timeout'
@@ -13,6 +15,8 @@ export type EmbeddingErrorKind =
 const USER_MESSAGES: Record<EmbeddingErrorKind, string> = {
   rate_limited:
     'The embedding service is busy (rate limit reached). Please try again in a few minutes.',
+  quota_exhausted:
+    'The daily quota of the embedding service is used up. Please try again tomorrow.',
   misconfigured: 'The embedding service is not configured correctly.',
   unavailable: 'The embedding service is temporarily unavailable. Please try again later.',
   timeout: 'The embedding service took too long to respond. Please try again.',
@@ -158,7 +162,11 @@ function toEmbeddingError(error: unknown): EmbeddingError {
 
   if (APICallError.isInstance(cause)) {
     const status = cause.statusCode;
-    if (status === 429) return new EmbeddingError('rate_limited', { cause });
+    if (status === 429) {
+      return new EmbeddingError(quotaInfoOf(cause).daily ? 'quota_exhausted' : 'rate_limited', {
+        cause,
+      });
+    }
     if (status === 401 || status === 403 || isInvalidKeyResponse(cause)) {
       return new EmbeddingError('misconfigured', { cause });
     }

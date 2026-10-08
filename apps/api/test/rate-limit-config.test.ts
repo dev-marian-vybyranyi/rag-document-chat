@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loadEnv } from '../src/config/env.js';
-import { describeWait } from '../src/http/rate-limit.js';
+import { describeWait } from '../src/http/wait.js';
 
 const base = { DATABASE_URL: 'postgres://u:p@localhost:5432/db' };
 

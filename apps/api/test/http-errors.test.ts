@@ -16,6 +16,9 @@ function buildApp() {
   app.get('/app-error', () => {
     throw new AppError(409, 'chat_full', 'This conversation is full', { limit: 200 });
   });
+  app.get('/busy', () => {
+    throw new AppError(503, 'ai_busy', 'Try later', undefined, 42);
+  });
   app.get('/boom', () => {
     throw new Error('secret internal detail at /srv/app/db.ts');
   });
@@ -55,6 +58,15 @@ describe('error responses', () => {
 
     expect(res.body.error.requestId).toBe('req-from-client-1');
     expect(res.headers['x-request-id']).toBe('req-from-client-1');
+  });
+
+  it('tell the caller when to come back, when the error has a wait', async () => {
+    const busy = await request(app).get('/busy');
+    const full = await request(app).get('/app-error');
+
+    expect(busy.status).toBe(503);
+    expect(busy.headers['retry-after']).toBe('42');
+    expect(full.headers['retry-after']).toBeUndefined();
   });
 
   it('are JSON for an unknown route too', async () => {

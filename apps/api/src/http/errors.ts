@@ -7,6 +7,7 @@ export class AppError extends Error {
     readonly code: ErrorCode,
     message: string,
     readonly details?: unknown,
+    readonly retryAfterSeconds?: number,
   ) {
     super(message);
     this.name = 'AppError';
@@ -51,6 +52,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
 
   const known = err instanceof AppError ? err : fromParser(err);
   if (known) {
+    if (known.retryAfterSeconds) res.setHeader('Retry-After', String(known.retryAfterSeconds));
     res.status(known.status).json(errorBody(req, known.code, known.message, known.details));
     return;
   }
