@@ -14,5 +14,13 @@ export function formatPercent(score: number): string {
 }
 
 export function formatDuration(ms: number): string {
-  return ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(1)} s`;
+  const rounded = Math.round(ms);
+  return rounded < 1000 ? `${rounded} ms` : `${(ms / 1000).toFixed(1)} s`;
+}
+
+export function formatScoreAgainst(score: number, required: number): [string, string] {
+  const whole = [formatPercent(score), formatPercent(required)] as [string, string];
+  const hidden = whole[0] === whole[1] && score !== required;
+  if (!hidden) return whole;
+  return [`${(score * 100).toFixed(1)}%`, `${(required * 100).toFixed(1)}%`];
 }

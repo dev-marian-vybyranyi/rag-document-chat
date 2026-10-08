@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import { SidePanel } from './SidePanel';
 import { citedIds } from './citations';
-import { formatDuration, formatPercent } from './source-format';
+import { formatDuration, formatPercent, formatScoreAgainst } from './source-format';
 import { useSourceViewer, type WhyData } from './source-viewer-context';
 
 export function WhyThisAnswer() {
@@ -155,12 +155,13 @@ function Relevance({ retrieval }: { retrieval: WhyData['retrieval'] }) {
   }
 
   const passed = outcome === 'answered';
+  const [bestText, requiredText] = formatScoreAgainst(bestScore, threshold ?? bestScore);
   return (
     <>
       {threshold !== undefined && (
         <div
           role="img"
-          aria-label={`Best similarity ${formatPercent(bestScore)}, required ${formatPercent(threshold)}`}
+          aria-label={`Best similarity ${bestText}, required ${requiredText}`}
           className="relative h-2 rounded-full bg-muted"
         >
           <div
@@ -174,8 +175,8 @@ function Relevance({ retrieval }: { retrieval: WhyData['retrieval'] }) {
         </div>
       )}
       <p>
-        Best match {formatPercent(bestScore)}
-        {threshold !== undefined && <>, at least {formatPercent(threshold)} is needed</>}.{' '}
+        Best match {bestText}
+        {threshold !== undefined && <>, at least {requiredText} is needed</>}.{' '}
         {passed
           ? 'That was enough to ask the model.'
           : 'That was not enough, so the model was not asked and no sources were shown.'}
