@@ -23,6 +23,8 @@ export function createTraceRecorder(db: Database, logger: Logger): TraceRecorder
           totalMs: trace.totalMs,
           inputTokens: trace.inputTokens,
           outputTokens: trace.outputTokens,
+          citationsKept: trace.citationsKept,
+          citationsRemoved: trace.citationsRemoved,
           model: trace.model,
           errorKind: trace.errorKind,
         },

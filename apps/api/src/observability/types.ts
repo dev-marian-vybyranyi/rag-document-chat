@@ -34,6 +34,8 @@ export interface RagTrace {
   totalMs: number;
   inputTokens: number | null;
   outputTokens: number | null;
+  citationsKept: number | null;
+  citationsRemoved: number | null;
   model: string | null;
   errorKind: ChatFailureKind | null;
 }

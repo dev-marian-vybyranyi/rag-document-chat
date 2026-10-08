@@ -18,6 +18,7 @@ import { AppError } from '../http/errors.js';
 import { defaultUsageLimits } from '../http/limits.js';
 import type { TraceRecorder } from '../observability/traces.js';
 import type { RagTrace, TracedChunk } from '../observability/types.js';
+import { createCitationStream, type CitationStats } from './citations.js';
 import { CHAT_FAILURE_MESSAGES, classifyChatFailure } from './errors.js';
 import { DEFAULT_CHAT_TITLE, type ChatRecord, type ChatRepository } from './repository.js';
 import type { ClosestPassage, MessageRetrieval, MessageSource } from './types.js';
@@ -166,6 +167,7 @@ export function createChatResponder(
       let answerStartedAt: number | undefined;
       let totalUsage: PromiseLike<LanguageModelUsage> | undefined;
       let recorded = false;
+      let citationStats: CitationStats | undefined;
 
       const record = async (fields: Pick<RagTrace, 'outcome'> & Partial<RagTrace>) => {
         if (recorded) return;
@@ -185,6 +187,8 @@ export function createChatResponder(
           generationMs: answerStartedAt === undefined ? null : Date.now() - answerStartedAt,
           inputTokens: null,
           outputTokens: null,
+          citationsKept: null,
+          citationsRemoved: null,
           model: modelId,
           errorKind: null,
           ...progress,
@@ -312,7 +316,16 @@ export function createChatResponder(
             onError: ({ error }) => logger.error({ err: error }, 'model stream error'),
           });
           totalUsage = answer.totalUsage;
-          writer.merge(toUIMessageStream({ stream: answer.stream, sendStart: false, onError }));
+          const sourceCount = sources.length;
+          const citations = createCitationStream((id) => id >= 1 && id <= sourceCount);
+          citationStats = citations.stats;
+          writer.merge(
+            toUIMessageStream({
+              stream: answer.stream.pipeThrough(citations.transform),
+              sendStart: false,
+              onError,
+            }),
+          );
         },
         onEnd: async ({ responseMessage, finishReason, isAborted, isCancelled }) => {
           if (retrieval?.outcome === 'declined') return;
@@ -336,7 +349,19 @@ export function createChatResponder(
             sources,
             retrieval,
           });
-          await record({ outcome: 'answered', messageId: saved.id, ...(await tokensUsed()) });
+          if (citationStats && citationStats.removed > 0) {
+            logger.warn(
+              { chatId: chat.id, removed: citationStats.removed, kept: citationStats.kept },
+              'removed citations that point to sources which do not exist',
+            );
+          }
+          await record({
+            outcome: 'answered',
+            messageId: saved.id,
+            citationsKept: citationStats?.kept ?? null,
+            citationsRemoved: citationStats?.removed ?? null,
+            ...(await tokensUsed()),
+          });
         },
       });
     },

@@ -202,6 +202,48 @@ describe('rag traces', () => {
     expect(trace.outcome).toBe('answered');
   });
 
+  it('strips references to sources that do not exist, from the stream and the stored answer', async () => {
+    const model = modelStreaming('Revenue grew ', '4% [1][', '7] and fell 2% [', '9], see [1].');
+    const app = setup({ model });
+    const { agent, chatId } = await startChat(app);
+
+    const res = await ask(agent, chatId, 'How did revenue change?');
+
+    const streamed = (res.body as string)
+      .split('\n\n')
+      .map((block) => block.replace(/^data: /, '').trim())
+      .filter((data) => data.startsWith('{'))
+      .map((data) => JSON.parse(data) as { type: string; delta?: string })
+      .filter((part) => part.type === 'text-delta')
+      .map((part) => part.delta)
+      .join('');
+    const trace = await tracesOf(chatId);
+    const assistant = (await chats.messagesOf(chatId)).find((m) => m.role === 'assistant')!;
+    expect(streamed).toBe('Revenue grew 4% [1] and fell 2%, see [1].');
+    expect(assistant.content).toBe(streamed);
+    expect(trace).toMatchObject({ citationsKept: 2, citationsRemoved: 2 });
+  });
+
+  it('treats the first and the one-past-the-last number as non-existent', async () => {
+    const model = modelStreaming('Zero [0] one [1] two [2].');
+    const app = setup({ model });
+    const { agent, chatId } = await startChat(app);
+
+    await ask(agent, chatId, PASSAGE);
+
+    const assistant = (await chats.messagesOf(chatId)).find((m) => m.role === 'assistant')!;
+    expect(assistant.content).toBe('Zero one [1] two.');
+  });
+
+  it('records no removed citations when every reference is valid', async () => {
+    const app = setup({});
+    const { agent, chatId } = await startChat(app);
+
+    await ask(agent, chatId, PASSAGE);
+
+    expect(await tracesOf(chatId)).toMatchObject({ citationsKept: 1, citationsRemoved: 0 });
+  });
+
   it('flags nothing for an ordinary passage', async () => {
     const app = setup({});
     const { agent, chatId } = await startChat(app);
@@ -241,6 +283,8 @@ describe('rag traces', () => {
       totalMs: 1,
       inputTokens: null,
       outputTokens: null,
+      citationsKept: null,
+      citationsRemoved: null,
       model: null,
       errorKind: null,
     });

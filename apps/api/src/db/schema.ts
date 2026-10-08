@@ -156,6 +156,8 @@ export const ragTraces = pgTable(
     totalMs: integer().notNull(),
     inputTokens: integer(),
     outputTokens: integer(),
+    citationsKept: integer(),
+    citationsRemoved: integer(),
     model: text(),
     errorKind: text(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
