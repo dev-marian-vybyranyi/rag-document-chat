@@ -56,7 +56,6 @@ Raw material for the README – not a polished document.
 - Chosen: one Blueprint with `rag-chat-db` (free Postgres 17), `rag-chat-api` and `rag-chat-web` (free Docker web services), all in `frankfurt`.
 - Why: free web services can only talk to the database over the private network inside one region; pgvector is supported on Render Postgres (`CREATE EXTENSION vector`).
 - Trade-offs / when to revisit: free Postgres is deleted 30 days after creation (1 GB, one per workspace); free web services idle out after 15 min. Fine for a demo, not for production.
-- Superseded for the database: see "Database on Neon instead of Render Postgres" below.
 
 ### Auto-deploy only after CI passes
 
@@ -464,9 +463,3 @@ Raw material for the README – not a polished document.
 - Why: vectors of different models can have the same length (768) and still mean nothing to each other, so a mixed index would silently return wrong passages. Keyword search skips them too, otherwise a switched deployment would half work and be confusing.
 - The evaluation corpus is reused only when it was indexed with the configured model, so a provider switch cannot be measured against stale vectors; reports record the provider.
 - Trade-offs / when to revisit: after a switch documents must be uploaded again (the app does not re-embed on its own and the UI does not flag them yet). Re-embedding from stored chunk text would avoid the upload; it is not built.
-
-### Database on Neon instead of Render Postgres
-
-- Chosen: the deployment uses a free Neon Postgres (pgvector available) and `DATABASE_URL` is entered by hand in the Render dashboard; `render.yaml` now describes only the two web services.
-- Why: Render's free Postgres is deleted 30 days after creation, which would take the demo's data (and the review window) with it.
-- Trade-offs / when to revisit: the API and database are no longer in one private network, so connections go over TLS on the public internet (`sslmode=require`) and add a little latency; Neon's free storage is small and the compute suspends when idle.

@@ -24,7 +24,7 @@ Register, open **Documents**, drop in files from `samples/` (a NIST PDF, two RFC
 - Development: `npm install`, `docker compose up -d db`, `npm run dev` (web :5173, API :3000).
 - Checks: `npm run lint && npm run typecheck && npm test && npm run build` (about 1,250 tests; none calls a real model).
 - Quality evaluation, run by hand because it uses Gemini quota: `npm run eval:retrieval -w @rag-chat/api` and `npm run eval:faithfulness -w @rag-chat/api`.
-- Deploy: `render.yaml` is a Render Blueprint (two free Docker services; the database is a free Neon Postgres, so `DATABASE_URL` is entered by hand). Create it from the dashboard, give it the model key (`GOOGLE_GENERATIVE_AI_API_KEY`, or `AI_PROVIDER=openai` with `OPENAI_API_KEY`) and set `API_UPSTREAM` to the API's public URL. Migrations run on API start; deploys wait for green CI.
+- Deploy: `render.yaml` is a Render Blueprint (free Postgres + two free Docker services). Create it from the dashboard, give it the model key (`GOOGLE_GENERATIVE_AI_API_KEY`, or `AI_PROVIDER=openai` with `OPENAI_API_KEY`) and set `API_UPSTREAM` to the API's public URL. Migrations run on API start; deploys wait for green CI.
 - All settings are environment variables, documented in `.env.example`.
 
 A step-by-step manual test checklist (in Ukrainian) is in [`docs/MANUAL.uk.md`](docs/MANUAL.uk.md).
@@ -125,7 +125,7 @@ Where it went wrong: while building the evaluation scripts it ran real evaluatio
 5. Real observability: OpenTelemetry, a dashboard over `rag_traces`, LLM tracing.
 6. Choose which documents a question is about; OCR, tables and other languages.
 
-Known limits of the demo: free services sleep after 15 minutes (first request can take a minute or two), free Neon storage is small, free Gemini quotas include a daily cap on embeddings, and greetings are refused like any off-topic message.
+Known limits of the demo: free services sleep after 15 minutes (first request can take a minute or two), the free Postgres expires after 30 days, free Gemini quotas include a daily cap on embeddings, and greetings are refused like any off-topic message.
 
 ## Screenshots
 
