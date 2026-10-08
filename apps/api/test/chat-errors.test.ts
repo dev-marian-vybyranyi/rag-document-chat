@@ -5,6 +5,8 @@ import {
   CHAT_FAILURE_MESSAGES,
   chatFailureMessage,
   classifyChatFailure,
+  failureKindOfMessage,
+  rateLimitedMessage,
 } from '../src/chat/errors.js';
 
 function apiError(statusCode: number | undefined, message = 'upstream failure', body?: string) {
@@ -82,5 +84,24 @@ describe('chatFailureMessage', () => {
 
     expect(message).toBe(CHAT_FAILURE_MESSAGES.rate_limited);
     expect(message).not.toContain('AIza');
+  });
+});
+
+describe('failureKindOfMessage', () => {
+  it.each(Object.entries(CHAT_FAILURE_MESSAGES))(
+    'recognises the fixed message of %s',
+    (kind, message) => {
+      expect(failureKindOfMessage(message)).toBe(kind);
+    },
+  );
+
+  it('recognises a rate-limit message that carries a wait', () => {
+    expect(failureKindOfMessage(rateLimitedMessage(34))).toBe('rate_limited');
+    expect(failureKindOfMessage(rateLimitedMessage(300))).toBe('rate_limited');
+  });
+
+  it('knows nothing about other text', () => {
+    expect(failureKindOfMessage('Something else entirely')).toBeNull();
+    expect(failureKindOfMessage('')).toBeNull();
   });
 });

@@ -6,6 +6,7 @@ import { loadEnv } from '../src/config/env.js';
 import { createDb } from '../src/db/client.js';
 import { ensureEvalCorpus, passagesByFile, removeEvalUser } from '../src/eval/corpus.js';
 import { loadGoldenSet } from '../src/eval/golden.js';
+import { QuotaExhaustedError } from '../src/eval/quota-exhausted.js';
 import { formatRetrievalReport } from '../src/eval/report.js';
 import {
   createRetrievalSearcher,
@@ -118,6 +119,13 @@ try {
   if (flag('cleanup') && process.exitCode !== 1) {
     await removeEvalUser(db);
     out('Evaluation user and its documents deleted.');
+  }
+} catch (error) {
+  if (error instanceof QuotaExhaustedError) {
+    out('The daily embedding quota of the free tier is used up. Run again tomorrow.');
+    process.exitCode = 1;
+  } else {
+    throw error;
   }
 } finally {
   await pool.end();

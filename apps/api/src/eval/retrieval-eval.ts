@@ -1,6 +1,5 @@
 import type { Logger } from 'pino';
-import { EmbeddingError, type Embedder } from '../ai/embeddings.js';
-import { quotaInfoOf } from '../ai/quota.js';
+import type { Embedder } from '../ai/embeddings.js';
 import type { ChatTurn } from '../rag/history.js';
 import { assessRelevance } from '../rag/relevance.js';
 import type { RetrievalStore } from '../rag/retrieval.js';
@@ -19,6 +18,7 @@ import {
   type RankSummary,
   type ThresholdPoint,
 } from './metrics.js';
+import { createPatientEmbedder, type PatienceOptions } from './patient-embedder.js';
 
 export const VARIANTS = ['hybrid', 'vector', 'keyword'] as const;
 export type Variant = (typeof VARIANTS)[number];
@@ -191,21 +191,13 @@ async function answerableRow(
   };
 }
 
-export const DEFAULT_QUERY_PACING_MS = 700;
-export const DEFAULT_RATE_LIMIT_RETRIES = 5;
-export const DEFAULT_RATE_LIMIT_WAIT_MS = 35_000;
-
-interface SearcherDeps {
+interface SearcherDeps extends PatienceOptions {
   userId: string;
   store: RetrievalStore;
   embedder: Embedder;
   rewriter: QueryRewriter;
   logger: Logger;
   cutoff?: number;
-  queryPacingMs?: number;
-  rateLimitRetries?: number;
-  sleep?: (ms: number) => Promise<void>;
-  onWait?: (ms: number) => void;
 }
 
 export function createRetrievalSearcher({
@@ -215,37 +207,16 @@ export function createRetrievalSearcher({
   rewriter,
   logger,
   cutoff = DEFAULT_CUTOFF,
-  queryPacingMs = DEFAULT_QUERY_PACING_MS,
-  rateLimitRetries = DEFAULT_RATE_LIMIT_RETRIES,
-  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
-  onWait,
+  ...patience
 }: SearcherDeps): Searcher {
+  const patient = createPatientEmbedder(embedder, patience);
   const cache = new Map<string, Promise<number[]>>();
-  let lastRequestAt = 0;
-
-  async function embedWithPatience(text: string, options?: { signal?: AbortSignal }) {
-    for (let attempt = 0; ; attempt++) {
-      const sinceLast = Date.now() - lastRequestAt;
-      if (sinceLast < queryPacingMs) await sleep(queryPacingMs - sinceLast);
-      lastRequestAt = Date.now();
-      try {
-        return await embedder.embedQuery(text, options);
-      } catch (error) {
-        const limited = error instanceof EmbeddingError && error.kind === 'rate_limited';
-        if (!limited || attempt >= rateLimitRetries) throw error;
-        const wait = (quotaInfoOf(error).retryAfterMs ?? DEFAULT_RATE_LIMIT_WAIT_MS) + 1000;
-        onWait?.(wait);
-        await sleep(wait);
-      }
-    }
-  }
-
   const cachedEmbedder: Embedder = {
-    embedDocuments: (texts, options) => embedder.embedDocuments(texts, options),
+    embedDocuments: (texts, options) => patient.embedDocuments(texts, options),
     embedQuery: (text, options) => {
       const known = cache.get(text);
       if (known) return known;
-      const pending = embedWithPatience(text, options);
+      const pending = patient.embedQuery(text, options);
       cache.set(text, pending);
       pending.catch(() => cache.delete(text));
       return pending;

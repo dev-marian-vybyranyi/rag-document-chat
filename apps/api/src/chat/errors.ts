@@ -52,6 +52,13 @@ export function classifyChatFailure(error: unknown): ChatFailureKind {
   return 'unexpected';
 }
 
+export function failureKindOfMessage(message: string): ChatFailureKind | null {
+  for (const kind of Object.keys(CHAT_FAILURE_MESSAGES) as ChatFailureKind[]) {
+    if (message === CHAT_FAILURE_MESSAGES[kind]) return kind;
+  }
+  return message.startsWith(RATE_LIMITED_PREFIX) ? 'rate_limited' : null;
+}
+
 export function chatFailureMessage(error: unknown): string {
   return CHAT_FAILURE_MESSAGES[classifyChatFailure(error)];
 }
@@ -72,6 +79,8 @@ export function describeChatFailure(error: unknown): ChatFailure {
   return { kind, message, retryAfterMs };
 }
 
+const RATE_LIMITED_PREFIX = 'The AI service is busy (rate limit reached).';
+
 export function rateLimitedMessage(seconds: number): string {
-  return `The AI service is busy (rate limit reached). Please try again in ${describeWait(seconds)}.`;
+  return `${RATE_LIMITED_PREFIX} Please try again in ${describeWait(seconds)}.`;
 }

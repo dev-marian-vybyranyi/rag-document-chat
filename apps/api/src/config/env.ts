@@ -20,6 +20,8 @@ const envSchema = z
     CHAT_THINKING_LEVEL: z.enum(['minimal', 'low', 'medium', 'high']).default('minimal'),
     CHAT_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(10),
     CHAT_RATE_LIMIT_PER_DAY: z.coerce.number().int().positive().default(150),
+    EVAL_JUDGE_MODEL: z.string().min(1).optional(),
+    EVAL_JUDGE_THINKING_LEVEL: z.enum(['minimal', 'low', 'medium', 'high']).default('low'),
     COOKIE_SECURE: z.stringbool().optional(),
   })
   .transform((env) => ({

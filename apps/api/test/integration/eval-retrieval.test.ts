@@ -4,7 +4,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pino } from 'pino';
 import { describe, expect, it, vi } from 'vitest';
+import { EmbeddingError } from '../../src/ai/embeddings.js';
 import { chunks, documents, users } from '../../src/db/schema.js';
+import { QuotaExhaustedError } from '../../src/eval/quota-exhausted.js';
 import {
   ensureEvalCorpus,
   EVAL_USER_EMAIL,
@@ -114,6 +116,23 @@ describe('retrieval evaluation against a database', () => {
       expect(result.failed[0]!.filename).toBe('rfc8259-json.txt');
       expect(result.indexed).toEqual([]);
       expect(retries).toEqual([1, 2]);
+      expect(await db.select().from(documents)).toHaveLength(0);
+    });
+
+    it('stops at once when the daily embedding quota is gone, since trying again will not help', async () => {
+      const dir = smallCorpus(['rfc8259-json.txt', 'rust-book-generics.md']);
+      const exhausted = embedder();
+      let calls = 0;
+      exhausted.embedDocuments = async () => {
+        calls++;
+        throw new EmbeddingError('quota_exhausted');
+      };
+
+      await expect(
+        ensureEvalCorpus({ db, embedder: exhausted, logger, samplesDir: dir, retryDelayMs: 0 }),
+      ).rejects.toBeInstanceOf(QuotaExhaustedError);
+
+      expect(calls).toBe(1);
       expect(await db.select().from(documents)).toHaveLength(0);
     });
 
