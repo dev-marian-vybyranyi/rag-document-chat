@@ -29,11 +29,20 @@ if (interrupted > 0) logger.warn({ count: interrupted }, 'marked interrupted doc
 
 const embedder = ai.embedder;
 
+const otherModel = await documentRepository.countIndexedWithOtherModel(env.EMBEDDING_MODEL);
+if (otherModel > 0) {
+  logger.warn(
+    { count: otherModel, embeddingModel: env.EMBEDDING_MODEL },
+    'documents were indexed with a different embedding model and are not searched; upload them again',
+  );
+}
+
 const ingestion = createIngestionService({
   repository: documentRepository,
   embedder,
   logger,
   suggester: ai.createSuggester(logger),
+  embeddingModel: env.EMBEDDING_MODEL,
 });
 
 const app = createApp({
@@ -46,7 +55,11 @@ const app = createApp({
   },
   ingestion,
   chat: {
-    retriever: createRetriever({ store: createRetrievalStore(db), embedder, logger }),
+    retriever: createRetriever({
+      store: createRetrievalStore(db, { embeddingModel: env.EMBEDDING_MODEL }),
+      embedder,
+      logger,
+    }),
     rewriter: ai.createRewriter(logger),
     relevanceThreshold: env.RELEVANCE_THRESHOLD,
     ...ai.chat,

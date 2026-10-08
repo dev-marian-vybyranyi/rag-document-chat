@@ -58,6 +58,7 @@ export const documents = pgTable(
     status: documentStatus().notNull().default('processing'),
     error: text(),
     pageCount: integer(),
+    embeddingModel: text(),
     suggestions: jsonb().$type<string[]>().notNull().default([]),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },

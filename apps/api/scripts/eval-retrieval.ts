@@ -55,6 +55,7 @@ try {
   const corpus = await ensureEvalCorpus({
     db,
     embedder,
+    embeddingModel: env.EMBEDDING_MODEL,
     logger,
     samplesDir,
     reindex: flag('reindex'),
@@ -78,7 +79,7 @@ try {
 
     const searcher = createRetrievalSearcher({
       userId: corpus.userId,
-      store: createRetrievalStore(db),
+      store: createRetrievalStore(db, { embeddingModel: env.EMBEDDING_MODEL }),
       embedder,
       rewriter: ai.createRewriter(logger),
       logger,

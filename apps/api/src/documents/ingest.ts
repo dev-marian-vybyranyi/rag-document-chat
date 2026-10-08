@@ -37,6 +37,7 @@ export interface IngestionOptions {
   embedder: Embedder;
   logger: Logger;
   suggester?: QuestionSuggester;
+  embeddingModel?: string;
   chunkOptions?: ChunkOptions;
   maxChunks?: number;
   concurrency?: number;
@@ -48,6 +49,7 @@ export function createIngestionService(options: IngestionOptions): IngestionServ
     embedder,
     logger,
     chunkOptions,
+    embeddingModel,
     maxChunks = DEFAULT_MAX_CHUNKS,
     suggester = createNoopSuggester(),
   } = options;
@@ -89,6 +91,7 @@ export function createIngestionService(options: IngestionOptions): IngestionServ
         documentId: job.document.id,
         userId: job.document.userId,
         pageCount: extracted.pageCount,
+        embeddingModel,
         suggestions,
         chunks: chunks.map((chunk, i) => ({ ...chunk, embedding: vectors[i]! })),
       });

@@ -33,6 +33,7 @@ export function listSampleFiles(samplesDir: string): string[] {
 export async function ensureEvalCorpus(options: {
   db: Database;
   embedder: Embedder;
+  embeddingModel?: string;
   logger: Logger;
   samplesDir: string;
   reindex?: boolean;
@@ -43,6 +44,7 @@ export async function ensureEvalCorpus(options: {
   const {
     db,
     embedder,
+    embeddingModel,
     logger,
     samplesDir,
     reindex = false,
@@ -51,7 +53,7 @@ export async function ensureEvalCorpus(options: {
     onRetry,
   } = options;
   const repository = createDocumentRepository(db);
-  const ingestion = createIngestionService({ repository, embedder, logger });
+  const ingestion = createIngestionService({ repository, embedder, embeddingModel, logger });
 
   const [existing] = await db.select().from(users).where(eq(users.email, EVAL_USER_EMAIL));
   const user =
@@ -73,7 +75,12 @@ export async function ensureEvalCorpus(options: {
       .from(documents)
       .where(and(eq(documents.userId, user.id), eq(documents.filename, filename)));
 
-    const upToDate = current.some((d) => d.status === 'ready' && d.sizeBytes === content.length);
+    const upToDate = current.some(
+      (d) =>
+        d.status === 'ready' &&
+        d.sizeBytes === content.length &&
+        (embeddingModel === undefined || d.embeddingModel === embeddingModel),
+    );
     if (upToDate && !reindex) {
       result.reused.push(filename);
       continue;
