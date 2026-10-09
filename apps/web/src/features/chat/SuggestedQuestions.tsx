@@ -1,9 +1,16 @@
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { useDocuments } from '@/features/documents/documents-context';
+import { sourcesInScope } from './scope';
 import { pickSuggestions } from './suggestions';
 
-export function SuggestedQuestions({ onPick }: { onPick: (question: string) => void }) {
+export function SuggestedQuestions({
+  onPick,
+  sourceIds = null,
+}: {
+  onPick: (question: string) => void;
+  sourceIds?: string[] | null;
+}) {
   const { state } = useDocuments();
   if (state.status !== 'ready') return null;
 
@@ -20,9 +27,18 @@ export function SuggestedQuestions({ onPick }: { onPick: (question: string) => v
     );
   }
 
-  const suggestions = pickSuggestions(documents);
+  if (sourceIds !== null && sourcesInScope(sourceIds, documents).length === 0) {
+    return (
+      <p className="mt-3 text-sm text-muted-foreground">
+        The sources chosen for this chat are gone. Choose others above.
+      </p>
+    );
+  }
+
+  const scoped = sourcesInScope(sourceIds, documents);
+  const suggestions = pickSuggestions(scoped);
   if (suggestions.length === 0) {
-    const waiting = documents.some((doc) => doc.status === 'processing');
+    const waiting = scoped.some((doc) => doc.status === 'processing');
     return waiting ? (
       <p role="status" className="mt-3 text-sm text-muted-foreground">
         Your documents and repositories are still being processed. Questions will work once they are

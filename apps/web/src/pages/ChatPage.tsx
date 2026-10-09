@@ -17,7 +17,7 @@ type Loaded =
   | { status: 'loading' }
   | { status: 'missing' }
   | { status: 'error' }
-  | { status: 'ready'; title: string; messages: ChatUIMessage[] };
+  | { status: 'ready'; title: string; sourceIds: string[] | null; messages: ChatUIMessage[] };
 
 export function ChatPage() {
   const { chatId } = useParams();
@@ -38,7 +38,12 @@ function LoadedChat({ chatId }: { chatId: string }) {
     chatsApi
       .get(chatId, controller.signal)
       .then(({ chat, messages }) =>
-        setLoaded({ status: 'ready', title: chat.title, messages: toUIMessages(messages) }),
+        setLoaded({
+          status: 'ready',
+          title: chat.title,
+          sourceIds: chat.sourceIds ?? null,
+          messages: toUIMessages(messages),
+        }),
       )
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
@@ -81,14 +86,16 @@ function LoadedChat({ chatId }: { chatId: string }) {
   }
 
   const listed = state.status === 'ready' ? state.chats.find((chat) => chat.id === chatId) : null;
+  const sourceIds = listed ? (listed.sourceIds ?? null) : loaded.sourceIds;
 
   return (
     <SourceViewerProvider>
       <div className="flex h-full">
         <div className="mx-auto flex h-full min-w-0 max-w-3xl flex-1 flex-col">
-          <ChatHeader chatId={chatId} title={listed?.title ?? loaded.title} />
+          <ChatHeader chatId={chatId} title={listed?.title ?? loaded.title} sourceIds={sourceIds} />
           <ChatView
             chatId={chatId}
+            sourceIds={sourceIds}
             initialMessages={loaded.messages}
             initialQuestion={initialQuestion}
             onInitialQuestionSent={() =>

@@ -8,7 +8,8 @@ export interface ChatsContextValue {
   state: ChatsState;
   reload: () => void;
   refresh: () => Promise<void>;
-  createChat: () => Promise<Chat>;
+  createChat: (sourceIds?: string[] | null) => Promise<Chat>;
+  setChatSources: (id: string, sourceIds: string[] | null) => Promise<void>;
   renameChat: (id: string, title: string) => Promise<void>;
   removeChat: (id: string) => Promise<void>;
 }

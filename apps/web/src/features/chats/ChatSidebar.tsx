@@ -9,7 +9,7 @@ import { useDocuments } from '../documents/documents-context';
 import { useChats } from './chats-context';
 
 function isUntouched(chat: Chat): boolean {
-  return chat.title === DEFAULT_CHAT_TITLE && chat.updatedAt === chat.createdAt;
+  return chat.title === DEFAULT_CHAT_TITLE && chat.updatedAt === chat.createdAt && !chat.sourceIds;
 }
 
 export function ChatSidebar() {

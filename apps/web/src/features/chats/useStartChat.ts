@@ -8,10 +8,10 @@ export function useStartChat() {
   const [failed, setFailed] = useState(false);
 
   const start = useCallback(
-    async (question: string) => {
+    async (question: string, sourceIds: string[] | null = null) => {
       setFailed(false);
       try {
-        const chat = await createChat();
+        const chat = await createChat(sourceIds);
         void navigate(`/chats/${chat.id}`, { state: { ask: question } });
       } catch {
         setFailed(true);

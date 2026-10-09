@@ -173,7 +173,7 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
                 variant="outline"
                 size="xs"
                 className="h-auto max-w-full py-1 text-left whitespace-normal"
-                onClick={() => void start(question)}
+                onClick={() => void start(question, [document.id])}
               >
                 {question}
               </Button>

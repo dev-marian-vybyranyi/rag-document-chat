@@ -11,6 +11,7 @@ import { textOf, type ChatStage, type ChatUIMessage } from './types';
 
 interface ChatViewProps {
   chatId: string;
+  sourceIds?: string[] | null;
   initialMessages?: ChatUIMessage[];
   initialQuestion?: string;
   onInitialQuestionSent?: () => void;
@@ -31,6 +32,7 @@ const STAGE_LABEL: Record<ChatStage, string> = {
 
 export function ChatView({
   chatId,
+  sourceIds = null,
   initialMessages,
   initialQuestion,
   onInitialQuestionSent,
@@ -82,7 +84,7 @@ export function ChatView({
             <p className="text-sm text-muted-foreground">
               Ask a question about your documents or code to start.
             </p>
-            <SuggestedQuestions onPick={handleSend} />
+            <SuggestedQuestions onPick={handleSend} sourceIds={sourceIds} />
           </div>
         )}
         <ul className="flex flex-col gap-4" aria-label="Conversation">
