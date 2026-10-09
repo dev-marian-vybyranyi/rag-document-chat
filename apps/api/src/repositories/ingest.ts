@@ -15,6 +15,7 @@ import { ImportRejectedError, ImportUnavailableError } from './errors.js';
 import { defaultImportLimits, type ImportLimits } from './filter.js';
 import type { GithubImporter } from './github.js';
 import { overviewChunks } from './overview.js';
+import { repositorySuggestions } from './suggestions.js';
 import { importZipArchive, type ImportedRepository } from './zip.js';
 
 export const DEFAULT_MAX_REPOSITORY_CHUNKS = 1_500;
@@ -128,6 +129,7 @@ export function createRepositoryIngestion(
         pageCount: null,
         embeddingModel,
         fileCount: imported.repository.files.length,
+        suggestions: repositorySuggestions(imported.repository.files, chunks),
         ...(imported.commitSha && { commitSha: imported.commitSha }),
         chunks: chunks.map((chunk, i): NewChunk => ({
           ordinal: i,

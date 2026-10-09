@@ -104,7 +104,9 @@ describe('documents page', () => {
     it('invites the user to add a first document', async () => {
       setup();
 
-      expect(await screen.findByText(/No documents yet/)).toBeInTheDocument();
+      expect(await screen.findByText(/No documents yet/)).toHaveTextContent(
+        'Add a file above, or a code repository',
+      );
     });
 
     it('shows why a document failed', async () => {

@@ -80,7 +80,7 @@ export function ChatView({
         {messages.length === 0 && !busy && (
           <div className="mt-16 text-center">
             <p className="text-sm text-muted-foreground">
-              Ask a question about your documents to start.
+              Ask a question about your documents or code to start.
             </p>
             <SuggestedQuestions onPick={handleSend} />
           </div>

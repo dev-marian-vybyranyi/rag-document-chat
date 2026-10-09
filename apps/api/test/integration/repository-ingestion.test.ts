@@ -144,6 +144,34 @@ describe('repository ingestion', () => {
       expect(stored?.content.startsWith('export')).toBe(true);
     });
 
+    it('stores questions worth asking about the repository, without calling a model', async () => {
+      const embedder = createFakeEmbedder();
+      const { app, ingestion } = setup({ embedder });
+
+      const { id } = await uploadZip(app, buildZip(sampleRepoEntries()));
+      await ingestion.idle();
+
+      const { suggestions } = await documentRow(id);
+      expect(suggestions.slice(0, 3)).toEqual([
+        'How is this project structured?',
+        'What dependencies does this project use?',
+        'What are the main entry points?',
+      ]);
+      expect(suggestions).toHaveLength(4);
+      expect(suggestions[3]).toMatch(/^How does \w+ work\?$/);
+      expect(embedder.queryCalls).toEqual([]);
+    });
+
+    it('shows the questions in the library once the repository is ready', async () => {
+      const { app, ingestion } = setup();
+
+      const { agent, id } = await uploadZip(app, buildZip(sampleRepoEntries()));
+      await ingestion.idle();
+
+      const res = await agent.get(`/documents/${id}`);
+      expect(res.body.document.suggestions[0]).toBe('How is this project structured?');
+    });
+
     it('never stores a secret or a file that was left out', async () => {
       const { app, ingestion } = setup();
 

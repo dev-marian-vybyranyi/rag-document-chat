@@ -41,7 +41,7 @@ export function Composer({ busy, onSend, onStop }: ComposerProps) {
           onChange={(event) => setText(event.target.value)}
           onKeyDown={handleKeyDown}
           aria-label="Your question"
-          placeholder="Ask about your documents…"
+          placeholder="Ask about your documents or code…"
           maxLength={MAX_QUESTION_LENGTH}
           rows={1}
           autoFocus

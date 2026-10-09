@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
@@ -109,10 +109,12 @@ describe('suggested questions in an empty chat', () => {
     expect(list).toHaveTextContent('What are the notes about?');
   });
 
-  it('points to the documents page when there are no documents', async () => {
+  it('points to the documents page when there are no documents, and mentions repositories', async () => {
     setup('/chats/c1', { 'GET /api/documents': jsonResponse(200, { documents: [] }) });
 
-    expect(await screen.findByText(/You have no documents yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/You have no documents yet/)).toHaveTextContent(
+      'import a code repository',
+    );
     expect(screen.getByRole('link', { name: 'Add one' })).toHaveAttribute('href', '/documents');
   });
 
@@ -214,5 +216,99 @@ describe('suggested questions on the documents page', () => {
     await user.click(await screen.findByRole('button', { name: 'What is HNSW?' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not start a chat');
+  });
+});
+
+describe('suggested questions about a code repository', () => {
+  const repository = (overrides: Partial<DocumentItem> = {}) =>
+    doc({
+      id: 'r1',
+      kind: 'repository',
+      filename: 'acme/shop',
+      mimeType: 'application/zip',
+      sizeBytes: 0,
+      pageCount: null,
+      fileCount: 12,
+      repoUrl: 'https://github.com/acme/shop',
+      suggestions: [
+        'How is this project structured?',
+        'What dependencies does this project use?',
+        'What are the main entry points?',
+        'How does loginHandler work?',
+      ],
+      ...overrides,
+    });
+
+  it('offers them in an empty chat', async () => {
+    setup('/chats/c1', { 'GET /api/documents': jsonResponse(200, { documents: [repository()] }) });
+
+    const list = await screen.findByRole('list', { name: 'Suggested questions' });
+
+    expect(list).toHaveTextContent('How is this project structured?');
+    expect(list).toHaveTextContent('What dependencies does this project use?');
+    expect(list).toHaveTextContent('How does loginHandler work?');
+  });
+
+  it('takes turns with the questions of a document, so neither crowds the other out', async () => {
+    setup('/chats/c1', {
+      'GET /api/documents': jsonResponse(200, { documents: [repository(), doc()] }),
+    });
+
+    const list = await screen.findByRole('list', { name: 'Suggested questions' });
+
+    expect(list).toHaveTextContent('How is this project structured?');
+    expect(list).toHaveTextContent('What is HNSW?');
+    expect(list.querySelectorAll('li')).toHaveLength(4);
+  });
+
+  it('asks the question about the code when one is clicked', async () => {
+    const api = setup('/chats/c1', {
+      'GET /api/documents': jsonResponse(200, { documents: [repository()] }),
+    });
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: 'How does loginHandler work?' }));
+
+    await waitFor(() =>
+      expect(posts(api, 'POST /api/chats/c1/messages').map((c) => c.body)).toEqual([
+        { content: 'How does loginHandler work?' },
+      ]),
+    );
+  });
+
+  it('are on the card of the repository, and start a chat from there', async () => {
+    const created = { ...chat, id: 'c9' };
+    const api = setup('/documents', {
+      'GET /api/documents': jsonResponse(200, { documents: [repository()] }),
+      'POST /api/chats': jsonResponse(201, { chat: created }),
+      'GET /api/chats/c9': jsonResponse(200, { chat: created, messages: [] }),
+      'POST /api/chats/c9/messages': () => sseResponse(answerChunks(['It is structured so'])),
+    });
+    const user = userEvent.setup();
+
+    const questions = await screen.findByRole('list', {
+      name: 'Questions to ask about acme/shop',
+    });
+    await user.click(
+      within(questions).getByRole('button', { name: 'What are the main entry points?' }),
+    );
+
+    expect(await screen.findByText('It is structured so')).toBeInTheDocument();
+    expect(posts(api, 'POST /api/chats/c9/messages').map((c) => c.body)).toEqual([
+      { content: 'What are the main entry points?' },
+    ]);
+  });
+
+  it('are not shown while the repository is still being imported', async () => {
+    setup('/chats/c1', {
+      'GET /api/documents': jsonResponse(200, {
+        documents: [repository({ status: 'processing', suggestions: [] })],
+      }),
+    });
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Your documents and repositories are still being processed.',
+    );
+    expect(screen.queryByRole('list', { name: 'Suggested questions' })).not.toBeInTheDocument();
   });
 });

@@ -73,7 +73,8 @@ export function DocumentsPage() {
 
       {state.status === 'ready' && state.documents.length === 0 && (
         <p className="text-center text-sm text-muted-foreground">
-          No documents yet. Add one above to start asking questions about it.
+          No documents yet. Add a file above, or a code repository, to start asking questions about
+          it.
         </p>
       )}
 
