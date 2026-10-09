@@ -1,0 +1,572 @@
+{
+  "version": 1,
+  "description": "Golden questions for the reference repository koajs/koa at the commit pinned in src/eval/reference-repository.ts (see samples/SOURCES.md). 'file' is the path inside the repository. Every quote is verbatim from that file; the code evaluation checks this when it fetches the repository.",
+  "questions": [
+    {
+      "id": "koa-listen",
+      "type": "answerable",
+      "question": "How does app.listen start the HTTP server?",
+      "expected": [
+        {
+          "file": "lib/application.js",
+          "quote": "const server = http.createServer(this.callback())"
+        }
+      ],
+      "answer": "It creates a Node http server from the app's callback() and calls listen on it.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-use-validation",
+      "type": "answerable",
+      "question": "What happens when something that is not a function is passed to app.use?",
+      "expected": [
+        {
+          "file": "lib/application.js",
+          "quote": "if (typeof fn !== 'function') { throw new TypeError('middleware must be a function!') }"
+        }
+      ],
+      "answer": "It throws a TypeError saying that middleware must be a function.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-initial-status",
+      "type": "answerable",
+      "question": "What status code does a response have before any middleware has run?",
+      "expected": [
+        {
+          "file": "lib/application.js",
+          "quote": "res.statusCode = 404"
+        }
+      ],
+      "answer": "404; handleRequest sets it before running the middleware.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-compose-option",
+      "type": "answerable",
+      "question": "Which function composes the middleware stack, and can it be replaced?",
+      "expected": [
+        {
+          "file": "lib/application.js",
+          "quote": "this.compose = options.compose || compose"
+        }
+      ],
+      "answer": "koa-compose by default; the compose option replaces it.",
+      "tags": ["code", "config"]
+    },
+    {
+      "id": "koa-create-context",
+      "type": "answerable",
+      "question": "How is the per-request context created from the application's context?",
+      "expected": [
+        {
+          "file": "lib/application.js",
+          "quote": "const context = Object.create(this.context)"
+        }
+      ],
+      "answer": "createContext derives it with Object.create(this.context), and does the same for request and response.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-default-error-listener",
+      "type": "answerable",
+      "question": "When does the application attach its default error handler?",
+      "expected": [
+        {
+          "file": "lib/application.js",
+          "quote": "if (!this.listenerCount('error')) this.on('error', this.onerror)"
+        }
+      ],
+      "answer": "In callback(), only if no error listener has been registered.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-app-onerror-skip",
+      "type": "answerable",
+      "question": "When does the application-level error handler skip logging an error?",
+      "expected": [
+        {
+          "file": "lib/application.js",
+          "quote": "if (err.status === 404 || err.expose) return"
+        }
+      ],
+      "answer": "When the status is 404 or the error is exposed (and also when the app is silent).",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-respond-empty-status",
+      "type": "answerable",
+      "question": "How does Koa treat a response whose status never has a body, such as 204?",
+      "expected": [
+        {
+          "file": "lib/application.js",
+          "quote": "if (statuses.empty[code]) {"
+        }
+      ],
+      "answer": "It clears the body and ends the response without sending one.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-respond-json",
+      "type": "answerable",
+      "question": "How is an object body turned into the bytes that are sent?",
+      "expected": [
+        {
+          "file": "lib/application.js",
+          "quote": "body = JSON.stringify(body)"
+        }
+      ],
+      "answer": "It is serialised with JSON.stringify and its byte length becomes the Content-Length.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-head-length",
+      "type": "answerable",
+      "question": "Where does a HEAD response get its Content-Length from?",
+      "expected": [
+        {
+          "file": "lib/application.js",
+          "quote": "if (Number.isInteger(length)) ctx.length = length"
+        }
+      ],
+      "answer": "From the length of the response body, when it is an integer and the header is not already set.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-proxy-ip-header",
+      "type": "answerable",
+      "question": "Which header holds the client address when the app runs behind a proxy, by default?",
+      "expected": [
+        {
+          "file": "lib/application.js",
+          "quote": "this.proxyIpHeader = options.proxyIpHeader || 'X-Forwarded-For'"
+        }
+      ],
+      "answer": "X-Forwarded-For, configurable with the proxyIpHeader option.",
+      "tags": ["code", "config"]
+    },
+    {
+      "id": "koa-current-context",
+      "type": "answerable",
+      "question": "How can code read the current request's context without it being passed in?",
+      "expected": [
+        {
+          "file": "lib/application.js",
+          "quote": "return this.ctxStorage.getStore()"
+        }
+      ],
+      "answer": "Through app.currentContext, which reads the AsyncLocalStorage store when asyncLocalStorage is enabled.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-exported-errors",
+      "type": "answerable",
+      "question": "Which HTTP error helpers does the application module export besides the class?",
+      "expected": [
+        {
+          "file": "lib/application.js",
+          "quote": "module.exports.createHttpError = createHttpError"
+        }
+      ],
+      "answer": "createHttpError, HttpError and isHttpError, taken from the http-errors package.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-ctx-throw",
+      "type": "answerable",
+      "question": "How does ctx.throw create the error it throws?",
+      "expected": [
+        {
+          "file": "lib/context.js",
+          "quote": "throw createError(...args)"
+        }
+      ],
+      "answer": "It passes its arguments to http-errors' createError and throws the result.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-ctx-assert",
+      "type": "answerable",
+      "question": "What is ctx.assert implemented with?",
+      "expected": [
+        {
+          "file": "lib/context.js",
+          "quote": "assert: httpAssert,"
+        }
+      ],
+      "answer": "The http-assert package.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-onerror-headers",
+      "type": "answerable",
+      "question": "What does the context error handler do with the headers already set before it replies with an error?",
+      "expected": [
+        {
+          "file": "lib/context.js",
+          "quote": "res.getHeaderNames().forEach(name => res.removeHeader(name))"
+        }
+      ],
+      "answer": "It removes all of them first, then sets only the headers carried by the error.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-onerror-message",
+      "type": "answerable",
+      "question": "When is the error's own message sent to the client instead of generic status text?",
+      "expected": [
+        {
+          "file": "lib/context.js",
+          "quote": "const msg = err.expose ? err.message : code"
+        }
+      ],
+      "answer": "Only when err.expose is true; otherwise the status text such as Internal Server Error is sent.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-cookies-keys",
+      "type": "answerable",
+      "question": "Where do the keys used for signed cookies come from?",
+      "expected": [
+        {
+          "file": "lib/context.js",
+          "quote": "keys: this.app.keys,"
+        }
+      ],
+      "answer": "From app.keys, which the Cookies object is created with.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-delegation",
+      "type": "answerable",
+      "question": "How are properties such as ctx.body and ctx.status forwarded to the response object?",
+      "expected": [
+        {
+          "file": "lib/context.js",
+          "quote": "delegate(proto, 'response')"
+        }
+      ],
+      "answer": "Through the delegates package: the context delegates those accessors to its response.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-host-header",
+      "type": "answerable",
+      "question": "Which header does request.host look at first when proxy trust is enabled?",
+      "expected": [
+        {
+          "file": "lib/request.js",
+          "quote": "let host = proxy && this.get('X-Forwarded-Host')"
+        }
+      ],
+      "answer": "X-Forwarded-Host, before :authority and Host.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-ips-limit",
+      "type": "answerable",
+      "question": "How is the number of addresses read from the proxy header limited?",
+      "expected": [
+        {
+          "file": "lib/request.js",
+          "quote": "ips = ips.slice(-this.app.maxIpsCount)"
+        }
+      ],
+      "answer": "With maxIpsCount greater than zero only that many addresses, counted from the end, are kept.",
+      "tags": ["code", "config"]
+    },
+    {
+      "id": "koa-ip-fallback",
+      "type": "answerable",
+      "question": "What does ctx.ip fall back to when there is no proxy address?",
+      "expected": [
+        {
+          "file": "lib/request.js",
+          "quote": "this[IP] = this.ips[0] || this.socket.remoteAddress || ''"
+        }
+      ],
+      "answer": "The socket's remote address, or an empty string.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-subdomains-ip",
+      "type": "answerable",
+      "question": "What does request.subdomains return when the host is an IP address?",
+      "expected": [
+        {
+          "file": "lib/request.js",
+          "quote": "if (net.isIP(hostname)) return []"
+        }
+      ],
+      "answer": "An empty array.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-status-checks",
+      "type": "answerable",
+      "question": "Which checks run when the response status is set?",
+      "expected": [
+        {
+          "file": "lib/response.js",
+          "quote": "assert(code >= 100 && code <= 999, `invalid status code: ${code}`)"
+        }
+      ],
+      "answer": "The code must be an integer between 100 and 999; otherwise an assertion fails.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-string-body-type",
+      "type": "answerable",
+      "question": "How is the content type chosen when the body is a string?",
+      "expected": [
+        {
+          "file": "lib/response.js",
+          "quote": "if (setType) this.type = /^\\s*</.test(val) ? 'html' : 'text'"
+        }
+      ],
+      "answer": "If it starts with an angle bracket it is html, otherwise text, and only when no type was set yet.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-null-body-status",
+      "type": "answerable",
+      "question": "What happens to the status when the body is set to null and the status could have a body?",
+      "expected": [
+        {
+          "file": "lib/response.js",
+          "quote": "this.status = 204"
+        }
+      ],
+      "answer": "The status becomes 204 (No Content).",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-redirect-status",
+      "type": "answerable",
+      "question": "Which status does redirect use if the current one is not a redirect status?",
+      "expected": [
+        {
+          "file": "lib/response.js",
+          "quote": "if (!statuses.redirect[this.status]) this.status = 302"
+        }
+      ],
+      "answer": "302.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-redirect-html",
+      "type": "answerable",
+      "question": "How does redirect prepare the address when the client accepts HTML?",
+      "expected": [
+        {
+          "file": "lib/response.js",
+          "quote": "url = escape(url)"
+        }
+      ],
+      "answer": "It HTML-escapes the address before putting it in the body.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-writable",
+      "type": "answerable",
+      "question": "When does Koa consider the response no longer writable?",
+      "expected": [
+        {
+          "file": "lib/response.js",
+          "quote": "if (this.res.writableEnded || this.res.finished) return false"
+        }
+      ],
+      "answer": "When the underlying response has ended.",
+      "tags": ["code"]
+    },
+    {
+      "id": "koa-main-file",
+      "type": "answerable",
+      "question": "What is the entry file of the package?",
+      "expected": [
+        {
+          "file": "package.json",
+          "quote": "\"main\": \"lib/application.js\""
+        }
+      ],
+      "answer": "lib/application.js.",
+      "tags": ["config"]
+    },
+    {
+      "id": "koa-error-doc-default",
+      "type": "answerable",
+      "question": "What message does the default error handler send for an error that is not exposed and has status 500?",
+      "expected": [
+        {
+          "file": "docs/error-handling.md",
+          "quote": "for the code 500 the message \"Internal Server Error\" will be used"
+        }
+      ],
+      "answer": "The generated message \"Internal Server Error\".",
+      "tags": ["docs"]
+    },
+    {
+      "id": "koa-error-event-doc",
+      "type": "answerable",
+      "question": "How are listeners for errors that reach the application registered?",
+      "expected": [
+        {
+          "file": "docs/error-handling.md",
+          "quote": "Error event listeners can be specified with `app.on('error')`."
+        }
+      ],
+      "answer": "With app.on('error'); without one the default app.onerror logs the error.",
+      "tags": ["docs"]
+    },
+    {
+      "id": "koa-debug-flag",
+      "type": "answerable",
+      "question": "How can Koa's debugging output be turned on?",
+      "expected": [
+        {
+          "file": "docs/guide.md",
+          "quote": "just pass `NODE_DEBUG=koa*`"
+        }
+      ],
+      "answer": "By running with NODE_DEBUG=koa*.",
+      "tags": ["docs"]
+    },
+    {
+      "id": "koa-http2",
+      "type": "answerable",
+      "question": "How is a Koa application served over HTTP/2?",
+      "expected": [
+        {
+          "file": "docs/guide.md",
+          "quote": "const server = http2.createSecureServer(serverOptions, onRequestHandler);"
+        }
+      ],
+      "answer": "With http2.createSecureServer and the app's request handler.",
+      "tags": ["docs"]
+    },
+    {
+      "id": "koa-sse-type",
+      "type": "answerable",
+      "question": "Which content type must a server-sent events response use?",
+      "expected": [
+        {
+          "file": "docs/guide.md",
+          "quote": "ctx.response.type = 'text/event-stream'"
+        }
+      ],
+      "answer": "text/event-stream.",
+      "tags": ["docs"]
+    },
+    {
+      "id": "koa-response-time",
+      "type": "answerable",
+      "question": "How does the example middleware record how long a request took?",
+      "expected": [
+        {
+          "file": "docs/guide.md",
+          "quote": "ctx.set('X-Response-Time', `${ms}ms`);"
+        }
+      ],
+      "answer": "It measures the time around await next() and sets it in the X-Response-Time header.",
+      "tags": ["docs"]
+    },
+    {
+      "id": "koa-trust-proxy-followup",
+      "type": "answerable",
+      "question": "Which header does it read for the host then?",
+      "expected": [
+        {
+          "file": "lib/request.js",
+          "quote": "let host = proxy && this.get('X-Forwarded-Host')"
+        }
+      ],
+      "answer": "X-Forwarded-Host.",
+      "history": [
+        {
+          "role": "user",
+          "content": "How does Koa decide whether to trust proxy headers?"
+        },
+        {
+          "role": "assistant",
+          "content": "Through the app.proxy setting: when it is true, the proxy header fields are trusted."
+        }
+      ],
+      "tags": ["code", "follow-up"]
+    },
+    {
+      "id": "koa-redirect-followup",
+      "type": "answerable",
+      "question": "And which status does it use when none was set?",
+      "expected": [
+        {
+          "file": "lib/response.js",
+          "quote": "if (!statuses.redirect[this.status]) this.status = 302"
+        }
+      ],
+      "answer": "302.",
+      "history": [
+        {
+          "role": "user",
+          "content": "How does ctx.redirect work?"
+        },
+        {
+          "role": "assistant",
+          "content": "It sets the Location header to the encoded address and writes a short body that says where it redirects to."
+        }
+      ],
+      "tags": ["code", "follow-up"]
+    },
+    {
+      "id": "koa-no-websocket",
+      "type": "unanswerable",
+      "question": "How does Koa implement WebSocket support?",
+      "note": "Nothing about WebSockets in the corpus.",
+      "absentTerms": ["websocket"]
+    },
+    {
+      "id": "koa-no-database",
+      "type": "unanswerable",
+      "question": "Which database drivers does Koa ship with?",
+      "note": "Koa has no database layer.",
+      "absentTerms": ["mongodb", "postgres", "redis"]
+    },
+    {
+      "id": "koa-no-graphql",
+      "type": "unanswerable",
+      "question": "How does Koa execute GraphQL queries?",
+      "note": "GraphQL is not mentioned.",
+      "absentTerms": ["graphql"]
+    },
+    {
+      "id": "koa-no-templates",
+      "type": "unanswerable",
+      "question": "How do I render Handlebars templates with Koa?",
+      "note": "No template engine in the corpus.",
+      "absentTerms": ["handlebars"]
+    },
+    {
+      "id": "koa-no-router",
+      "type": "unanswerable",
+      "question": "How does Koa's built-in router match path parameters?",
+      "note": "Koa has no router; a near-miss for a routing question.",
+      "absentTerms": ["router"],
+      "hard": true
+    },
+    {
+      "id": "koa-no-session",
+      "type": "unanswerable",
+      "question": "Where is the built-in session store implemented?",
+      "note": "Cookies exist, sessions do not.",
+      "absentTerms": ["session"],
+      "hard": true
+    },
+    {
+      "id": "koa-no-cors",
+      "type": "unanswerable",
+      "question": "How does Koa configure CORS headers by default?",
+      "note": "CORS is not covered.",
+      "absentTerms": ["cors"],
+      "hard": true
+    }
+  ]
+}

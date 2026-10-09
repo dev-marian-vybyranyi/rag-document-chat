@@ -3,6 +3,7 @@ import {
   CLOSEST_PASSAGES,
   EXCERPT_LENGTH,
   closestPassages,
+  toTracedChunks,
   MAX_TITLE_FROM_QUESTION,
   titleFromQuestion,
   toMessageSources,
@@ -121,5 +122,78 @@ describe('closestPassages', () => {
       { filename: 'b.txt', page: 1, score: 0.3 },
     ]);
     expect(closestPassages([])).toEqual([]);
+  });
+});
+
+describe('the code location in what the user sees and what is traced', () => {
+  const location = {
+    path: 'src/auth/routes.ts',
+    language: 'typescript',
+    startLine: 10,
+    endLine: 24,
+    symbol: 'login',
+  };
+  const fileChunk = {
+    chunkId: 'c1',
+    documentId: 'repo',
+    filename: 'acme/shop',
+    ordinal: 3,
+    page: null,
+    code: location,
+    content: 'export function login() {}',
+    score: 0.03,
+    vectorScore: 0.71,
+    vectorRank: 1,
+    keywordScore: 0.2,
+    keywordRank: 2,
+  } as RetrievedChunk;
+
+  it('reaches the message sources, which are stored with the answer', () => {
+    const promptSource: PromptSource = {
+      id: 1,
+      chunkId: 'c1',
+      documentId: 'repo',
+      filename: 'acme/shop',
+      page: null,
+      code: location,
+      ordinal: 3,
+    };
+
+    const [source] = toMessageSources([promptSource], [fileChunk]);
+
+    expect(source).toMatchObject({ id: 1, code: location, excerpt: 'export function login() {}' });
+  });
+
+  it('is left out of the sources of a document passage', () => {
+    const promptSource: PromptSource = {
+      id: 1,
+      chunkId: 'c1',
+      documentId: 'doc',
+      filename: 'a.txt',
+      page: 2,
+      ordinal: 0,
+    };
+
+    const [source] = toMessageSources([promptSource], [{ ...fileChunk, code: undefined }]);
+
+    expect(source).not.toHaveProperty('code', location);
+  });
+
+  it('names the file in the closest passages shown when nothing was relevant', () => {
+    expect(closestPassages([fileChunk])).toEqual([
+      { filename: 'acme/shop', page: null, code: location, score: 0.71 },
+    ]);
+  });
+
+  it('is recorded in the trace of the retrieval', () => {
+    const [traced] = toTracedChunks([fileChunk], new Set(['c1']));
+
+    expect(traced).toMatchObject({ code: location, sentToModel: true });
+  });
+
+  it('is left out of the trace of a document passage', () => {
+    const [traced] = toTracedChunks([{ ...fileChunk, code: undefined }], new Set());
+
+    expect(traced).not.toHaveProperty('code', location);
   });
 });

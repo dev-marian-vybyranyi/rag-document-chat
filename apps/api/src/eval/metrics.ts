@@ -43,3 +43,30 @@ export function sweepThresholds(
     ),
   }));
 }
+
+export const MIN_ANSWERED_SHARE = 0.95;
+
+export interface ThresholdRecommendation {
+  threshold: number;
+  answered: number;
+  refused: number;
+}
+
+/**
+ * The strictest cut-off that still answers nearly every answerable question: refusing a question
+ * the documents can answer is a failure the user sees at once, so that share is protected first
+ * and the refusal of unanswerable ones is what is left to gain.
+ */
+export function recommendThreshold(
+  points: ThresholdPoint[],
+  minAnswered: number = MIN_ANSWERED_SHARE,
+): ThresholdRecommendation | null {
+  if (points.length === 0) return null;
+  const eligible = points.filter((point) => point.answered >= minAnswered);
+  const mostAnswered = Math.max(...points.map((point) => point.answered));
+  const pool =
+    eligible.length > 0 ? eligible : points.filter((point) => point.answered === mostAnswered);
+  const bestRefused = Math.max(...pool.map((point) => point.refused));
+  const best = pool.filter((point) => point.refused === bestRefused).at(-1)!;
+  return { threshold: best.threshold, answered: best.answered, refused: best.refused };
+}

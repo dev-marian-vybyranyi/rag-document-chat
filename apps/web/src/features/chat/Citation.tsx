@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { describeMatch, describeSource } from './source-format';
+import { describeMatch, describeSource, describeLines } from './source-format';
 import { useSourceViewer } from './source-viewer-context';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import type { ChatSource } from './types';
@@ -23,9 +23,10 @@ export function Citation({ source, children }: { source: ChatSource; children: R
         </button>
       </HoverCardTrigger>
       <HoverCardContent>
-        <p className="text-sm font-medium break-words">{source.filename}</p>
+        <p className="text-sm font-medium break-words">{source.code?.path ?? source.filename}</p>
         <p className="text-xs text-muted-foreground">
           {source.page !== null && `Page ${source.page} · `}
+          {source.code && describeLines(source.code) && `Lines ${describeLines(source.code)} · `}
           {describeMatch(source.score)}
         </p>
         <p className="mt-2 line-clamp-6 text-xs break-words whitespace-pre-line">

@@ -13,6 +13,10 @@ describe('Composer', () => {
     expect(setup()).toHaveFocus();
   });
 
+  it('says that it takes questions about documents and about code', () => {
+    expect(setup()).toHaveAttribute('placeholder', 'Ask about your documents or code…');
+  });
+
   it('shows no counter for a short question', async () => {
     const user = userEvent.setup();
     await user.type(setup(), 'short');

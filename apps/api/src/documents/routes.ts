@@ -6,23 +6,9 @@ import { plural } from '../http/limits.js';
 import { parseQuery } from '../http/validate.js';
 import { checkContent, detectFileType, sanitizeFilename } from './file-types.js';
 import type { IngestionService } from './ingest.js';
-import type { DocumentRepository, DocumentWithChunkCount } from './repository.js';
+import { toPublicDocument } from './public.js';
+import type { DocumentRepository } from './repository.js';
 import { singleFileUpload } from './upload.js';
-
-function toPublicDocument(document: DocumentWithChunkCount) {
-  return {
-    id: document.id,
-    filename: document.filename,
-    mimeType: document.mimeType,
-    sizeBytes: document.sizeBytes,
-    status: document.status,
-    error: document.error,
-    pageCount: document.pageCount,
-    chunkCount: document.chunkCount,
-    suggestions: document.suggestions,
-    createdAt: document.createdAt,
-  };
-}
 
 export const MAX_PASSAGE_RADIUS = 3;
 export const DEFAULT_PASSAGE_RADIUS = 1;
@@ -81,6 +67,9 @@ export function createDocumentsRouter({
         id: found.document.id,
         filename: found.document.filename,
         pageCount: found.document.pageCount,
+        kind: found.document.kind,
+        repoUrl: found.document.repoUrl,
+        commitSha: found.document.commitSha,
       },
       target: ordinal,
       passages: found.passages,

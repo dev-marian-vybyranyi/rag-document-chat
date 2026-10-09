@@ -20,6 +20,8 @@ export interface DocumentsContextValue {
   anyProcessing: boolean;
   reload: () => void;
   upload: (files: File[]) => void;
+  addRepositoryUrl: (url: string) => Promise<void>;
+  addRepositoryZip: (file: File) => Promise<void>;
   dismissUpload: (key: number) => void;
   remove: (id: string) => Promise<void>;
 }

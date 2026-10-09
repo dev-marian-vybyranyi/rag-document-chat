@@ -8,7 +8,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { EmbeddingError, type Embedder } from '../../src/ai/embeddings.js';
 import { CHAT_FAILURE_MESSAGES } from '../../src/chat/errors.js';
 import { NO_ANSWER_MESSAGE } from '../../src/chat/responder.js';
-import { HISTORY_MAX_TURNS, NO_ANSWER_PREFIX } from '../../src/rag/prompt.js';
+import {
+  CODE_SYSTEM_PROMPT,
+  HISTORY_MAX_TURNS,
+  NO_ANSWER_PREFIX,
+  SYSTEM_PROMPT,
+} from '../../src/rag/prompt.js';
 import { createChatRepository } from '../../src/chat/repository.js';
 import type { ChatDeps } from '../../src/chat/responder.js';
 import { chunks, documents, messages } from '../../src/db/schema.js';
@@ -56,7 +61,7 @@ describe('POST /chats/:id/messages', () => {
       model?: ChatDeps['model'];
       embedder?: Embedder;
       rewriter?: QueryRewriter;
-      relevanceThreshold?: number;
+      relevanceThreshold?: ChatDeps['relevanceThreshold'];
     } = {},
   ) {
     const fakeEmbedder = createFakeEmbedder();
@@ -589,6 +594,150 @@ describe('POST /chats/:id/messages', () => {
 
       expect(streamedPromptText(model, 'user')).toContain('Who won the 2018 football world cup?');
       expect(streamedPromptText(model, 'assistant')).toContain(NO_ANSWER_PREFIX);
+    });
+  });
+
+  describe('a question about code', () => {
+    const LOGIN =
+      'export async function login(email: string, password: string) { return verify(email); }';
+
+    async function addRepository(userId: string) {
+      const [repo] = await db
+        .insert(documents)
+        .values({
+          userId,
+          kind: 'repository',
+          filename: 'acme/shop',
+          mimeType: 'application/zip',
+          sizeBytes: 0,
+          status: 'ready',
+        })
+        .returning();
+      await db.insert(chunks).values({
+        documentId: repo!.id,
+        userId,
+        ordinal: 0,
+        path: 'src/auth/login.ts',
+        language: 'typescript',
+        startLine: 12,
+        endLine: 18,
+        symbol: 'login',
+        content: LOGIN,
+        tokenCount: 20,
+        embedding: fakeVector(LOGIN),
+      });
+      return repo!;
+    }
+
+    it('shows the model the file, its lines and the code prompt, and the user the same location', async () => {
+      const model = modelStreaming('Login is in `src/auth/login.ts` [1].');
+      const { app } = setup({ model, embedder: asksOnlyAbout(LOGIN) });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addRepository(userId);
+      const chat = await chats.create(userId);
+
+      const { parts } = await ask(agent, chat.id, 'HNSW: where is login implemented?');
+
+      const prompt = streamedPromptText(model, 'user');
+      expect(prompt).toContain(
+        '<source id="1" document="acme/shop" path="src/auth/login.ts" lines="12-18" symbol="login" language="typescript">',
+      );
+      expect(streamedPromptText(model, 'system')).toBe(CODE_SYSTEM_PROMPT);
+      const sourcesPart = parts.find((p) => p.type === 'data-sources')!;
+      expect(sourcesPart.data).toMatchObject({
+        sources: [
+          {
+            id: 1,
+            filename: 'acme/shop',
+            code: { path: 'src/auth/login.ts', startLine: 12, endLine: 18, symbol: 'login' },
+          },
+        ],
+      });
+    });
+
+    it('stores the location with the answer, so it is there when the chat is reopened', async () => {
+      const { app } = setup({ model: modelStreaming('See [1].'), embedder: asksOnlyAbout(LOGIN) });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addRepository(userId);
+      const chat = await chats.create(userId);
+
+      await ask(agent, chat.id, 'HNSW: where is login implemented?');
+
+      const stored = await savedMessages(chat.id, 2);
+      expect(stored[1]!.sources).toMatchObject([
+        { code: { path: 'src/auth/login.ts', startLine: 12, endLine: 18 } },
+      ]);
+    });
+
+    it('is judged by the code threshold, not the document threshold', async () => {
+      const model = modelStreaming('See [1].');
+      const { app } = setup({
+        model,
+        embedder: asksOnlyAbout(LOGIN),
+        relevanceThreshold: { document: 0.99, code: 0.5 },
+      });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addRepository(userId);
+      const chat = await chats.create(userId);
+
+      const { parts } = await ask(agent, chat.id, 'HNSW: where is login implemented?');
+
+      expect(textOf(parts)).toBe('See [1].');
+      const sourcesPart = parts.find((p) => p.type === 'data-sources')!;
+      expect(sourcesPart.data).toMatchObject({
+        retrieval: { outcome: 'answered', threshold: 0.5 },
+      });
+    });
+
+    it('is declined when the code threshold is not reached, and says which one applied', async () => {
+      const model = modelStreaming('should not be called');
+      const { app } = setup({
+        model,
+        embedder: asksOnlyAbout(LOGIN),
+        relevanceThreshold: { document: -1, code: 1.01 },
+      });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addRepository(userId);
+      const chat = await chats.create(userId);
+
+      const { parts } = await ask(agent, chat.id, 'HNSW: where is login implemented?');
+
+      expect(textOf(parts)).toBe(NO_ANSWER_MESSAGE);
+      expect(model.doStreamCalls).toHaveLength(0);
+      const sourcesPart = parts.find((p) => p.type === 'data-sources')!;
+      expect(sourcesPart.data).toMatchObject({
+        retrieval: {
+          outcome: 'declined',
+          threshold: 1.01,
+          closest: [{ filename: 'acme/shop', code: { path: 'src/auth/login.ts' } }],
+        },
+      });
+    });
+
+    it('keeps the original prompt for a question about documents only', async () => {
+      const model = modelStreaming('See [1].');
+      const { app } = setup({ model, embedder: asksOnlyAbout(HNSW) });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addDocument(userId, 'handbook.txt', [HNSW]);
+      const chat = await chats.create(userId);
+
+      await ask(agent, chat.id, 'What is HNSW?');
+
+      expect(streamedPromptText(model, 'system')).toBe(SYSTEM_PROMPT);
+      expect(streamedPromptText(model, 'user')).not.toContain('path=');
+    });
+
+    it('drops a citation number that points at nothing, as for documents', async () => {
+      const model = modelStreaming('It is in the login file [1] and also [4].');
+      const { app } = setup({ model, embedder: asksOnlyAbout(LOGIN) });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addRepository(userId);
+      const chat = await chats.create(userId);
+
+      const { parts } = await ask(agent, chat.id, 'HNSW: where is login implemented?');
+
+      expect(textOf(parts)).not.toContain('[4]');
+      expect(textOf(parts)).toContain('[1]');
     });
   });
 

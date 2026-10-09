@@ -57,6 +57,34 @@
       "when": 1791458888978,
       "tag": "0007_embedding_model",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791463241656,
+      "tag": "0008_source_kind_and_code_metadata",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791466998289,
+      "tag": "0009_repository_source",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791530217987,
+      "tag": "0010_repository_progress",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791532472902,
+      "tag": "0011_code_search_vector",
+      "breakpoints": true
     }
   ]
 }

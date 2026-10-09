@@ -13,6 +13,7 @@ export const ERROR_CODES = [
   'unsupported_file_type',
   'invalid_file',
   'invalid_upload',
+  'invalid_repository_url',
   'document_limit',
   'chat_limit',
   'chat_full',

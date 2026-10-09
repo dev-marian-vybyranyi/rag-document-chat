@@ -6,7 +6,12 @@ import { extractText } from '../src/documents/extract.js';
 import { detectFileType } from '../src/documents/file-types.js';
 import { listSampleFiles } from '../src/eval/corpus.js';
 import { loadGoldenSet, parseGoldenSet } from '../src/eval/golden.js';
-import { firstRelevantRank, summarizeRanks, sweepThresholds } from '../src/eval/metrics.js';
+import {
+  firstRelevantRank,
+  recommendThreshold,
+  summarizeRanks,
+  sweepThresholds,
+} from '../src/eval/metrics.js';
 import { formatRetrievalReport } from '../src/eval/report.js';
 import {
   evaluateRetrieval,
@@ -333,5 +338,73 @@ describe('findUncoveredQuotes', () => {
     const golden = loadGoldenSet(join(root, 'scripts/eval/golden.json'));
 
     expect(findUncoveredQuotes(golden, passages)).toEqual([]);
+  });
+});
+
+describe('recommendThreshold', () => {
+  const point = (threshold: number, answered: number, refused: number) => ({
+    threshold,
+    answered,
+    refused,
+  });
+
+  it('is nothing without points', () => {
+    expect(recommendThreshold([])).toBeNull();
+  });
+
+  it('picks the strictest cut-off that still answers nearly every answerable question', () => {
+    const result = recommendThreshold([
+      point(0.3, 1, 0),
+      point(0.4, 1, 0.5),
+      point(0.5, 0.96, 0.9),
+      point(0.6, 0.5, 1),
+      point(0.7, 0, 1),
+    ]);
+
+    expect(result).toEqual({ threshold: 0.5, answered: 0.96, refused: 0.9 });
+  });
+
+  it('does not trade answerable questions for refusals, even when that scores well', () => {
+    const result = recommendThreshold([
+      point(0.6, 1, 0),
+      point(0.65, 0.92, 0),
+      point(0.7, 0.47, 1),
+    ]);
+
+    expect(result).toEqual({ threshold: 0.6, answered: 1, refused: 0 });
+  });
+
+  it('takes the highest cut-off when several refuse equally many', () => {
+    const result = recommendThreshold([point(0.3, 1, 0.2), point(0.4, 1, 0.2), point(0.5, 1, 0.2)]);
+
+    expect(result?.threshold).toBe(0.5);
+  });
+
+  it('falls back to the cut-offs that answer the most when none reaches the share', () => {
+    const result = recommendThreshold([
+      point(0.5, 0.9, 0.1),
+      point(0.6, 0.9, 0.4),
+      point(0.7, 0.3, 1),
+    ]);
+
+    expect(result).toEqual({ threshold: 0.6, answered: 0.9, refused: 0.4 });
+  });
+
+  it('accepts another share to protect', () => {
+    const points = [point(0.3, 1, 0), point(0.5, 0.8, 0.7), point(0.7, 0.2, 1)];
+
+    expect(recommendThreshold(points)?.threshold).toBe(0.3);
+    expect(recommendThreshold(points, 0.8)?.threshold).toBe(0.5);
+  });
+
+  it('works on a real sweep', () => {
+    const points = sweepThresholds(
+      [0.8, 0.7, 0.65, 0.55],
+      [0.4, 0.35, 0.5],
+      [0.3, 0.45, 0.6, 0.75],
+    );
+
+    expect(recommendThreshold(points)).toMatchObject({ threshold: 0.45, answered: 1 });
+    expect(recommendThreshold(points)!.refused).toBeCloseTo(2 / 3);
   });
 });

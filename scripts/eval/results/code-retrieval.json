@@ -1,0 +1,1929 @@
+{
+  "date": "2026-10-09T11:57:00.305Z",
+  "provider": "google",
+  "embeddingModel": "gemini-embedding-001",
+  "rewriteModel": "gemini-3.5-flash-lite",
+  "repository": {
+    "owner": "koajs",
+    "name": "koa",
+    "commit": "2fecd029c6ce6b79d65158d28a76538f7f6b0378"
+  },
+  "codeRelevanceThreshold": 0.65,
+  "suggestedThreshold": {
+    "threshold": 0.6,
+    "answered": 1,
+    "refused": 0
+  },
+  "cutoff": 6,
+  "ks": [1, 3, 6],
+  "rewrite": true,
+  "summary": {
+    "all": {
+      "hybrid": {
+        "questions": 38,
+        "hitAt": {
+          "1": 0.5526315789473685,
+          "3": 0.7894736842105263,
+          "6": 0.9210526315789473
+        },
+        "mrr": 0.6763157894736842
+      },
+      "vector": {
+        "questions": 38,
+        "hitAt": {
+          "1": 0.6842105263157895,
+          "3": 0.8157894736842105,
+          "6": 0.8947368421052632
+        },
+        "mrr": 0.7552631578947369
+      },
+      "keyword": {
+        "questions": 38,
+        "hitAt": {
+          "1": 0.42105263157894735,
+          "3": 0.6052631578947368,
+          "6": 0.8157894736842105
+        },
+        "mrr": 0.5574561403508771
+      }
+    },
+    "standalone": {
+      "hybrid": {
+        "questions": 36,
+        "hitAt": {
+          "1": 0.5555555555555556,
+          "3": 0.8055555555555556,
+          "6": 0.9166666666666666
+        },
+        "mrr": 0.6814814814814815
+      },
+      "vector": {
+        "questions": 36,
+        "hitAt": {
+          "1": 0.6944444444444444,
+          "3": 0.8333333333333334,
+          "6": 0.9166666666666666
+        },
+        "mrr": 0.7694444444444444
+      },
+      "keyword": {
+        "questions": 36,
+        "hitAt": {
+          "1": 0.4166666666666667,
+          "3": 0.6111111111111112,
+          "6": 0.8333333333333334
+        },
+        "mrr": 0.560648148148148
+      }
+    },
+    "followUps": {
+      "hybrid": {
+        "questions": 2,
+        "hitAt": {
+          "1": 0.5,
+          "3": 0.5,
+          "6": 1
+        },
+        "mrr": 0.5833333333333334
+      },
+      "vector": {
+        "questions": 2,
+        "hitAt": {
+          "1": 0.5,
+          "3": 0.5,
+          "6": 0.5
+        },
+        "mrr": 0.5
+      },
+      "keyword": {
+        "questions": 2,
+        "hitAt": {
+          "1": 0.5,
+          "3": 0.5,
+          "6": 0.5
+        },
+        "mrr": 0.5
+      }
+    }
+  },
+  "rows": [
+    {
+      "id": "koa-listen",
+      "question": "How does app.listen start the HTTP server?",
+      "query": "How does app.listen start the HTTP server?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7004468897046461
+    },
+    {
+      "id": "koa-use-validation",
+      "question": "What happens when something that is not a function is passed to app.use?",
+      "query": "What happens when something that is not a function is passed to app.use?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": null,
+        "vector": 1,
+        "keyword": null
+      },
+      "hybridTop": [
+        {
+          "filename": "docs/error-handling.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6553133810593805
+    },
+    {
+      "id": "koa-initial-status",
+      "question": "What status code does a response have before any middleware has run?",
+      "query": "What status code does a response have before any middleware has run?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 6
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6849415071248549
+    },
+    {
+      "id": "koa-compose-option",
+      "question": "Which function composes the middleware stack, and can it be replaced?",
+      "query": "Which function composes the middleware stack, and can it be replaced?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": null,
+        "vector": null,
+        "keyword": null
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.688790473993568
+    },
+    {
+      "id": "koa-create-context",
+      "question": "How is the per-request context created from the application's context?",
+      "query": "How is the per-request context created from the application's context?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6917612238312895
+    },
+    {
+      "id": "koa-default-error-listener",
+      "question": "When does the application attach its default error handler?",
+      "query": "When does the application attach its default error handler?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 5,
+        "vector": null,
+        "keyword": 4
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/error-handling.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6993868221771269
+    },
+    {
+      "id": "koa-app-onerror-skip",
+      "question": "When does the application-level error handler skip logging an error?",
+      "query": "When does the application-level error handler skip logging an error?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 2,
+        "vector": 3,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "docs/error-handling.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6751400846709527
+    },
+    {
+      "id": "koa-respond-empty-status",
+      "question": "How does Koa treat a response whose status never has a body, such as 204?",
+      "query": "How does Koa treat a response whose status never has a body, such as 204?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.751279796949828
+    },
+    {
+      "id": "koa-respond-json",
+      "question": "How is an object body turned into the bytes that are sent?",
+      "query": "How is an object body turned into the bytes that are sent?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 2,
+        "vector": 1,
+        "keyword": 5
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6885967776230243
+    },
+    {
+      "id": "koa-head-length",
+      "question": "Where does a HEAD response get its Content-Length from?",
+      "query": "Where does a HEAD response get its Content-Length from?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 4,
+        "vector": 4,
+        "keyword": 4
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.643525178669337
+    },
+    {
+      "id": "koa-proxy-ip-header",
+      "question": "Which header holds the client address when the app runs behind a proxy, by default?",
+      "query": "Which header holds the client address when the app runs behind a proxy, by default?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 2,
+        "vector": 5,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7238604425711515
+    },
+    {
+      "id": "koa-current-context",
+      "question": "How can code read the current request's context without it being passed in?",
+      "query": "How can code read the current request's context without it being passed in?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 3,
+        "vector": null,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6913908610885958
+    },
+    {
+      "id": "koa-exported-errors",
+      "question": "Which HTTP error helpers does the application module export besides the class?",
+      "query": "Which HTTP error helpers does the application module export besides the class?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 3,
+        "vector": 3,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7436088488881777
+    },
+    {
+      "id": "koa-ctx-throw",
+      "question": "How does ctx.throw create the error it throws?",
+      "query": "How does ctx.throw create the error it throws?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 5
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/error-handling.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.781529094497384
+    },
+    {
+      "id": "koa-ctx-assert",
+      "question": "What is ctx.assert implemented with?",
+      "query": "What is ctx.assert implemented with?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 3,
+        "vector": 1,
+        "keyword": null
+      },
+      "hybridTop": [
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7232503231681788
+    },
+    {
+      "id": "koa-onerror-headers",
+      "question": "What does the context error handler do with the headers already set before it replies with an error?",
+      "query": "What does the context error handler do with the headers already set before it replies with an error?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "docs/error-handling.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7487597395557152
+    },
+    {
+      "id": "koa-onerror-message",
+      "question": "When is the error's own message sent to the client instead of generic status text?",
+      "query": "When is the error's own message sent to the client instead of generic status text?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/error-handling.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6869138328283416
+    },
+    {
+      "id": "koa-cookies-keys",
+      "question": "Where do the keys used for signed cookies come from?",
+      "query": "Where do the keys used for signed cookies come from?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "REPOSITORY_OVERVIEW",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "package.json",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/search-params.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6569901037879546
+    },
+    {
+      "id": "koa-delegation",
+      "question": "How are properties such as ctx.body and ctx.status forwarded to the response object?",
+      "query": "How are properties such as ctx.body and ctx.status forwarded to the response object?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": null,
+        "vector": 4,
+        "keyword": null
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7379019387297401
+    },
+    {
+      "id": "koa-host-header",
+      "question": "Which header does request.host look at first when proxy trust is enabled?",
+      "query": "Which header does request.host look at first when proxy trust is enabled?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7290711575003793
+    },
+    {
+      "id": "koa-ips-limit",
+      "question": "How is the number of addresses read from the proxy header limited?",
+      "query": "How is the number of addresses read from the proxy header limited?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 3,
+        "vector": 1,
+        "keyword": null
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6365732973549633
+    },
+    {
+      "id": "koa-ip-fallback",
+      "question": "What does ctx.ip fall back to when there is no proxy address?",
+      "query": "What does ctx.ip fall back to when there is no proxy address?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7053080944400156
+    },
+    {
+      "id": "koa-subdomains-ip",
+      "question": "What does request.subdomains return when the host is an IP address?",
+      "query": "What does request.subdomains return when the host is an IP address?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 2,
+        "vector": 1,
+        "keyword": 4
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7322052893614808
+    },
+    {
+      "id": "koa-status-checks",
+      "question": "Which checks run when the response status is set?",
+      "query": "Which checks run when the response status is set?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7169255379014664
+    },
+    {
+      "id": "koa-string-body-type",
+      "question": "How is the content type chosen when the body is a string?",
+      "query": "How is the content type chosen when the body is a string?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 4,
+        "vector": 1,
+        "keyword": 5
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6907042928907539
+    },
+    {
+      "id": "koa-null-body-status",
+      "question": "What happens to the status when the body is set to null and the status could have a body?",
+      "query": "What happens to the status when the body is set to null and the status could have a body?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.727911248362735
+    },
+    {
+      "id": "koa-redirect-status",
+      "question": "Which status does redirect use if the current one is not a redirect status?",
+      "query": "Which status does redirect use if the current one is not a redirect status?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6641272155757786
+    },
+    {
+      "id": "koa-redirect-html",
+      "question": "How does redirect prepare the address when the client accepts HTML?",
+      "query": "How does redirect prepare the address when the client accepts HTML?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6545899438609859
+    },
+    {
+      "id": "koa-writable",
+      "question": "When does Koa consider the response no longer writable?",
+      "query": "When does Koa consider the response no longer writable?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 3,
+        "vector": 3,
+        "keyword": 6
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7365707966625986
+    },
+    {
+      "id": "koa-main-file",
+      "question": "What is the entry file of the package?",
+      "query": "What is the entry file of the package?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "filename": "package.json",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "REPOSITORY_OVERVIEW",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6745566563185867
+    },
+    {
+      "id": "koa-error-doc-default",
+      "question": "What message does the default error handler send for an error that is not exposed and has status 500?",
+      "query": "What message does the default error handler send for an error that is not exposed and has status 500?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "docs/error-handling.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7322268305863836
+    },
+    {
+      "id": "koa-error-event-doc",
+      "question": "How are listeners for errors that reach the application registered?",
+      "query": "How are listeners for errors that reach the application registered?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 2,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "docs/error-handling.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6860372416551279
+    },
+    {
+      "id": "koa-debug-flag",
+      "question": "How can Koa's debugging output be turned on?",
+      "query": "How can Koa's debugging output be turned on?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "REPOSITORY_OVERVIEW",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7553537071576666
+    },
+    {
+      "id": "koa-http2",
+      "question": "How is a Koa application served over HTTP/2?",
+      "query": "How is a Koa application served over HTTP/2?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 6,
+        "vector": 1,
+        "keyword": null
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "REPOSITORY_OVERVIEW",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": true
+        }
+      ],
+      "bestScore": 0.7303822778490788
+    },
+    {
+      "id": "koa-sse-type",
+      "question": "Which content type must a server-sent events response use?",
+      "query": "Which content type must a server-sent events response use?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6262195018299505
+    },
+    {
+      "id": "koa-response-time",
+      "question": "How does the example middleware record how long a request took?",
+      "query": "How does the example middleware record how long a request took?",
+      "rewritten": false,
+      "followUp": false,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 2,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/guide.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6915405369636323
+    },
+    {
+      "id": "koa-trust-proxy-followup",
+      "question": "Which header does it read for the host then?",
+      "query": "Which header does Koa read for the host then?",
+      "rewritten": true,
+      "followUp": true,
+      "ranks": {
+        "hybrid": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": true
+        },
+        {
+          "filename": "lib/application.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "Readme.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/request.js",
+          "page": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7342371060705
+    },
+    {
+      "id": "koa-redirect-followup",
+      "question": "And which status does it use when none was set?",
+      "query": "And which status does it use when none was set?",
+      "rewritten": false,
+      "followUp": true,
+      "ranks": {
+        "hybrid": 6,
+        "vector": null,
+        "keyword": null
+      },
+      "hybridTop": [
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/context.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "docs/error-handling.md",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": false
+        },
+        {
+          "filename": "lib/response.js",
+          "page": null,
+          "relevant": true
+        }
+      ],
+      "bestScore": 0.6675818971337618
+    }
+  ],
+  "unanswerable": [
+    {
+      "id": "koa-no-websocket",
+      "question": "How does Koa implement WebSocket support?",
+      "query": "How does Koa implement WebSocket support?",
+      "hard": false,
+      "bestScore": 0.6875209253628567
+    },
+    {
+      "id": "koa-no-database",
+      "question": "Which database drivers does Koa ship with?",
+      "query": "Which database drivers does Koa ship with?",
+      "hard": false,
+      "bestScore": 0.6877178499381137
+    },
+    {
+      "id": "koa-no-graphql",
+      "question": "How does Koa execute GraphQL queries?",
+      "query": "How does Koa execute GraphQL queries?",
+      "hard": false,
+      "bestScore": 0.6849419532638658
+    },
+    {
+      "id": "koa-no-templates",
+      "question": "How do I render Handlebars templates with Koa?",
+      "query": "How do I render Handlebars templates with Koa?",
+      "hard": false,
+      "bestScore": 0.6873787438663607
+    },
+    {
+      "id": "koa-no-router",
+      "question": "How does Koa's built-in router match path parameters?",
+      "query": "How does Koa's built-in router match path parameters?",
+      "hard": true,
+      "bestScore": 0.658510836381744
+    },
+    {
+      "id": "koa-no-session",
+      "question": "Where is the built-in session store implemented?",
+      "query": "Where is the built-in session store implemented?",
+      "hard": true,
+      "bestScore": 0.6578491074259668
+    },
+    {
+      "id": "koa-no-cors",
+      "question": "How does Koa configure CORS headers by default?",
+      "query": "How does Koa configure CORS headers by default?",
+      "hard": true,
+      "bestScore": 0.6674824325213188
+    }
+  ],
+  "thresholds": [
+    {
+      "threshold": 0.3,
+      "answered": 1,
+      "refused": 0
+    },
+    {
+      "threshold": 0.35,
+      "answered": 1,
+      "refused": 0
+    },
+    {
+      "threshold": 0.4,
+      "answered": 1,
+      "refused": 0
+    },
+    {
+      "threshold": 0.45,
+      "answered": 1,
+      "refused": 0
+    },
+    {
+      "threshold": 0.5,
+      "answered": 1,
+      "refused": 0
+    },
+    {
+      "threshold": 0.55,
+      "answered": 1,
+      "refused": 0
+    },
+    {
+      "threshold": 0.6,
+      "answered": 1,
+      "refused": 0
+    },
+    {
+      "threshold": 0.65,
+      "answered": 0.9210526315789473,
+      "refused": 0
+    },
+    {
+      "threshold": 0.7,
+      "answered": 0.47368421052631576,
+      "refused": 1
+    },
+    {
+      "threshold": 0.75,
+      "answered": 0.07894736842105263,
+      "refused": 1
+    },
+    {
+      "threshold": 0.8,
+      "answered": 0,
+      "refused": 1
+    }
+  ]
+}

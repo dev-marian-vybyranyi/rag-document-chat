@@ -138,12 +138,18 @@ describe('managing documents', () => {
 
       expect(Object.keys(res.body.documents[0]).sort()).toEqual([
         'chunkCount',
+        'commitSha',
         'createdAt',
         'error',
+        'fileCount',
         'filename',
         'id',
+        'kind',
         'mimeType',
         'pageCount',
+        'progress',
+        'repoRef',
+        'repoUrl',
         'sizeBytes',
         'status',
         'suggestions',

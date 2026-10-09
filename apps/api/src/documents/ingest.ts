@@ -3,6 +3,7 @@ import type { Embedder } from '../ai/embeddings.js';
 import { EmbeddingError } from '../ai/embeddings.js';
 import { PG_FOREIGN_KEY_VIOLATION, pgErrorCode } from '../db/errors.js';
 import { chunkSegments, type ChunkOptions } from './chunker.js';
+import { embedInGroups } from './embedding-groups.js';
 import { ExtractionError, extractText } from './extract.js';
 import type { FileType } from './file-types.js';
 import { createNoopSuggester, type QuestionSuggester } from '../rag/suggest.js';
@@ -10,7 +11,6 @@ import { createJobQueue } from './queue.js';
 import type { DocumentRepository } from './repository.js';
 
 export const DEFAULT_MAX_CHUNKS = 2000;
-export const EMBEDDING_GROUP_SIZE = 100;
 export const INTERRUPTED_MESSAGE = 'Processing was interrupted. Please upload the file again.';
 const UNEXPECTED_MESSAGE = 'Something went wrong while processing the document.';
 
@@ -58,14 +58,6 @@ export function createIngestionService(options: IngestionOptions): IngestionServ
     logger.error({ err: error }, 'ingestion job crashed'),
   );
 
-  async function embedInGroups(texts: string[]): Promise<number[][]> {
-    const vectors: number[][] = [];
-    for (let i = 0; i < texts.length; i += EMBEDDING_GROUP_SIZE) {
-      vectors.push(...(await embedder.embedDocuments(texts.slice(i, i + EMBEDDING_GROUP_SIZE))));
-    }
-    return vectors;
-  }
-
   async function process(job: IngestionJob): Promise<void> {
     const log = logger.child({ documentId: job.document.id, userId: job.document.userId });
     const startedAt = Date.now();
@@ -78,7 +70,10 @@ export function createIngestionService(options: IngestionOptions): IngestionServ
       }
       log.info({ pages: extracted.pageCount, chunks: chunks.length }, 'document text extracted');
 
-      const vectors = await embedInGroups(chunks.map((chunk) => chunk.content));
+      const vectors = await embedInGroups(
+        embedder,
+        chunks.map((chunk) => chunk.content),
+      );
 
       const suggestions = await suggester
         .suggest({

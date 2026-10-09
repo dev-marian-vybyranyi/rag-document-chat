@@ -5,6 +5,10 @@ import { createDb } from './db/client.js';
 import { runMigrations } from './db/migrate.js';
 import { createIngestionService, INTERRUPTED_MESSAGE } from './documents/ingest.js';
 import { createDocumentRepository } from './documents/repository.js';
+import { defaultImportLimits } from './repositories/filter.js';
+import { createGithubImporter } from './repositories/github.js';
+import { createRepositoryIngestion } from './repositories/ingest.js';
+import { relevanceThresholds } from './rag/relevance.js';
 import { createRetriever } from './rag/retriever.js';
 import { createRetrievalStore } from './rag/retrieval.js';
 import { createLogger } from './observability/logger.js';
@@ -45,6 +49,17 @@ const ingestion = createIngestionService({
   embeddingModel: env.EMBEDDING_MODEL,
 });
 
+const importLimits = { ...defaultImportLimits, maxFiles: env.REPOSITORY_MAX_FILES };
+const repositoryIngestion = createRepositoryIngestion({
+  repository: documentRepository,
+  embedder,
+  github: createGithubImporter({ token: env.GITHUB_TOKEN, limits: importLimits }),
+  logger,
+  embeddingModel: env.EMBEDDING_MODEL,
+  limits: importLimits,
+  maxChunks: env.REPOSITORY_MAX_CHUNKS,
+});
+
 const app = createApp({
   logger,
   db,
@@ -54,6 +69,7 @@ const app = createApp({
     perDay: env.CHAT_RATE_LIMIT_PER_DAY,
   },
   ingestion,
+  repositoryIngestion,
   chat: {
     retriever: createRetriever({
       store: createRetrievalStore(db, { embeddingModel: env.EMBEDDING_MODEL }),
@@ -61,7 +77,7 @@ const app = createApp({
       logger,
     }),
     rewriter: ai.createRewriter(logger),
-    relevanceThreshold: env.RELEVANCE_THRESHOLD,
+    relevanceThreshold: relevanceThresholds(env),
     ...ai.chat,
   },
 });

@@ -19,6 +19,12 @@ function doc(overrides: Partial<DocumentItem> = {}): DocumentItem {
     error: null,
     pageCount: 12,
     chunkCount: 30,
+    kind: 'document',
+    fileCount: null,
+    repoUrl: null,
+    repoRef: null,
+    commitSha: null,
+    progress: null,
     suggestions: [],
     createdAt: '2026-10-07T10:00:00Z',
     ...overrides,
@@ -98,7 +104,9 @@ describe('documents page', () => {
     it('invites the user to add a first document', async () => {
       setup();
 
-      expect(await screen.findByText(/No documents yet/)).toBeInTheDocument();
+      expect(await screen.findByText(/No documents yet/)).toHaveTextContent(
+        'Add a file above, or a code repository',
+      );
     });
 
     it('shows why a document failed', async () => {

@@ -1,7 +1,12 @@
 import { cn } from '@/lib/utils';
 import { SidePanel } from './SidePanel';
 import { citedIds } from './citations';
-import { formatDuration, formatPercent, formatScoreAgainst } from './source-format';
+import {
+  describeLocation,
+  formatDuration,
+  formatPercent,
+  formatScoreAgainst,
+} from './source-format';
 import { useSourceViewer, type WhyData } from './source-viewer-context';
 
 export function WhyThisAnswer() {
@@ -83,7 +88,9 @@ export function WhyContent({ data }: { data: WhyData }) {
             <ol className="flex flex-col gap-1.5">
               {retrieval.closest.map((passage, index) => (
                 <li key={index} className="rounded-md border px-2.5 py-1.5">
-                  <span className="font-medium">{passage.filename}</span>
+                  <span className="font-medium">
+                    {passage.code ? describeLocation(passage) : passage.filename}
+                  </span>
                   {passage.page !== null && (
                     <span className="text-muted-foreground"> · page {passage.page}</span>
                   )}
@@ -106,7 +113,8 @@ export function WhyContent({ data }: { data: WhyData }) {
                 <li key={source.id} className="rounded-md border px-2.5 py-2">
                   <div className="flex items-start justify-between gap-2">
                     <p className="min-w-0 break-words">
-                      <span className="font-medium">[{source.id}]</span> {source.filename}
+                      <span className="font-medium">[{source.id}]</span>{' '}
+                      {source.code ? describeLocation(source) : source.filename}
                       {source.page !== null && (
                         <span className="text-muted-foreground"> · page {source.page}</span>
                       )}

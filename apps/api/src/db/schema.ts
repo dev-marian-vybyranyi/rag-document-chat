@@ -23,6 +23,14 @@ const tsvector = customType<{ data: string }>({
   dataType: () => 'tsvector',
 });
 
+const splitIdentifiers = (text: ReturnType<typeof sql>) => sql`regexp_replace(
+  regexp_replace(
+    regexp_replace(${text}, '([A-Z]+)([A-Z][a-z])', '\\1 \\2', 'g'),
+    '([a-z0-9])([A-Z])', '\\1 \\2', 'g'),
+  '[^A-Za-z0-9]+', ' ', 'g')`;
+
+const codeText = sql`coalesce(path, '') || ' ' || coalesce(symbol, '') || ' ' || content`;
+
 export const users = pgTable('users', {
   id: uuid().primaryKey().defaultRandom(),
   email: text().notNull().unique(),
@@ -45,6 +53,8 @@ export const sessions = pgTable(
 
 export const documentStatus = pgEnum('document_status', ['processing', 'ready', 'failed']);
 
+export const documentKind = pgEnum('document_kind', ['document', 'repository']);
+
 export const documents = pgTable(
   'documents',
   {
@@ -52,6 +62,7 @@ export const documents = pgTable(
     userId: uuid()
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    kind: documentKind().notNull().default('document'),
     filename: text().notNull(),
     mimeType: text().notNull(),
     sizeBytes: integer().notNull(),
@@ -59,6 +70,13 @@ export const documents = pgTable(
     error: text(),
     pageCount: integer(),
     embeddingModel: text(),
+    repoUrl: text(),
+    repoRef: text(),
+    commitSha: text(),
+    fileCount: integer(),
+    progressPhase: text(),
+    progressDone: integer(),
+    progressTotal: integer(),
     suggestions: jsonb().$type<string[]>().notNull().default([]),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
@@ -77,12 +95,20 @@ export const chunks = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     ordinal: integer().notNull(),
     page: integer(),
+    path: text(),
+    language: text(),
+    startLine: integer(),
+    endLine: integer(),
+    symbol: text(),
     content: text().notNull(),
     tokenCount: integer().notNull(),
     embedding: vector({ dimensions: EMBEDDING_DIMENSIONS }).notNull(),
     searchVector: tsvector()
       .notNull()
       .generatedAlwaysAs(sql`to_tsvector('english', content)`),
+    codeSearchVector: tsvector().generatedAlwaysAs(
+      sql`CASE WHEN path IS NULL THEN NULL ELSE to_tsvector('simple', ${codeText} || ' ' || ${splitIdentifiers(codeText)}) END`,
+    ),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
@@ -90,6 +116,7 @@ export const chunks = pgTable(
     index('chunks_user_id_idx').on(table.userId),
     index('chunks_embedding_idx').using('hnsw', table.embedding.op('vector_cosine_ops')),
     index('chunks_search_vector_idx').using('gin', table.searchVector),
+    index('chunks_code_search_vector_idx').using('gin', table.codeSearchVector),
   ],
 );
 

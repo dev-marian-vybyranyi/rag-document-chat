@@ -122,6 +122,24 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const addDocument = useCallback((document: DocumentItem) => {
+    setState((current) =>
+      current.status === 'ready'
+        ? { ...current, documents: [document, ...current.documents] }
+        : current,
+    );
+  }, []);
+
+  const addRepositoryUrl = useCallback(
+    async (url: string) => addDocument(await documentsApi.addRepositoryUrl(url)),
+    [addDocument],
+  );
+
+  const addRepositoryZip = useCallback(
+    async (file: File) => addDocument(await documentsApi.addRepositoryZip(file)),
+    [addDocument],
+  );
+
   const dismissUpload = useCallback((key: number) => {
     setUploads((current) => current.filter((entry) => entry.key !== key));
   }, []);
@@ -138,8 +156,30 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
   const announcement = state.status === 'ready' ? state.announcement : '';
 
   const value = useMemo<DocumentsContextValue>(
-    () => ({ state, uploads, announcement, anyProcessing, reload, upload, dismissUpload, remove }),
-    [state, uploads, announcement, anyProcessing, reload, upload, dismissUpload, remove],
+    () => ({
+      state,
+      uploads,
+      announcement,
+      anyProcessing,
+      reload,
+      upload,
+      addRepositoryUrl,
+      addRepositoryZip,
+      dismissUpload,
+      remove,
+    }),
+    [
+      state,
+      uploads,
+      announcement,
+      anyProcessing,
+      reload,
+      upload,
+      addRepositoryUrl,
+      addRepositoryZip,
+      dismissUpload,
+      remove,
+    ],
   );
 
   return <DocumentsContext.Provider value={value}>{children}</DocumentsContext.Provider>;

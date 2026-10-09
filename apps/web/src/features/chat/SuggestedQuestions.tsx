@@ -15,7 +15,7 @@ export function SuggestedQuestions({ onPick }: { onPick: (question: string) => v
         <Link to="/documents" className="font-medium text-foreground underline underline-offset-4">
           Add one
         </Link>{' '}
-        to get answers from it.
+        to get answers from it, or import a code repository there.
       </p>
     );
   }
@@ -25,7 +25,8 @@ export function SuggestedQuestions({ onPick }: { onPick: (question: string) => v
     const waiting = documents.some((doc) => doc.status === 'processing');
     return waiting ? (
       <p role="status" className="mt-3 text-sm text-muted-foreground">
-        Your documents are still being processed. Questions will work once they are ready.
+        Your documents and repositories are still being processed. Questions will work once they are
+        ready.
       </p>
     ) : null;
   }

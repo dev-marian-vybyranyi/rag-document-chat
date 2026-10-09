@@ -173,4 +173,26 @@ describe('fuseRankings', () => {
     expect(sharp!.score).toBeCloseTo(1 / 2, 10);
     expect(flat!.score).toBeCloseTo(1 / 1001, 10);
   });
+
+  describe('code location', () => {
+    const location = {
+      path: 'src/a.ts',
+      language: 'typescript',
+      startLine: 3,
+      endLine: 9,
+      symbol: 'login',
+    };
+
+    it('travels with the chunk through the fusion', () => {
+      const fused = fuseRankings([candidate('a', { code: location })], [], { limit: 5 });
+
+      expect(fused[0]!.code).toEqual(location);
+    });
+
+    it('is absent for a document passage', () => {
+      const fused = fuseRankings([candidate('a')], [], { limit: 5 });
+
+      expect(fused[0]).not.toHaveProperty('code');
+    });
+  });
 });

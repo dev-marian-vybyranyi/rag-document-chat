@@ -9,6 +9,7 @@ function doc(
 ): DocumentItem {
   return {
     id,
+    kind: 'document',
     filename: `${id}.txt`,
     mimeType: 'text/plain',
     sizeBytes: 1,
@@ -16,6 +17,11 @@ function doc(
     error: null,
     pageCount: null,
     chunkCount: 1,
+    fileCount: null,
+    repoUrl: null,
+    repoRef: null,
+    commitSha: null,
+    progress: null,
     suggestions,
     createdAt: '2026-10-07T10:00:00Z',
   };
