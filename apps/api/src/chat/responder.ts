@@ -75,7 +75,14 @@ export function closestPassages(chunks: RetrievedChunk[]): ClosestPassage[] {
   return chunks
     .flatMap((chunk) =>
       typeof chunk.vectorScore === 'number'
-        ? [{ filename: chunk.filename, page: chunk.page, score: chunk.vectorScore }]
+        ? [
+            {
+              filename: chunk.filename,
+              page: chunk.page,
+              ...(chunk.code && { code: chunk.code }),
+              score: chunk.vectorScore,
+            },
+          ]
         : [],
     )
     .sort((a, b) => b.score - a.score)
@@ -110,6 +117,7 @@ export function toTracedChunks(chunks: RetrievedChunk[], sentIds: Set<string>): 
     documentId: chunk.documentId,
     filename: chunk.filename,
     page: chunk.page,
+    ...(chunk.code && { code: chunk.code }),
     ordinal: chunk.ordinal,
     vectorScore: chunk.vectorScore,
     vectorRank: chunk.vectorRank,

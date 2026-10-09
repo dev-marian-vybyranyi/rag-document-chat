@@ -1,4 +1,5 @@
 import type { ChatFailureKind } from '../chat/errors.js';
+import type { CodeSource } from '../rag/code-source.js';
 
 export type TraceOutcome = 'answered' | 'declined' | 'failed' | 'cancelled';
 
@@ -7,6 +8,7 @@ export interface TracedChunk {
   documentId: string;
   filename: string;
   page: number | null;
+  code?: CodeSource;
   ordinal: number;
   vectorScore: number | null;
   vectorRank: number | null;

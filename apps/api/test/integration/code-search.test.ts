@@ -277,6 +277,47 @@ describe('keyword search over code', () => {
     });
   });
 
+  describe('the location of a result', () => {
+    it('is returned by keyword search for code and left out for a document', async () => {
+      const ada = await createUser('ada@example.com');
+      const repo = await addSource(ada.id, 'repository', 'acme/shop', [
+        { path: 'src/a.ts', symbol: 'login', content: 'function login() {}' },
+      ]);
+      await db
+        .update(chunks)
+        .set({ language: 'typescript', startLine: 4, endLine: 9 })
+        .where(eq(chunks.documentId, repo.id));
+      await addSource(ada.id, 'document', 'handbook.txt', [{ content: 'login is explained here' }]);
+
+      const results = await store.keywordSearch(ada.id, 'login', 5);
+
+      const file = results.find((r) => r.filename === 'acme/shop');
+      const prose = results.find((r) => r.filename === 'handbook.txt');
+      expect(file?.code).toEqual({
+        path: 'src/a.ts',
+        language: 'typescript',
+        startLine: 4,
+        endLine: 9,
+        symbol: 'login',
+      });
+      expect(prose).toBeDefined();
+      expect(prose).not.toHaveProperty('code');
+    });
+
+    it('is returned by vector search too', async () => {
+      const ada = await createUser('ada@example.com');
+      await addSource(ada.id, 'repository', 'acme/shop', [
+        { path: 'src/a.ts', content: 'function login() {}' },
+      ]);
+      await addSource(ada.id, 'document', 'handbook.txt', [{ content: 'plain text' }]);
+
+      const results = await store.vectorSearch(ada.id, embedding(0), 5);
+
+      expect(results.map((r) => r.code?.path ?? null).sort()).toEqual([null, 'src/a.ts']);
+      expect(results.find((r) => r.code)).not.toHaveProperty('path');
+    });
+  });
+
   describe('the index', () => {
     it('has a GIN index on the code vector and fills the vector itself', async () => {
       const ada = await createUser('ada@example.com');

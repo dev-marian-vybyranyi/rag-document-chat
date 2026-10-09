@@ -1,9 +1,12 @@
+import type { CodeSource } from '../rag/code-source.js';
+
 export interface MessageSource {
   id: number;
   chunkId: string;
   documentId: string;
   filename: string;
   page: number | null;
+  code?: CodeSource;
   ordinal: number;
   excerpt: string;
   score: number | null;
@@ -16,6 +19,7 @@ export interface MessageSource {
 export interface ClosestPassage {
   filename: string;
   page: number | null;
+  code?: CodeSource;
   score: number;
 }
 
