@@ -61,7 +61,7 @@ describe('POST /chats/:id/messages', () => {
       model?: ChatDeps['model'];
       embedder?: Embedder;
       rewriter?: QueryRewriter;
-      relevanceThreshold?: number;
+      relevanceThreshold?: ChatDeps['relevanceThreshold'];
     } = {},
   ) {
     const fakeEmbedder = createFakeEmbedder();
@@ -667,6 +667,51 @@ describe('POST /chats/:id/messages', () => {
       expect(stored[1]!.sources).toMatchObject([
         { code: { path: 'src/auth/login.ts', startLine: 12, endLine: 18 } },
       ]);
+    });
+
+    it('is judged by the code threshold, not the document threshold', async () => {
+      const model = modelStreaming('See [1].');
+      const { app } = setup({
+        model,
+        embedder: asksOnlyAbout(LOGIN),
+        relevanceThreshold: { document: 0.99, code: 0.5 },
+      });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addRepository(userId);
+      const chat = await chats.create(userId);
+
+      const { parts } = await ask(agent, chat.id, 'HNSW: where is login implemented?');
+
+      expect(textOf(parts)).toBe('See [1].');
+      const sourcesPart = parts.find((p) => p.type === 'data-sources')!;
+      expect(sourcesPart.data).toMatchObject({
+        retrieval: { outcome: 'answered', threshold: 0.5 },
+      });
+    });
+
+    it('is declined when the code threshold is not reached, and says which one applied', async () => {
+      const model = modelStreaming('should not be called');
+      const { app } = setup({
+        model,
+        embedder: asksOnlyAbout(LOGIN),
+        relevanceThreshold: { document: -1, code: 1.01 },
+      });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addRepository(userId);
+      const chat = await chats.create(userId);
+
+      const { parts } = await ask(agent, chat.id, 'HNSW: where is login implemented?');
+
+      expect(textOf(parts)).toBe(NO_ANSWER_MESSAGE);
+      expect(model.doStreamCalls).toHaveLength(0);
+      const sourcesPart = parts.find((p) => p.type === 'data-sources')!;
+      expect(sourcesPart.data).toMatchObject({
+        retrieval: {
+          outcome: 'declined',
+          threshold: 1.01,
+          closest: [{ filename: 'acme/shop', code: { path: 'src/auth/login.ts' } }],
+        },
+      });
     });
 
     it('keeps the original prompt for a question about documents only', async () => {

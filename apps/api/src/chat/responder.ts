@@ -9,7 +9,11 @@ import {
 } from 'ai';
 import type { Logger } from 'pino';
 import { buildChatPrompt, NO_ANSWER_PREFIX, type PromptSource } from '../rag/prompt.js';
-import { assessRelevance, DEFAULT_RELEVANCE_THRESHOLD } from '../rag/relevance.js';
+import {
+  assessRelevance,
+  DEFAULT_RELEVANCE_THRESHOLD,
+  type RelevanceThresholds,
+} from '../rag/relevance.js';
 import type { RetrievedChunk } from '../rag/fusion.js';
 import { findInjectionSignals } from '../rag/sanitize.js';
 import type { QueryRewriter } from '../rag/rewrite.js';
@@ -40,7 +44,7 @@ export interface ChatDeps {
   retriever: Retriever;
   rewriter: QueryRewriter;
   model: LanguageModel | null;
-  relevanceThreshold?: number;
+  relevanceThreshold?: number | RelevanceThresholds;
   maxMessagesPerChat?: number;
   cooldown?: Cooldown;
   providerOptions?: ProviderOptions;
@@ -271,7 +275,7 @@ export function createChatResponder(
             rewritten: rewritten.rewritten,
             mode: result.mode,
             bestScore: relevance.bestScore,
-            threshold: relevanceThreshold,
+            threshold: relevance.threshold,
             timings: {
               rewriteMs: retrievalStart - rewriteStart,
               retrievalMs: Date.now() - retrievalStart,
@@ -282,7 +286,7 @@ export function createChatResponder(
             rewrittenQuery: details.query,
             retrievalMode: result.mode,
             bestScore: relevance.bestScore,
-            threshold: relevanceThreshold,
+            threshold: relevance.threshold,
             rewriteMs: details.timings.rewriteMs,
             retrievalMs: details.timings.retrievalMs,
             retrieved: toTracedChunks(result.chunks, new Set()),
@@ -295,7 +299,7 @@ export function createChatResponder(
               closest: closestPassages(result.chunks),
             };
             logger.info(
-              { chatId: chat.id, bestScore: relevance.bestScore, threshold: relevanceThreshold },
+              { chatId: chat.id, bestScore: relevance.bestScore, threshold: relevance.threshold },
               'no relevant passages, answering without the model',
             );
             const declined = await chats.addMessage({

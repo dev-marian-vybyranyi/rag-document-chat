@@ -8,6 +8,7 @@ import { createDocumentRepository } from './documents/repository.js';
 import { defaultImportLimits } from './repositories/filter.js';
 import { createGithubImporter } from './repositories/github.js';
 import { createRepositoryIngestion } from './repositories/ingest.js';
+import { relevanceThresholds } from './rag/relevance.js';
 import { createRetriever } from './rag/retriever.js';
 import { createRetrievalStore } from './rag/retrieval.js';
 import { createLogger } from './observability/logger.js';
@@ -76,7 +77,7 @@ const app = createApp({
       logger,
     }),
     rewriter: ai.createRewriter(logger),
-    relevanceThreshold: env.RELEVANCE_THRESHOLD,
+    relevanceThreshold: relevanceThresholds(env),
     ...ai.chat,
   },
 });

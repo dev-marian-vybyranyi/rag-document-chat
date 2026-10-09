@@ -96,6 +96,13 @@ describe('loadEnv', () => {
     expect(loadEnv({ ...base, RELEVANCE_THRESHOLD: '0.7' }).RELEVANCE_THRESHOLD).toBe(0.7);
     expect(() => loadEnv({ ...base, RELEVANCE_THRESHOLD: '1.5' })).toThrow(/RELEVANCE_THRESHOLD/);
     expect(() => loadEnv({ ...base, RELEVANCE_THRESHOLD: 'high' })).toThrow(/RELEVANCE_THRESHOLD/);
+    expect(loadEnv(base).CODE_RELEVANCE_THRESHOLD).toBeUndefined();
+    expect(loadEnv({ ...base, CODE_RELEVANCE_THRESHOLD: '0.5' }).CODE_RELEVANCE_THRESHOLD).toBe(
+      0.5,
+    );
+    expect(() => loadEnv({ ...base, CODE_RELEVANCE_THRESHOLD: '1.5' })).toThrow(
+      /CODE_RELEVANCE_THRESHOLD/,
+    );
   });
 
   it('only accepts a thinking level the model API knows', () => {
