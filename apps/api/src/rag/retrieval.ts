@@ -1,6 +1,7 @@
 import { and, asc, cosineDistance, desc, eq, sql } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import { chunks, documents } from '../db/schema.js';
+import { codeSearchTerms, toTsQueryOr } from './code-terms.js';
 
 export interface RetrievalCandidate {
   chunkId: string;
@@ -38,6 +39,48 @@ export function createRetrievalStore(
     content: chunks.content,
   };
 
+  async function searchProse(userId: string, queryText: string, limit: number) {
+    const anyTerm = sql`replace(plainto_tsquery('english', ${queryText}::text)::text, ' & ', ' | ')::tsquery`;
+    const rank = sql<number>`ts_rank(${chunks.searchVector}, ${anyTerm}, 32)`;
+
+    return db
+      .select({ ...columns, score: rank })
+      .from(chunks)
+      .innerJoin(documents, eq(documents.id, chunks.documentId))
+      .where(
+        and(
+          eq(chunks.userId, userId),
+          eq(documents.kind, 'document'),
+          sameModel,
+          sql`${chunks.searchVector} @@ ${anyTerm}`,
+        ),
+      )
+      .orderBy(desc(rank), asc(chunks.documentId), asc(chunks.ordinal))
+      .limit(limit);
+  }
+
+  async function searchCode(userId: string, queryText: string, limit: number) {
+    const terms = codeSearchTerms(queryText);
+    if (terms.length === 0) return [];
+    const anyTerm = sql`to_tsquery('simple', ${toTsQueryOr(terms)})`;
+    const rank = sql<number>`ts_rank(${chunks.codeSearchVector}, ${anyTerm}, 32)`;
+
+    return db
+      .select({ ...columns, score: rank })
+      .from(chunks)
+      .innerJoin(documents, eq(documents.id, chunks.documentId))
+      .where(
+        and(
+          eq(chunks.userId, userId),
+          eq(documents.kind, 'repository'),
+          sameModel,
+          sql`${chunks.codeSearchVector} @@ ${anyTerm}`,
+        ),
+      )
+      .orderBy(desc(rank), asc(chunks.documentId), asc(chunks.ordinal))
+      .limit(limit);
+  }
+
   return {
     async vectorSearch(userId, queryEmbedding, limit) {
       if (limit <= 0) return [];
@@ -57,16 +100,11 @@ export function createRetrievalStore(
 
     async keywordSearch(userId, queryText, limit) {
       if (limit <= 0 || queryText.trim().length === 0) return [];
-      const anyTerm = sql`replace(plainto_tsquery('english', ${queryText}::text)::text, ' & ', ' | ')::tsquery`;
-      const rank = sql<number>`ts_rank(${chunks.searchVector}, ${anyTerm}, 32)`;
-
-      return db
-        .select({ ...columns, score: rank })
-        .from(chunks)
-        .innerJoin(documents, eq(documents.id, chunks.documentId))
-        .where(and(eq(chunks.userId, userId), sameModel, sql`${chunks.searchVector} @@ ${anyTerm}`))
-        .orderBy(desc(rank), asc(chunks.documentId), asc(chunks.ordinal))
-        .limit(limit);
+      const [prose, code] = await Promise.all([
+        searchProse(userId, queryText, limit),
+        searchCode(userId, queryText, limit),
+      ]);
+      return [...prose, ...code].sort((a, b) => b.score - a.score).slice(0, limit);
     },
   };
 }

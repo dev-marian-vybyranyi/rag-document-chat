@@ -23,6 +23,14 @@ const tsvector = customType<{ data: string }>({
   dataType: () => 'tsvector',
 });
 
+const splitIdentifiers = (text: ReturnType<typeof sql>) => sql`regexp_replace(
+  regexp_replace(
+    regexp_replace(${text}, '([A-Z]+)([A-Z][a-z])', '\\1 \\2', 'g'),
+    '([a-z0-9])([A-Z])', '\\1 \\2', 'g'),
+  '[^A-Za-z0-9]+', ' ', 'g')`;
+
+const codeText = sql`coalesce(path, '') || ' ' || coalesce(symbol, '') || ' ' || content`;
+
 export const users = pgTable('users', {
   id: uuid().primaryKey().defaultRandom(),
   email: text().notNull().unique(),
@@ -98,6 +106,9 @@ export const chunks = pgTable(
     searchVector: tsvector()
       .notNull()
       .generatedAlwaysAs(sql`to_tsvector('english', content)`),
+    codeSearchVector: tsvector().generatedAlwaysAs(
+      sql`CASE WHEN path IS NULL THEN NULL ELSE to_tsvector('simple', ${codeText} || ' ' || ${splitIdentifiers(codeText)}) END`,
+    ),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
@@ -105,6 +116,7 @@ export const chunks = pgTable(
     index('chunks_user_id_idx').on(table.userId),
     index('chunks_embedding_idx').using('hnsw', table.embedding.op('vector_cosine_ops')),
     index('chunks_search_vector_idx').using('gin', table.searchVector),
+    index('chunks_code_search_vector_idx').using('gin', table.codeSearchVector),
   ],
 );
 

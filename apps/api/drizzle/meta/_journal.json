@@ -78,6 +78,13 @@
       "when": 1791530217987,
       "tag": "0010_repository_progress",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791532472902,
+      "tag": "0011_code_search_vector",
+      "breakpoints": true
     }
   ]
 }
