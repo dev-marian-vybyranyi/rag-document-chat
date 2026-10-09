@@ -130,6 +130,7 @@ export const chats = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     title: text().notNull(),
+    sourceIds: uuid().array(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },

@@ -1,4 +1,4 @@
-import { and, asc, cosineDistance, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, cosineDistance, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import { chunks, documents } from '../db/schema.js';
 import type { CodeSource } from './code-source.js';
@@ -15,13 +15,23 @@ export interface RetrievalCandidate {
   score: number;
 }
 
+export interface SearchScope {
+  documentIds?: string[];
+}
+
 export interface RetrievalStore {
   vectorSearch(
     userId: string,
     queryEmbedding: number[],
     limit: number,
+    scope?: SearchScope,
   ): Promise<RetrievalCandidate[]>;
-  keywordSearch(userId: string, queryText: string, limit: number): Promise<RetrievalCandidate[]>;
+  keywordSearch(
+    userId: string,
+    queryText: string,
+    limit: number,
+    scope?: SearchScope,
+  ): Promise<RetrievalCandidate[]>;
 }
 
 export function createRetrievalStore(
@@ -62,7 +72,10 @@ export function createRetrievalStore(
     return candidate;
   }
 
-  async function searchProse(userId: string, queryText: string, limit: number) {
+  const inScope = (scope: SearchScope) =>
+    scope.documentIds ? inArray(documents.id, scope.documentIds) : undefined;
+
+  async function searchProse(userId: string, queryText: string, limit: number, scope: SearchScope) {
     const anyTerm = sql`replace(plainto_tsquery('english', ${queryText}::text)::text, ' & ', ' | ')::tsquery`;
     const rank = sql<number>`ts_rank(${chunks.searchVector}, ${anyTerm}, 32)`;
 
@@ -75,6 +88,7 @@ export function createRetrievalStore(
           eq(chunks.userId, userId),
           eq(documents.kind, 'document'),
           sameModel,
+          inScope(scope),
           sql`${chunks.searchVector} @@ ${anyTerm}`,
         ),
       )
@@ -83,7 +97,7 @@ export function createRetrievalStore(
     return rows.map(toCandidate);
   }
 
-  async function searchCode(userId: string, queryText: string, limit: number) {
+  async function searchCode(userId: string, queryText: string, limit: number, scope: SearchScope) {
     const terms = codeSearchTerms(queryText);
     if (terms.length === 0) return [];
     const anyTerm = sql`to_tsquery('simple', ${toTsQueryOr(terms)})`;
@@ -98,6 +112,7 @@ export function createRetrievalStore(
           eq(chunks.userId, userId),
           eq(documents.kind, 'repository'),
           sameModel,
+          inScope(scope),
           sql`${chunks.codeSearchVector} @@ ${anyTerm}`,
         ),
       )
@@ -107,8 +122,8 @@ export function createRetrievalStore(
   }
 
   return {
-    async vectorSearch(userId, queryEmbedding, limit) {
-      if (limit <= 0) return [];
+    async vectorSearch(userId, queryEmbedding, limit, scope = {}) {
+      if (limit <= 0 || scope.documentIds?.length === 0) return [];
       const distance = cosineDistance(chunks.embedding, queryEmbedding);
 
       return db.transaction(async (tx) => {
@@ -117,18 +132,18 @@ export function createRetrievalStore(
           .select({ ...columns, score: sql<number>`1 - (${distance})` })
           .from(chunks)
           .innerJoin(documents, eq(documents.id, chunks.documentId))
-          .where(and(eq(chunks.userId, userId), sameModel))
+          .where(and(eq(chunks.userId, userId), sameModel, inScope(scope)))
           .orderBy(distance, asc(chunks.documentId), asc(chunks.ordinal))
           .limit(limit);
         return rows.map(toCandidate);
       });
     },
 
-    async keywordSearch(userId, queryText, limit) {
-      if (limit <= 0 || queryText.trim().length === 0) return [];
+    async keywordSearch(userId, queryText, limit, scope = {}) {
+      if (limit <= 0 || queryText.trim().length === 0 || scope.documentIds?.length === 0) return [];
       const [prose, code] = await Promise.all([
-        searchProse(userId, queryText, limit),
-        searchCode(userId, queryText, limit),
+        searchProse(userId, queryText, limit, scope),
+        searchCode(userId, queryText, limit, scope),
       ]);
       return [...prose, ...code].sort((a, b) => b.score - a.score).slice(0, limit);
     },

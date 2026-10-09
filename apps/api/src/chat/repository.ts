@@ -1,6 +1,6 @@
-import { and, asc, count, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
-import { chats, messages } from '../db/schema.js';
+import { chats, documents, messages } from '../db/schema.js';
 import type { MessageRetrieval, MessageSource } from './types.js';
 
 export type ChatRecord = typeof chats.$inferSelect;
@@ -18,9 +18,35 @@ export interface NewMessage {
 
 export function createChatRepository(db: Database) {
   return {
-    async create(userId: string, title: string = DEFAULT_CHAT_TITLE): Promise<ChatRecord> {
-      const [chat] = await db.insert(chats).values({ userId, title }).returning();
+    async create(
+      userId: string,
+      title: string = DEFAULT_CHAT_TITLE,
+      sourceIds: string[] | null = null,
+    ): Promise<ChatRecord> {
+      const [chat] = await db.insert(chats).values({ userId, title, sourceIds }).returning();
       return chat!;
+    },
+
+    async ownedSourceIds(userId: string, ids: string[]): Promise<string[]> {
+      if (ids.length === 0) return [];
+      const rows = await db
+        .select({ id: documents.id })
+        .from(documents)
+        .where(and(eq(documents.userId, userId), inArray(documents.id, ids)));
+      return rows.map((row) => row.id);
+    },
+
+    async setScope(
+      id: string,
+      userId: string,
+      sourceIds: string[] | null,
+    ): Promise<ChatRecord | undefined> {
+      const [chat] = await db
+        .update(chats)
+        .set({ sourceIds })
+        .where(and(eq(chats.id, id), eq(chats.userId, userId)))
+        .returning();
+      return chat;
     },
 
     async listByUser(userId: string): Promise<ChatRecord[]> {

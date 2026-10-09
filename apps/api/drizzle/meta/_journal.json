@@ -85,6 +85,13 @@
       "when": 1791532472902,
       "tag": "0011_code_search_vector",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791550180824,
+      "tag": "0012_chat_source_scope",
+      "breakpoints": true
     }
   ]
 }

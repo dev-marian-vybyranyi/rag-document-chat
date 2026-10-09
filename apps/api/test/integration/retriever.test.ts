@@ -144,8 +144,27 @@ describe('retriever', () => {
 
     await retriever.retrieve(ada.id, 'retrieval', { candidates: 7 });
 
-    expect(spy.vectorSearch).toHaveBeenCalledWith(ada.id, expect.any(Array), 7);
-    expect(spy.keywordSearch).toHaveBeenCalledWith(ada.id, 'retrieval', 7);
+    expect(spy.vectorSearch).toHaveBeenCalledWith(ada.id, expect.any(Array), 7, {});
+    expect(spy.keywordSearch).toHaveBeenCalledWith(ada.id, 'retrieval', 7, {});
+  });
+
+  it('passes the chosen sources to both searches', async () => {
+    const ada = await createUser('ada@example.com');
+    const spy: RetrievalStore = {
+      vectorSearch: vi.fn(store.vectorSearch),
+      keywordSearch: vi.fn(store.keywordSearch),
+    };
+    const { retriever } = setup({ store: spy });
+    const ids = ['3f0c6f6e-8d2a-4b7e-9a51-5c1d2e7f9a10'];
+
+    await retriever.retrieve(ada.id, 'retrieval', { documentIds: ids });
+
+    expect(spy.vectorSearch).toHaveBeenCalledWith(ada.id, expect.any(Array), expect.any(Number), {
+      documentIds: ids,
+    });
+    expect(spy.keywordSearch).toHaveBeenCalledWith(ada.id, 'retrieval', expect.any(Number), {
+      documentIds: ids,
+    });
   });
 
   describe('when the embedding service fails', () => {

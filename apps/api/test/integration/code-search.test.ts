@@ -318,6 +318,71 @@ describe('keyword search over code', () => {
     });
   });
 
+  describe('inside chosen sources', () => {
+    async function seed() {
+      const ada = await createUser('ada@example.com');
+      const repo = await addSource(ada.id, 'repository', 'acme/shop', [
+        { path: 'src/leave.ts', content: 'function leavePolicy() {}' },
+      ]);
+      const doc = await addSource(ada.id, 'document', 'handbook.txt', [
+        { content: 'The leave policy covers vacation.' },
+      ]);
+      return { ada, repo, doc };
+    }
+
+    it('keyword search stays inside the chosen sources', async () => {
+      const { ada, repo, doc } = await seed();
+
+      const inRepo = await store.keywordSearch(ada.id, 'leave policy', 5, {
+        documentIds: [repo.id],
+      });
+      const inDoc = await store.keywordSearch(ada.id, 'leave policy', 5, { documentIds: [doc.id] });
+      const both = await store.keywordSearch(ada.id, 'leave policy', 5, {
+        documentIds: [repo.id, doc.id],
+      });
+
+      expect(inRepo.map((r) => r.filename)).toEqual(['acme/shop']);
+      expect(inDoc.map((r) => r.filename)).toEqual(['handbook.txt']);
+      expect(both).toHaveLength(2);
+    });
+
+    it('vector search stays inside the chosen sources', async () => {
+      const { ada, repo, doc } = await seed();
+
+      const inRepo = await store.vectorSearch(ada.id, embedding(0), 5, { documentIds: [repo.id] });
+      const inDoc = await store.vectorSearch(ada.id, embedding(0), 5, { documentIds: [doc.id] });
+      const all = await store.vectorSearch(ada.id, embedding(0), 5);
+
+      expect(inRepo.map((r) => r.filename)).toEqual(['acme/shop']);
+      expect(inDoc.map((r) => r.filename)).toEqual(['handbook.txt']);
+      expect(all).toHaveLength(2);
+    });
+
+    it('finds nothing in an empty list of sources or in sources that are not there', async () => {
+      const { ada } = await seed();
+      const gone = ['3f0c6f6e-8d2a-4b7e-9a51-5c1d2e7f9a10'];
+
+      expect(await store.keywordSearch(ada.id, 'leave policy', 5, { documentIds: [] })).toEqual([]);
+      expect(await store.vectorSearch(ada.id, embedding(0), 5, { documentIds: [] })).toEqual([]);
+      expect(await store.keywordSearch(ada.id, 'leave policy', 5, { documentIds: gone })).toEqual(
+        [],
+      );
+      expect(await store.vectorSearch(ada.id, embedding(0), 5, { documentIds: gone })).toEqual([]);
+    });
+
+    it('never crosses to another user, whatever ids are asked for', async () => {
+      const { repo } = await seed();
+      const grace = await createUser('grace@example.com');
+
+      expect(
+        await store.keywordSearch(grace.id, 'leave policy', 5, { documentIds: [repo.id] }),
+      ).toEqual([]);
+      expect(
+        await store.vectorSearch(grace.id, embedding(0), 5, { documentIds: [repo.id] }),
+      ).toEqual([]);
+    });
+  });
+
   describe('the index', () => {
     it('has a GIN index on the code vector and fills the vector itself', async () => {
       const ada = await createUser('ada@example.com');
