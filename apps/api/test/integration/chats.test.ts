@@ -177,7 +177,13 @@ describe('chats', () => {
 
       const res = await agent.get(`/chats/${chat.id}`);
 
-      expect(Object.keys(res.body.chat).sort()).toEqual(['createdAt', 'id', 'title', 'updatedAt']);
+      expect(Object.keys(res.body.chat).sort()).toEqual([
+        'createdAt',
+        'id',
+        'sourceIds',
+        'title',
+        'updatedAt',
+      ]);
       expect(res.body.messages[0]).not.toHaveProperty('seq');
       expect(res.body.messages[0]).not.toHaveProperty('chatId');
     });

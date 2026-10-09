@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ApiError } from '@/lib/api';
 import { MAX_TITLE_LENGTH } from '@/features/chats/api';
 import { useChats } from '@/features/chats/chats-context';
+import { SourcePicker } from './SourcePicker';
 
 type Mode = 'view' | 'rename' | 'confirm-delete';
 
@@ -15,7 +16,15 @@ function messageOf(error: unknown, fallback: string): string {
     : fallback;
 }
 
-export function ChatHeader({ chatId, title }: { chatId: string; title: string }) {
+export function ChatHeader({
+  chatId,
+  title,
+  sourceIds,
+}: {
+  chatId: string;
+  title: string;
+  sourceIds: string[] | null;
+}) {
   const { renameChat, removeChat } = useChats();
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>('view');
@@ -93,6 +102,7 @@ export function ChatHeader({ chatId, title }: { chatId: string; title: string })
 
       {mode === 'view' && (
         <>
+          <SourcePicker chatId={chatId} sourceIds={sourceIds} />
           <Button
             variant="ghost"
             size="icon-sm"

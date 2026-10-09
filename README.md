@@ -27,8 +27,6 @@ Register, open **Documents**, drop in files from `samples/` (a NIST PDF, two RFC
 - Deploy: `render.yaml` is a Render Blueprint (free Postgres + two free Docker services). Create it from the dashboard, give it the model key (`GOOGLE_GENERATIVE_AI_API_KEY`, or `AI_PROVIDER=openai` with `OPENAI_API_KEY`) and set `API_UPSTREAM` to the API's public URL. Migrations run on API start; deploys wait for green CI.
 - All settings are environment variables, documented in `.env.example`. Optional ones for repositories: `GITHUB_TOKEN` (a token without scopes raises GitHub's 60 requests an hour per IP), `REPOSITORY_MAX_FILES` and `REPOSITORY_MAX_CHUNKS` (the size of a repository you accept; each passage is one embedding), `CODE_RELEVANCE_THRESHOLD`.
 
-A step-by-step manual test checklist (in Ukrainian) is in [`docs/MANUAL.uk.md`](docs/MANUAL.uk.md).
-
 ## Architecture
 
 ```mermaid
@@ -43,6 +41,7 @@ flowchart LR
 - **Indexing** (`POST /documents` returns `202`): extract text page by page, chunk (~400 tokens, 60 overlap), embed in paced batches, write chunks and mark the document ready in one transaction, then generate three suggested questions.
 - **Importing a repository** (`POST /repositories` for a GitHub address, `POST /repositories/upload` for a zip; both return `202`): a background job downloads or unpacks it, filters the files, cuts the code along its structure, builds a repository overview (file tree, manifests, entry points), embeds in the same paced batches and writes everything in one transaction. The library shows its phase and progress while it runs.
 - **Answering:** rewrite follow-ups into a standalone query → vector + keyword search (this user's chunks only) → fuse with RRF → if the best similarity is below 0.65, refuse without calling the model → otherwise stream a grounded answer, drop citations to sources that don't exist, save the answer with its sources and a trace row.
+- A chat can be limited to chosen sources: both searches filter by the chat's source list in SQL, so a conversation about a codebase is answered from the codebase only (a "Searching in" menu in the chat header; a chat started from a source's card is limited to that source).
 - A repository is a row in the same `documents` table (`kind = repository`) and its chunks carry the file path, language, line range and symbol, so retrieval, citations, guardrails, traces and the interface are shared with documents.
 - Code is organised by feature: `apps/api/src/{auth,documents,repositories,rag,chat,ai,http,observability,eval}`, `apps/web/src/{features,components,pages}`.
 

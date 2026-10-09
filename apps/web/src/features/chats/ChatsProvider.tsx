@@ -40,8 +40,8 @@ export function ChatsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const createChat = useCallback(async (): Promise<Chat> => {
-    const chat = await chatsApi.create();
+  const createChat = useCallback(async (sourceIds: string[] | null = null): Promise<Chat> => {
+    const chat = await chatsApi.create(sourceIds);
     setState((current) =>
       current.status === 'ready' ? { status: 'ready', chats: [chat, ...current.chats] } : current,
     );
@@ -60,6 +60,18 @@ export function ChatsProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const setChatSources = useCallback(async (id: string, sourceIds: string[] | null) => {
+    const updated = await chatsApi.setSources(id, sourceIds);
+    setState((current) =>
+      current.status === 'ready'
+        ? {
+            status: 'ready',
+            chats: current.chats.map((chat) => (chat.id === id ? updated : chat)),
+          }
+        : current,
+    );
+  }, []);
+
   const removeChat = useCallback(async (id: string) => {
     await chatsApi.remove(id);
     setState((current) =>
@@ -70,8 +82,8 @@ export function ChatsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<ChatsContextValue>(
-    () => ({ state, reload, refresh, createChat, renameChat, removeChat }),
-    [state, reload, refresh, createChat, renameChat, removeChat],
+    () => ({ state, reload, refresh, createChat, setChatSources, renameChat, removeChat }),
+    [state, reload, refresh, createChat, setChatSources, renameChat, removeChat],
   );
 
   return <ChatsContext.Provider value={value}>{children}</ChatsContext.Provider>;

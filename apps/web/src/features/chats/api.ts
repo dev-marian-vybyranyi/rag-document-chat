@@ -4,6 +4,7 @@ import type { ChatRetrieval, ChatSource } from '../chat/types';
 export interface Chat {
   id: string;
   title: string;
+  sourceIds: string[] | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -27,5 +28,13 @@ export const chatsApi = {
   rename: (id: string, title: string) =>
     api<{ chat: Chat }>(`/chats/${id}`, { method: 'PATCH', body: { title } }).then((r) => r.chat),
   remove: (id: string) => api<void>(`/chats/${id}`, { method: 'DELETE' }),
-  create: () => api<{ chat: Chat }>('/chats', { method: 'POST', body: {} }).then((r) => r.chat),
+  create: (sourceIds: string[] | null = null) =>
+    api<{ chat: Chat }>('/chats', {
+      method: 'POST',
+      body: sourceIds ? { sourceIds } : {},
+    }).then((r) => r.chat),
+  setSources: (id: string, sourceIds: string[] | null) =>
+    api<{ chat: Chat }>(`/chats/${id}`, { method: 'PATCH', body: { sourceIds } }).then(
+      (r) => r.chat,
+    ),
 };

@@ -16,6 +16,7 @@ export interface RetrievalResult {
 export interface RetrieveOptions {
   candidates?: number;
   limit?: number;
+  documentIds?: string[];
 }
 
 export interface Retriever {
@@ -31,13 +32,14 @@ interface RetrieverDeps {
 export function createRetriever({ store, embedder, logger }: RetrieverDeps): Retriever {
   return {
     async retrieve(userId, query, options = {}) {
-      const { candidates = DEFAULT_CANDIDATES, limit = DEFAULT_LIMIT } = options;
+      const { candidates = DEFAULT_CANDIDATES, limit = DEFAULT_LIMIT, documentIds } = options;
+      const scope = documentIds ? { documentIds } : {};
       if (query.trim().length === 0) return { chunks: [], mode: 'hybrid' };
 
       const searchByVector = async (): Promise<RetrievalCandidate[] | null> => {
         try {
           const queryEmbedding = await embedder.embedQuery(query);
-          return await store.vectorSearch(userId, queryEmbedding, candidates);
+          return await store.vectorSearch(userId, queryEmbedding, candidates, scope);
         } catch (error) {
           if (!(error instanceof EmbeddingError)) throw error;
           logger.warn({ err: error }, 'query embedding failed, using keyword search only');
@@ -47,7 +49,7 @@ export function createRetriever({ store, embedder, logger }: RetrieverDeps): Ret
 
       const [vectorResults, keywordResults] = await Promise.all([
         searchByVector(),
-        store.keywordSearch(userId, query, candidates),
+        store.keywordSearch(userId, query, candidates, scope),
       ]);
 
       return {

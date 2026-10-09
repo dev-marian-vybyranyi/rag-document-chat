@@ -268,7 +268,9 @@ export function createChatResponder(
           const rewriteStart = Date.now();
           const rewritten = await rewriter.rewrite(history, question, { signal });
           const retrievalStart = Date.now();
-          const result = await retriever.retrieve(userId, rewritten.query);
+          const result = await retriever.retrieve(userId, rewritten.query, {
+            ...(chat.sourceIds && { documentIds: chat.sourceIds }),
+          });
           const relevance = assessRelevance(result.chunks, result.mode, relevanceThreshold);
           const details = {
             query: rewritten.query,

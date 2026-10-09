@@ -12,14 +12,26 @@ export const MAX_TITLE_LENGTH = 120;
 
 const titleSchema = z.string().trim().min(1).max(MAX_TITLE_LENGTH);
 
-const createChatSchema = z.object({ title: titleSchema.optional() });
+export const MAX_SCOPED_SOURCES = 50;
+
+const sourceIdsSchema = z.array(z.uuid()).min(1).max(MAX_SCOPED_SOURCES);
+
+const createChatSchema = z.object({
+  title: titleSchema.optional(),
+  sourceIds: sourceIdsSchema.nullable().optional(),
+});
 const sendMessageSchema = z.object({ content: z.string().trim().min(1).max(MAX_QUESTION_LENGTH) });
-const renameChatSchema = z.object({ title: titleSchema });
+const updateChatSchema = z
+  .object({ title: titleSchema.optional(), sourceIds: sourceIdsSchema.nullable().optional() })
+  .refine((body) => body.title !== undefined || body.sourceIds !== undefined, {
+    message: 'Send a title or the sources to search',
+  });
 
 function toPublicChat(chat: ChatRecord) {
   return {
     id: chat.id,
     title: chat.title,
+    sourceIds: chat.sourceIds,
     createdAt: chat.createdAt,
     updatedAt: chat.updatedAt,
   };
@@ -63,8 +75,18 @@ export function createChatsRouter({
     res.json({ chats: list.map(toPublicChat) });
   });
 
+  const checkedSources = async (userId: string, ids: string[] | null | undefined) => {
+    if (!ids) return null;
+    const unique = [...new Set(ids)];
+    const owned = await chats.ownedSourceIds(userId, unique);
+    if (owned.length !== unique.length) {
+      throw new AppError(400, 'validation_error', 'One of the chosen sources is not available');
+    }
+    return unique;
+  };
+
   router.post('/', async (req, res) => {
-    const { title } = parseBody(createChatSchema, req.body ?? {});
+    const { title, sourceIds } = parseBody(createChatSchema, req.body ?? {});
     const userId = userOf(req).id;
     if ((await chats.countByUser(userId)) >= maxChatsPerUser) {
       throw new AppError(
@@ -73,7 +95,8 @@ export function createChatsRouter({
         `You have reached the limit of ${plural(maxChatsPerUser, 'conversation')}. Delete one to start another.`,
       );
     }
-    const chat = await chats.create(userId, title);
+    const scope = await checkedSources(userId, sourceIds);
+    const chat = await chats.create(userId, title, scope);
     res.status(201).json({ chat: toPublicChat(chat) });
   });
 
@@ -109,9 +132,15 @@ export function createChatsRouter({
   });
 
   router.patch('/:id', async (req, res) => {
-    const { title } = parseBody(renameChatSchema, req.body);
-    const chat = await chats.rename(idParam(req.params.id), userOf(req).id, title);
+    const { title, sourceIds } = parseBody(updateChatSchema, req.body);
+    const id = idParam(req.params.id);
+    const userId = userOf(req).id;
+    let chat = await chats.findForUser(id, userId);
     if (!chat) throw notFound();
+    if (sourceIds !== undefined) {
+      chat = (await chats.setScope(id, userId, await checkedSources(userId, sourceIds))) ?? chat;
+    }
+    if (title !== undefined) chat = (await chats.rename(id, userId, title)) ?? chat;
     res.json({ chat: toPublicChat(chat) });
   });
 

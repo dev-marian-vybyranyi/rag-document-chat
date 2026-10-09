@@ -53,6 +53,7 @@ describe('upgrading a database that already holds documents', () => {
   const { db, pool } = createDb(scratchUrl.toString());
   const userId = '00000000-0000-4000-8000-000000000001';
   const documentId = '00000000-0000-4000-8000-000000000002';
+  const chatId = '00000000-0000-4000-8000-000000000003';
   const vector = `[${Array.from({ length: EMBEDDING_DIMENSIONS }, () => 0.01).join(',')}]`;
 
   beforeAll(async () => {
@@ -72,6 +73,9 @@ describe('upgrading a database that already holds documents', () => {
       insert into chunks (document_id, user_id, ordinal, page, content, token_count, embedding)
       values (${documentId}, ${userId}, 0, 1, 'Remote work is allowed.', 5, ${vector}::vector)
     `);
+    await db.execute(
+      sql`insert into chats (id, user_id, title) values (${chatId}, ${userId}, 'Old chat')`,
+    );
     await migrate(db, { migrationsFolder: MIGRATIONS });
   });
 
@@ -112,5 +116,13 @@ describe('upgrading a database that already holds documents', () => {
     );
 
     expect(rows.rows).toEqual([{ path: null, start_line: null }]);
+  });
+
+  it('leaves existing chats searching the whole library', async () => {
+    const rows = await db.execute<{ title: string; source_ids: string[] | null }>(
+      sql`select title, source_ids from chats where id = ${chatId}`,
+    );
+
+    expect(rows.rows).toEqual([{ title: 'Old chat', source_ids: null }]);
   });
 });
