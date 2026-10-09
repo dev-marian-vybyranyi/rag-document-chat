@@ -223,8 +223,13 @@ export function createRetrievalSearcher({
     },
   };
   const retriever = createRetriever({ store, embedder: cachedEmbedder, logger });
-  const toHit = (c: { filename: string; page: number | null; content: string }): EvalHit => ({
-    filename: c.filename,
+  const toHit = (c: {
+    filename: string;
+    page: number | null;
+    content: string;
+    code?: { path: string };
+  }): EvalHit => ({
+    filename: c.code?.path ?? c.filename,
     page: c.page,
     content: c.content,
   });
