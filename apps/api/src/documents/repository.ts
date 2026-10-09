@@ -24,6 +24,14 @@ export interface NewChunk extends Partial<CodeLocation> {
   embedding: number[];
 }
 
+export type ProgressPhase = 'downloading' | 'reading' | 'embedding';
+
+export interface Progress {
+  phase: ProgressPhase;
+  done: number;
+  total: number;
+}
+
 export interface Passage {
   ordinal: number;
   page: number | null;
@@ -115,6 +123,8 @@ export function createDocumentRepository(db: Database) {
       pageCount: number | null;
       embeddingModel?: string;
       suggestions?: string[];
+      fileCount?: number;
+      commitSha?: string;
       chunks: NewChunk[];
     }): Promise<void> {
       await db.transaction(async (tx) => {
@@ -136,9 +146,25 @@ export function createDocumentRepository(db: Database) {
             pageCount: input.pageCount,
             embeddingModel: input.embeddingModel ?? null,
             suggestions: input.suggestions ?? [],
+            progressPhase: null,
+            progressDone: null,
+            progressTotal: null,
+            ...(input.fileCount !== undefined && { fileCount: input.fileCount }),
+            ...(input.commitSha !== undefined && { commitSha: input.commitSha }),
           })
           .where(eq(documents.id, input.documentId));
       });
+    },
+
+    async setProgress(documentId: string, progress: Progress): Promise<void> {
+      await db
+        .update(documents)
+        .set({
+          progressPhase: progress.phase,
+          progressDone: progress.done,
+          progressTotal: progress.total,
+        })
+        .where(and(eq(documents.id, documentId), eq(documents.status, 'processing')));
     },
 
     async countIndexedWithOtherModel(embeddingModel: string): Promise<number> {
@@ -157,14 +183,26 @@ export function createDocumentRepository(db: Database) {
     async fail(documentId: string, message: string): Promise<void> {
       await db
         .update(documents)
-        .set({ status: 'failed', error: message })
+        .set({
+          status: 'failed',
+          error: message,
+          progressPhase: null,
+          progressDone: null,
+          progressTotal: null,
+        })
         .where(and(eq(documents.id, documentId), eq(documents.status, 'processing')));
     },
 
     async failInterrupted(message: string): Promise<number> {
       const interrupted = await db
         .update(documents)
-        .set({ status: 'failed', error: message })
+        .set({
+          status: 'failed',
+          error: message,
+          progressPhase: null,
+          progressDone: null,
+          progressTotal: null,
+        })
         .where(eq(documents.status, 'processing'))
         .returning({ id: documents.id });
       return interrupted.length;

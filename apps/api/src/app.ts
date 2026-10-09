@@ -13,6 +13,9 @@ import type { Database } from './db/client.js';
 import { createDocumentRepository } from './documents/repository.js';
 import { createDocumentsRouter } from './documents/routes.js';
 import type { IngestionService } from './documents/ingest.js';
+import { defaultImportLimits } from './repositories/filter.js';
+import type { RepositoryIngestionService } from './repositories/ingest.js';
+import { createRepositoriesRouter } from './repositories/routes.js';
 import { DEFAULT_MAX_UPLOAD_BYTES } from './documents/upload.js';
 import { errorHandler, notFoundHandler } from './http/errors.js';
 import { healthRouter } from './http/health.js';
@@ -42,6 +45,8 @@ interface AppDeps {
   db: Database;
   cookieSecure: boolean;
   ingestion: IngestionService;
+  repositoryIngestion?: RepositoryIngestionService;
+  maxArchiveBytes?: number;
   chat?: ChatDeps;
   authRateLimits?: AuthRateLimits;
   chatRateLimits?: ChatRateLimits;
@@ -55,6 +60,8 @@ export function createApp({
   db,
   cookieSecure,
   ingestion,
+  repositoryIngestion = { enqueue: () => {}, idle: async () => {} },
+  maxArchiveBytes = defaultImportLimits.maxArchiveBytes,
   chat,
   authRateLimits = defaultAuthRateLimits,
   chatRateLimits = defaultChatRateLimits,
@@ -89,6 +96,17 @@ export function createApp({
       documents: createDocumentRepository(db),
       ingestion,
       maxUploadBytes,
+      maxDocumentsPerUser: usageLimits.maxDocumentsPerUser,
+      uploadLimiter: createUploadRateLimiter(uploadRateLimit),
+    }),
+  );
+
+  app.use(
+    '/repositories',
+    createRepositoriesRouter({
+      documents: createDocumentRepository(db),
+      ingestion: repositoryIngestion,
+      maxArchiveBytes,
       maxDocumentsPerUser: usageLimits.maxDocumentsPerUser,
       uploadLimiter: createUploadRateLimiter(uploadRateLimit),
     }),

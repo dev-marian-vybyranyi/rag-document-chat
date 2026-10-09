@@ -32,6 +32,40 @@ describe('loadEnv', () => {
     );
   });
 
+  describe('repository import settings', () => {
+    it('default to a small repository and no GitHub token', () => {
+      const env = loadEnv(base);
+
+      expect(env).toMatchObject({ REPOSITORY_MAX_FILES: 300, REPOSITORY_MAX_CHUNKS: 1500 });
+      expect(env.GITHUB_TOKEN).toBeUndefined();
+    });
+
+    it('can be changed, and a blank token counts as no token', () => {
+      expect(
+        loadEnv({
+          ...base,
+          REPOSITORY_MAX_FILES: '50',
+          REPOSITORY_MAX_CHUNKS: '400',
+          GITHUB_TOKEN: 'ghp_x',
+        }),
+      ).toMatchObject({
+        REPOSITORY_MAX_FILES: 50,
+        REPOSITORY_MAX_CHUNKS: 400,
+        GITHUB_TOKEN: 'ghp_x',
+      });
+      expect(loadEnv({ ...base, GITHUB_TOKEN: '   ' }).GITHUB_TOKEN).toBeUndefined();
+    });
+
+    it.each(['0', '-5', 'many'])('reject %s as a limit', (value) => {
+      expect(() => loadEnv({ ...base, REPOSITORY_MAX_FILES: value })).toThrow(
+        /REPOSITORY_MAX_FILES/,
+      );
+      expect(() => loadEnv({ ...base, REPOSITORY_MAX_CHUNKS: value })).toThrow(
+        /REPOSITORY_MAX_CHUNKS/,
+      );
+    });
+  });
+
   describe('GOOGLE_GENERATIVE_AI_API_KEY', () => {
     it('is passed through when set', () => {
       expect(loadEnv({ ...base, GOOGLE_GENERATIVE_AI_API_KEY: 'abc123' })).toMatchObject({
