@@ -32,6 +32,15 @@ const GENERIC_NAMES = new Set([
   'app',
 ]);
 
+const escapeRegExp = (text: string) => text.replace(/[$]/g, '\\$&');
+
+function isImported(name: string, content: string): boolean {
+  const escaped = escapeRegExp(name);
+  return new RegExp(
+    `(?:(?:const|let|var)\\s+${escaped}\\s*=\\s*require\\()|(?:import\\s+${escaped}\\s+from)`,
+  ).test(content);
+}
+
 const filenameOf = (path: string) => (path.split('/').pop() ?? path).toLowerCase();
 
 function depthOf(path: string): number {
@@ -50,7 +59,7 @@ export function prominentSymbols(chunks: CodeChunk[], limit: number): string[] {
       if (!IDENTIFIER.test(name) || CONSTANT.test(name) || GENERIC_NAMES.has(lower)) continue;
       if (/\.(test|spec)\./.test(chunk.path) || /(^|\/)(tests?|__tests__)\//.test(chunk.path))
         continue;
-      if (seen.has(name)) continue;
+      if (seen.has(name) || isImported(name, chunk.content)) continue;
       seen.add(name);
       candidates.push({ name, depth: depthOf(chunk.path), order });
     }

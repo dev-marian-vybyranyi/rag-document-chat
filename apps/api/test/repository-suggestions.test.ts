@@ -9,13 +9,18 @@ import type { ImportedFile } from '../src/repositories/zip.js';
 
 const file = (path: string): ImportedFile => ({ path, language: 'typescript', content: '' });
 
-const chunk = (path: string, symbol: string | null, language = 'typescript'): CodeChunk => ({
+const chunk = (
+  path: string,
+  symbol: string | null,
+  language = 'typescript',
+  content = 'x',
+): CodeChunk => ({
   path,
   language,
   startLine: 1,
   endLine: 2,
   symbol,
-  content: 'x',
+  content,
   tokenCount: 1,
 });
 
@@ -61,6 +66,23 @@ describe('prominentSymbols', () => {
     ];
 
     expect(prominentSymbols(chunks, 5)).toEqual(['ok_name']);
+  });
+
+  it('does not offer a name that is only an imported module', () => {
+    const chunks = [
+      chunk('lib/is-stream.js', 'Stream', 'javascript', "const Stream = require('stream')"),
+      chunk('lib/a.js', '$ref', 'javascript', "var $ref = require('ref')"),
+      chunk('src/b.ts', 'Settings', 'typescript', "import Settings from './settings'"),
+      chunk('src/c.ts', 'realThing', 'typescript', 'export function realThing() {}'),
+    ];
+
+    expect(prominentSymbols(chunks, 5)).toEqual(['realThing']);
+  });
+
+  it('keeps a name that is defined next to a similar import', () => {
+    const content = "const util = require('util')\nfunction util2() {}";
+
+    expect(prominentSymbols([chunk('a.js', 'util2', 'javascript', content)], 5)).toEqual(['util2']);
   });
 
   it('lists each name once', () => {
