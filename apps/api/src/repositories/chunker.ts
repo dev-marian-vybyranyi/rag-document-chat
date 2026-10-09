@@ -345,6 +345,7 @@ function toChunk(file: SourceFile, ctx: Context, piece: Piece): CodeChunk | unde
   if (start > end) return undefined;
 
   const content = piece.text ?? ctx.lines.slice(start, end + 1).join('\n');
+  if (isBlank(content)) return undefined;
   const names = [...new Set(piece.symbols)].slice(0, MAX_SYMBOLS_PER_CHUNK);
   return {
     path: file.path,

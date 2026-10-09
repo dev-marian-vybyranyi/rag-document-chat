@@ -5,6 +5,7 @@ import {
   type CodeChunk,
   type SourceFile,
 } from '../src/repositories/chunker.js';
+import { expectFaithfulToSource } from './helpers/chunk-invariants.js';
 import {
   bigClass,
   bigFunction,
@@ -22,26 +23,6 @@ const file = (language: string, content: string, path = `src/sample.${language}`
 });
 
 const symbols = (chunks: CodeChunk[]) => chunks.flatMap((c) => c.symbol?.split(', ') ?? []);
-
-function expectFaithfulToSource(source: SourceFile, chunks: CodeChunk[]) {
-  const lines = source.content.replace(/\r\n/g, '\n').split('\n');
-  const covered = new Set<number>();
-  for (const chunk of chunks) {
-    expect(chunk.startLine).toBeGreaterThanOrEqual(1);
-    expect(chunk.endLine).toBeGreaterThanOrEqual(chunk.startLine);
-    expect(chunk.endLine).toBeLessThanOrEqual(lines.length);
-    const original = lines.slice(chunk.startLine - 1, chunk.endLine).join('\n');
-    if (chunk.content !== original) {
-      expect(chunk.startLine).toBe(chunk.endLine);
-      expect(original).toContain(chunk.content);
-    }
-    for (let line = chunk.startLine; line <= chunk.endLine; line++) covered.add(line);
-  }
-  lines.forEach((text, index) => {
-    if (text.trim().length > 0)
-      expect(covered.has(index + 1), `line ${index + 1}: ${text}`).toBe(true);
-  });
-}
 
 describe('chunkSourceFile', () => {
   describe('small files', () => {
