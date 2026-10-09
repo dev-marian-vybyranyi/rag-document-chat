@@ -69,11 +69,15 @@ export function ChatView({
 
   const askedInitial = useRef(false);
   useEffect(() => {
-    if (!initialQuestion || askedInitial.current) return;
-    askedInitial.current = true;
-    setStage('searching');
-    void sendMessage({ text: initialQuestion });
-    onInitialQuestionSent?.();
+    if (!initialQuestion) return;
+    const timer = setTimeout(() => {
+      if (askedInitial.current) return;
+      askedInitial.current = true;
+      setStage('searching');
+      void sendMessage({ text: initialQuestion });
+      onInitialQuestionSent?.();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [initialQuestion, sendMessage, onInitialQuestionSent]);
 
   return (

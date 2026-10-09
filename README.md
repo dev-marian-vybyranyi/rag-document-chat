@@ -27,8 +27,6 @@ Register, open **Documents**, drop in files from `samples/` (a NIST PDF, two RFC
 - Deploy: `render.yaml` is a Render Blueprint (free Postgres + two free Docker services). Create it from the dashboard, give it the model key (`GOOGLE_GENERATIVE_AI_API_KEY`, or `AI_PROVIDER=openai` with `OPENAI_API_KEY`) and set `API_UPSTREAM` to the API's public URL. Migrations run on API start; deploys wait for green CI.
 - All settings are environment variables, documented in `.env.example`. Optional ones for repositories: `GITHUB_TOKEN` (a token without scopes raises GitHub's 60 requests an hour per IP), `REPOSITORY_MAX_FILES` and `REPOSITORY_MAX_CHUNKS` (the size of a repository you accept; each passage is one embedding), `CODE_RELEVANCE_THRESHOLD`.
 
-A step-by-step manual test checklist (in Ukrainian) is in [`docs/MANUAL.uk.md`](docs/MANUAL.uk.md).
-
 ## Architecture
 
 ```mermaid
