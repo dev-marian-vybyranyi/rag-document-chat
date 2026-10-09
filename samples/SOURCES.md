@@ -32,3 +32,19 @@ c88e9d9404ce16c820b4f4f84af73f40b4eb4978020dc3a1cead90ba0ac2569a  rust-book-gene
   repeated every page; the PDF has real page numbers, which the app turns into citations.
 - Each licensor's text is the authority, not this summary. Check the original before reusing a
   file outside this repository.
+
+## Reference code repository (not stored here)
+
+The code evaluation (`scripts/eval/golden-code.json`) asks questions about one public repository.
+Nothing of it is kept in this folder: the evaluation downloads it from GitHub at one fixed commit
+(through the app's own importer), so the text it indexes is always the text the questions were
+written against.
+
+| Repository | What it is | Commit | Fetched | License |
+|---|---|---|---|---|
+| https://github.com/koajs/koa | Koa, a web framework for Node.js (version 3.2.1) | `2fecd029c6ce6b79d65158d28a76538f7f6b0378` | by the evaluation, on each run | MIT, Copyright (c) 2019 Koa contributors, as stated in the repository's `LICENSE`. |
+
+Of that repository only these files are indexed, the ones a reader would ask about: `lib/*.js`,
+`package.json`, `Readme.md`, `LICENSE`, `docs/error-handling.md` and `docs/guide.md`. The commit
+and the list live in `apps/api/src/eval/reference-repository.ts`.
+
