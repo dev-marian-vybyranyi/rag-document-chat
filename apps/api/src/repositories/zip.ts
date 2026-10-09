@@ -8,6 +8,7 @@ import {
   planImport,
   type CandidateFile,
   type ImportLimits,
+  type SkipReason,
   type SkippedFile,
 } from './filter.js';
 
@@ -24,6 +25,7 @@ export interface ImportedRepository {
 
 interface ArchiveEntry extends CandidateFile {
   entry: yauzl.Entry;
+  unreadable?: SkipReason;
 }
 
 const UNIX_MADE_BY = 3;
@@ -46,19 +48,20 @@ function invalidArchive(cause: unknown): ImportRejectedError {
   return new ImportRejectedError('The file is not a valid zip archive');
 }
 
+const isMacMetadata = (path: string) => path.toLowerCase().startsWith('__macosx/');
+
 function stripSingleRoot(entries: ArchiveEntry[]): ArchiveEntry[] {
-  const roots = new Set(entries.map((e) => e.path.split('/')[0]));
-  const everythingIsNested = entries.every((e) => e.path.includes('/'));
+  const real = entries.filter((e) => !isMacMetadata(e.path));
+  const roots = new Set(real.map((e) => e.path.split('/')[0]));
+  const everythingIsNested = real.every((e) => e.path.includes('/'));
   if (roots.size !== 1 || !everythingIsNested) return entries;
-  return entries.map((e) => ({ ...e, path: e.path.slice(e.path.indexOf('/') + 1) }));
+  return entries.map((e) =>
+    isMacMetadata(e.path) ? e : { ...e, path: e.path.slice(e.path.indexOf('/') + 1) },
+  );
 }
 
-async function listEntries(
-  zip: yauzl.ZipFile,
-  limits: ImportLimits,
-): Promise<{ entries: ArchiveEntry[]; skipped: SkippedFile[] }> {
+async function listEntries(zip: yauzl.ZipFile, limits: ImportLimits): Promise<ArchiveEntry[]> {
   const entries: ArchiveEntry[] = [];
-  const skipped: SkippedFile[] = [];
   const seen = new Set<string>();
   let count = 0;
 
@@ -79,21 +82,21 @@ async function listEntries(
     }
     seen.add(path);
 
-    if (path.toLowerCase().startsWith('__macosx/')) {
-      skipped.push({ path, reason: 'ignored-directory' });
-      continue;
-    }
-    if (isSymlink(entry)) {
-      skipped.push({ path, reason: 'symlink' });
-      continue;
-    }
-    if (!entry.canDecodeFileData()) {
-      skipped.push({ path, reason: 'unsupported-type' });
-      continue;
-    }
-    entries.push({ path, size: entry.uncompressedSize, entry });
+    const unreadable: SkipReason | undefined = isMacMetadata(path)
+      ? 'ignored-directory'
+      : isSymlink(entry)
+        ? 'symlink'
+        : entry.canDecodeFileData()
+          ? undefined
+          : 'unsupported-type';
+    entries.push({
+      path,
+      size: entry.uncompressedSize,
+      entry,
+      ...(unreadable && { unreadable }),
+    });
   }
-  return { entries, skipped };
+  return entries;
 }
 
 async function readEntry(zip: yauzl.ZipFile, entry: yauzl.Entry): Promise<Buffer> {
@@ -119,11 +122,14 @@ export async function importZipArchive(
   }
 
   try {
-    const listed = await listEntries(zip, limits);
-    const skipped = [...listed.skipped];
-
-    const rooted = stripSingleRoot(listed.entries);
-    const plan = planImport(rooted, limits);
+    const rooted = stripSingleRoot(await listEntries(zip, limits));
+    const skipped: SkippedFile[] = rooted
+      .filter((e) => e.unreadable)
+      .map((e) => ({ path: e.path, reason: e.unreadable! }));
+    const plan = planImport(
+      rooted.filter((e) => !e.unreadable),
+      limits,
+    );
     skipped.push(...plan.skipped);
 
     const entryByPath = new Map(rooted.map((e) => [e.path, e.entry]));
