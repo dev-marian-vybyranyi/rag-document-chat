@@ -29,14 +29,30 @@ export interface DocumentItem {
   createdAt: string;
 }
 
+export interface CodeLocation {
+  path: string;
+  language: string | null;
+  startLine: number | null;
+  endLine: number | null;
+  symbol: string | null;
+}
+
 export interface Passage {
   ordinal: number;
   page: number | null;
+  code?: CodeLocation;
   content: string;
 }
 
 export interface PassagesResponse {
-  document: { id: string; filename: string; pageCount: number | null };
+  document: {
+    id: string;
+    filename: string;
+    pageCount: number | null;
+    kind: DocumentKind;
+    repoUrl: string | null;
+    commitSha: string | null;
+  };
   target: number;
   passages: Passage[];
 }

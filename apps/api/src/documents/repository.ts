@@ -1,6 +1,7 @@
 import { and, asc, count, desc, eq, getTableColumns, gte, lte, sql } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import { chunks, documents } from '../db/schema.js';
+import type { CodeSource } from '../rag/code-source.js';
 
 export type DocumentRecord = typeof documents.$inferSelect;
 
@@ -35,6 +36,7 @@ export interface Progress {
 export interface Passage {
   ordinal: number;
   page: number | null;
+  code?: CodeSource;
   content: string;
 }
 
@@ -94,8 +96,17 @@ export function createDocumentRepository(db: Database) {
         .where(and(eq(documents.id, id), eq(documents.userId, userId)));
       if (!document) return undefined;
 
-      const passages = await db
-        .select({ ordinal: chunks.ordinal, page: chunks.page, content: chunks.content })
+      const rows = await db
+        .select({
+          ordinal: chunks.ordinal,
+          page: chunks.page,
+          content: chunks.content,
+          path: chunks.path,
+          language: chunks.language,
+          startLine: chunks.startLine,
+          endLine: chunks.endLine,
+          symbol: chunks.symbol,
+        })
         .from(chunks)
         .where(
           and(
@@ -106,6 +117,10 @@ export function createDocumentRepository(db: Database) {
           ),
         )
         .orderBy(asc(chunks.ordinal));
+      const passages: Passage[] = rows.map(
+        ({ path, language, startLine, endLine, symbol, ...rest }) =>
+          path === null ? rest : { ...rest, code: { path, language, startLine, endLine, symbol } },
+      );
       return { document, passages };
     },
 

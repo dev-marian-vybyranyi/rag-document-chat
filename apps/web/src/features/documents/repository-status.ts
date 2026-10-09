@@ -15,9 +15,13 @@ export function shortSha(sha: string): string {
   return sha.slice(0, SHORT_SHA_LENGTH);
 }
 
+export function isCommitSha(value: string | null): value is string {
+  return value !== null && /^[0-9a-f]{40}$/.test(value);
+}
+
 export function commitUrl(document: DocumentItem): string | null {
   const base = safeGithubUrl(document.repoUrl);
-  if (!base || !document.commitSha || !/^[0-9a-f]{40}$/.test(document.commitSha)) return null;
+  if (!base || !isCommitSha(document.commitSha)) return null;
   return `${base}/tree/${document.commitSha}`;
 }
 

@@ -79,6 +79,9 @@ function sequence(...responses: Array<() => Response>) {
 
 const listOf = (documents: DocumentItem[]) => () => jsonResponse(200, { documents });
 
+const times = (count: number, response: () => Response) =>
+  Array.from({ length: count }, () => response);
+
 describe('a repository in the library', () => {
   describe('when it is ready', () => {
     it('shows how many files and passages were indexed, and the commit that was read', async () => {
@@ -213,9 +216,9 @@ describe('a repository in the library', () => {
         ]);
       setup(
         sequence(
-          processing({ phase: 'downloading', done: 0, total: 0 }),
-          processing({ phase: 'embedding', done: 100, total: 300 }),
-          processing({ phase: 'embedding', done: 200, total: 300 }),
+          ...times(8, processing({ phase: 'downloading', done: 0, total: 0 })),
+          ...times(8, processing({ phase: 'embedding', done: 100, total: 300 })),
+          ...times(8, processing({ phase: 'embedding', done: 200, total: 300 })),
           listOf([repo()]),
         ),
       );

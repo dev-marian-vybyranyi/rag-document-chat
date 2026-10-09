@@ -1,7 +1,31 @@
+import type { CodeLocation } from '../documents/api';
 import type { ChatSource } from './types';
 
+export const OVERVIEW_PATH = 'REPOSITORY_OVERVIEW';
+
+export function describeLines(code: CodeLocation): string | null {
+  if (code.startLine === null || code.endLine === null) return null;
+  return code.startLine === code.endLine
+    ? `${code.startLine}`
+    : `${code.startLine}-${code.endLine}`;
+}
+
+export function describeLocation(source: {
+  filename: string;
+  page: number | null;
+  code?: CodeLocation;
+}): string {
+  const { code } = source;
+  if (!code) {
+    return source.page === null ? source.filename : `${source.filename}, page ${source.page}`;
+  }
+  if (code.path === OVERVIEW_PATH) return `Overview of ${source.filename}`;
+  const lines = describeLines(code);
+  return lines ? `${code.path}:${lines}` : code.path;
+}
+
 export function describeSource(source: ChatSource): string {
-  return source.page === null ? source.filename : `${source.filename}, page ${source.page}`;
+  return describeLocation(source);
 }
 
 export function describeMatch(score: number | null): string {

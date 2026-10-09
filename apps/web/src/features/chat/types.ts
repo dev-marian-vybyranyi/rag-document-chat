@@ -1,4 +1,5 @@
 import type { UIMessage } from 'ai';
+import type { CodeLocation } from '../documents/api';
 
 export interface ChatSource {
   id: number;
@@ -6,6 +7,7 @@ export interface ChatSource {
   documentId: string;
   filename: string;
   page: number | null;
+  code?: CodeLocation;
   ordinal: number;
   excerpt: string;
   score: number | null;
@@ -23,7 +25,12 @@ export interface ChatRetrieval {
   outcome: 'answered' | 'declined';
   threshold?: number;
   timings?: { rewriteMs: number; retrievalMs: number };
-  closest?: Array<{ filename: string; page: number | null; score: number }>;
+  closest?: Array<{
+    filename: string;
+    page: number | null;
+    code?: CodeLocation;
+    score: number;
+  }>;
 }
 
 export type ChatStage = 'searching' | 'answering';

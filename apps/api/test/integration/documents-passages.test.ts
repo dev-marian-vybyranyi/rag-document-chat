@@ -66,6 +66,9 @@ describe('document passages', () => {
       id: document.id,
       filename: 'handbook.pdf',
       pageCount: 3,
+      kind: 'document',
+      repoUrl: null,
+      commitSha: null,
     });
   });
 
@@ -137,5 +140,149 @@ describe('document passages', () => {
     expect(res.status).toBe(404);
     expect(JSON.stringify(res.body)).not.toContain('passage');
     expect(JSON.stringify(res.body)).not.toContain('secret.pdf');
+  });
+
+  describe('of a repository', () => {
+    const SHA = '7fd1a60b01f91b314f59955a4e4d4e80d8edf11d';
+
+    async function addRepository(userId: string) {
+      const [repo] = await db
+        .insert(documents)
+        .values({
+          userId,
+          kind: 'repository',
+          filename: 'acme/shop',
+          mimeType: 'application/zip',
+          sizeBytes: 0,
+          status: 'ready',
+          repoUrl: 'https://github.com/acme/shop',
+          commitSha: SHA,
+        })
+        .returning();
+      await db.insert(chunks).values([
+        {
+          documentId: repo!.id,
+          userId,
+          ordinal: 0,
+          content: '# Repository overview',
+          tokenCount: 3,
+          embedding: fakeVector('overview'),
+          path: 'REPOSITORY_OVERVIEW',
+          language: 'markdown',
+          startLine: 1,
+          endLine: 1,
+        },
+        {
+          documentId: repo!.id,
+          userId,
+          ordinal: 1,
+          content: 'export function login() {}',
+          tokenCount: 6,
+          embedding: fakeVector('login'),
+          path: 'src/auth/login.ts',
+          language: 'typescript',
+          startLine: 12,
+          endLine: 12,
+          symbol: 'login',
+        },
+        {
+          documentId: repo!.id,
+          userId,
+          ordinal: 2,
+          content: 'export function logout() {}',
+          tokenCount: 6,
+          embedding: fakeVector('logout'),
+          path: 'src/auth/login.ts',
+          language: 'typescript',
+          startLine: 14,
+          endLine: 14,
+          symbol: 'logout',
+        },
+      ]);
+      return repo!;
+    }
+
+    it('gives each passage its file, language, lines and symbol', async () => {
+      const { agent, userId } = await signedIn('ann@example.com');
+      const repo = await addRepository(userId);
+
+      const res = await agent.get(`/documents/${repo.id}/passages?ordinal=1&radius=1`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.passages).toEqual([
+        {
+          ordinal: 0,
+          page: null,
+          content: '# Repository overview',
+          code: {
+            path: 'REPOSITORY_OVERVIEW',
+            language: 'markdown',
+            startLine: 1,
+            endLine: 1,
+            symbol: null,
+          },
+        },
+        {
+          ordinal: 1,
+          page: null,
+          content: 'export function login() {}',
+          code: {
+            path: 'src/auth/login.ts',
+            language: 'typescript',
+            startLine: 12,
+            endLine: 12,
+            symbol: 'login',
+          },
+        },
+        {
+          ordinal: 2,
+          page: null,
+          content: 'export function logout() {}',
+          code: {
+            path: 'src/auth/login.ts',
+            language: 'typescript',
+            startLine: 14,
+            endLine: 14,
+            symbol: 'logout',
+          },
+        },
+      ]);
+    });
+
+    it('says where the repository came from, so a link to the same lines can be made', async () => {
+      const { agent, userId } = await signedIn('ann@example.com');
+      const repo = await addRepository(userId);
+
+      const res = await agent.get(`/documents/${repo.id}/passages?ordinal=1&radius=0`);
+
+      expect(res.body.document).toEqual({
+        id: repo.id,
+        filename: 'acme/shop',
+        pageCount: null,
+        kind: 'repository',
+        repoUrl: 'https://github.com/acme/shop',
+        commitSha: SHA,
+      });
+    });
+
+    it('does not add a code location to a passage of an ordinary document', async () => {
+      const { agent, userId } = await signedIn('ann@example.com');
+      const doc = await addDocument(userId, 3);
+
+      const res = await agent.get(`/documents/${doc.id}/passages?ordinal=1&radius=0`);
+
+      expect(res.body.passages[0]).not.toHaveProperty('code');
+    });
+
+    it('is private to its owner', async () => {
+      const ann = await signedIn('ann@example.com');
+      const bob = await signedIn('bob@example.com');
+      const repo = await addRepository(ann.userId);
+
+      const res = await bob.agent.get(`/documents/${repo.id}/passages?ordinal=1`);
+
+      expect(res.status).toBe(404);
+      expect(JSON.stringify(res.body)).not.toContain('login');
+    });
   });
 });

@@ -1,11 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { ExternalLinkIcon } from 'lucide-react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { Button } from '@/components/ui/button';
 import { SidePanel } from './SidePanel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError } from '@/lib/api';
 import { documentsApi, type PassagesResponse } from '@/features/documents/api';
 import { cn } from '@/lib/utils';
-import { describeMatch } from './source-format';
+import { CodeSnippet } from './CodeSnippet';
+import { githubPermalink } from './permalink';
+import { describeLines, describeMatch, OVERVIEW_PATH } from './source-format';
 import { useSourceViewer } from './source-viewer-context';
 import type { ChatSource } from './types';
 
@@ -44,11 +47,16 @@ function Panel({ source, onClose }: { source: ChatSource; onClose: () => void })
     if (loaded.status === 'ready') target.current?.scrollIntoView?.({ block: 'center' });
   }, [loaded.status]);
 
+  const code = source.code;
+  const isFile = code !== undefined && code.path !== OVERVIEW_PATH;
+  const title = !code ? source.filename : isFile ? code.path : `Overview of ${source.filename}`;
+  const origin = isFile ? `${source.filename} · ` : '';
+
   return (
     <SidePanel
       label="Source viewer"
-      title={source.filename}
-      subtitle={`Source [${source.id}]${source.page !== null ? ` · Page ${source.page}` : ''} · ${describeMatch(source.score)}`}
+      title={title}
+      subtitle={`${origin}Source [${source.id}]${source.page !== null ? ` · Page ${source.page}` : ''} · ${describeMatch(source.score)}`}
       closeLabel="Close source viewer"
       onClose={onClose}
     >
@@ -81,7 +89,11 @@ function Panel({ source, onClose }: { source: ChatSource; onClose: () => void })
 
       {loaded.status === 'gone' && <Unavailable source={source} />}
 
-      {loaded.status === 'ready' && (
+      {loaded.status === 'ready' && isFile && (
+        <FileView data={loaded.data} source={source} target={target} />
+      )}
+
+      {loaded.status === 'ready' && !isFile && (
         <ol className="flex flex-col gap-3">
           {loaded.data.passages.map((passage) => {
             const cited = passage.ordinal === loaded.data.target;
@@ -108,6 +120,73 @@ function Panel({ source, onClose }: { source: ChatSource; onClose: () => void })
         </ol>
       )}
     </SidePanel>
+  );
+}
+
+function FileView({
+  data,
+  source,
+  target,
+}: {
+  data: PassagesResponse;
+  source: ChatSource;
+  target: RefObject<HTMLLIElement | null>;
+}) {
+  const path = source.code!.path;
+  const sameFile = data.passages.filter((passage) => passage.code?.path === path);
+  const passages = sameFile.some((p) => p.ordinal === data.target) ? sameFile : data.passages;
+  const cited = passages.find((p) => p.ordinal === data.target)?.code ?? source.code!;
+  const permalink = githubPermalink(data.document, cited);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        {cited.symbol && <span className="font-mono">{cited.symbol}</span>}
+        {cited.language && <span>{cited.language}</span>}
+        {permalink && (
+          <a
+            href={permalink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-primary underline underline-offset-2"
+          >
+            View these lines on GitHub
+            <ExternalLinkIcon className="size-3" aria-hidden />
+          </a>
+        )}
+      </div>
+      <ol className="flex flex-col gap-3">
+        {passages.map((passage) => {
+          const isCited = passage.ordinal === data.target;
+          const code = passage.code;
+          const lines = code ? describeLines(code) : null;
+          return (
+            <li
+              key={passage.ordinal}
+              ref={isCited ? target : undefined}
+              aria-current={isCited ? 'true' : undefined}
+              className={cn(
+                'rounded-lg border',
+                isCited
+                  ? 'border-amber-500/60 bg-amber-100 text-foreground dark:bg-amber-400/15'
+                  : 'text-muted-foreground',
+              )}
+            >
+              <p className="px-3 pt-2 text-xs font-medium">
+                {isCited ? 'Cited lines' : 'Nearby'}
+                {lines && ` · ${code!.startLine === code!.endLine ? 'line' : 'lines'} ${lines}`}
+              </p>
+              <CodeSnippet
+                code={passage.content}
+                language={code?.language ?? null}
+                startLine={code?.startLine ?? 1}
+                label={`${isCited ? 'Cited code' : 'Nearby code'}${lines ? `, lines ${lines}` : ''}`}
+              />
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }
 
