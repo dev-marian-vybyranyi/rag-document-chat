@@ -134,7 +134,7 @@ export function createMeetingsRouter({
         durationMs: transcript.durationMs,
         ...(details.data.heldOn && { meetingHeldOn: details.data.heldOn }),
       });
-      ingestion.enqueue({ document, transcript });
+      ingestion.enqueue({ document, transcript, heldOn: details.data.heldOn ?? null });
       res.status(202).json({ document: toPublicDocument({ ...document, chunkCount: 0 }) });
     },
   );
