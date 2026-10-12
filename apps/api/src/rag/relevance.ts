@@ -6,6 +6,7 @@ export const DEFAULT_RELEVANCE_THRESHOLD = 0.65;
 export interface RelevanceThresholds {
   document: number;
   code: number;
+  meeting: number;
 }
 
 export interface Relevance {
@@ -17,10 +18,12 @@ export interface Relevance {
 export function relevanceThresholds(settings: {
   RELEVANCE_THRESHOLD: number;
   CODE_RELEVANCE_THRESHOLD?: number | undefined;
+  MEETING_RELEVANCE_THRESHOLD?: number | undefined;
 }): RelevanceThresholds {
   return {
     document: settings.RELEVANCE_THRESHOLD,
     code: settings.CODE_RELEVANCE_THRESHOLD ?? settings.RELEVANCE_THRESHOLD,
+    meeting: settings.MEETING_RELEVANCE_THRESHOLD ?? settings.RELEVANCE_THRESHOLD,
   };
 }
 
@@ -30,9 +33,14 @@ export function assessRelevance(
   threshold: number | RelevanceThresholds = DEFAULT_RELEVANCE_THRESHOLD,
 ): Relevance {
   const thresholds =
-    typeof threshold === 'number' ? { document: threshold, code: threshold } : threshold;
-  const thresholdOf = (chunk: RetrievedChunk) =>
-    chunk.code ? thresholds.code : thresholds.document;
+    typeof threshold === 'number'
+      ? { document: threshold, code: threshold, meeting: threshold }
+      : threshold;
+  const thresholdOf = (chunk: RetrievedChunk) => {
+    if (chunk.code) return thresholds.code;
+    if (chunk.meeting) return thresholds.meeting;
+    return thresholds.document;
+  };
 
   if (chunks.length === 0)
     return { relevant: false, bestScore: null, threshold: thresholds.document };

@@ -72,7 +72,7 @@ describe('assessRelevance', () => {
 });
 
 describe('assessRelevance with a threshold for each kind of source', () => {
-  const thresholds = { document: 0.65, code: 0.5 };
+  const thresholds = { document: 0.65, code: 0.5, meeting: 0.65 };
   const file = (vectorScore: number | null) =>
     ({
       chunkId: 'f',
@@ -134,15 +134,104 @@ describe('assessRelevance with a threshold for each kind of source', () => {
 
 describe('relevanceThresholds', () => {
   it('uses the document threshold for code until a code threshold is set', () => {
-    expect(relevanceThresholds({ RELEVANCE_THRESHOLD: 0.3 })).toEqual({ document: 0.3, code: 0.3 });
+    expect(relevanceThresholds({ RELEVANCE_THRESHOLD: 0.3 })).toEqual({
+      document: 0.3,
+      code: 0.3,
+      meeting: 0.3,
+    });
   });
 
   it('uses the code threshold when one is set, even a low one', () => {
     expect(relevanceThresholds({ RELEVANCE_THRESHOLD: 0.65, CODE_RELEVANCE_THRESHOLD: 0 })).toEqual(
-      {
-        document: 0.65,
-        code: 0,
-      },
+      { document: 0.65, code: 0, meeting: 0.65 },
     );
+  });
+
+  it('uses the document threshold for meetings until a meeting threshold is set', () => {
+    expect(relevanceThresholds({ RELEVANCE_THRESHOLD: 0.4 }).meeting).toBe(0.4);
+  });
+
+  it('uses the meeting threshold when one is set, even a low one, without touching the others', () => {
+    expect(
+      relevanceThresholds({
+        RELEVANCE_THRESHOLD: 0.65,
+        CODE_RELEVANCE_THRESHOLD: 0.5,
+        MEETING_RELEVANCE_THRESHOLD: 0,
+      }),
+    ).toEqual({ document: 0.65, code: 0.5, meeting: 0 });
+  });
+});
+
+describe('assessRelevance with meetings among the sources', () => {
+  const thresholds = { document: 0.65, code: 0.5, meeting: 0.4 };
+  const location = { startMs: 0, endMs: 60_000, speakers: ['Alice'] };
+  const spoken = (vectorScore: number | null) =>
+    ({ chunkId: 'm', vectorScore, score: 0.03, meeting: location }) as RetrievedChunk;
+  const notes = (vectorScore: number | null) =>
+    ({
+      chunkId: 'n',
+      vectorScore,
+      score: 0.03,
+      meeting: { startMs: null, endMs: null, speakers: ['Alice'] },
+    }) as RetrievedChunk;
+  const file = (vectorScore: number | null) =>
+    ({
+      chunkId: 'f',
+      vectorScore,
+      score: 0.03,
+      code: { path: 'a.ts', language: 'typescript', startLine: 1, endLine: 2, symbol: null },
+    }) as RetrievedChunk;
+
+  it('judges a passage of a transcript by the meeting threshold', () => {
+    expect(assessRelevance([spoken(0.45)], 'hybrid', thresholds)).toEqual({
+      relevant: true,
+      bestScore: 0.45,
+      threshold: 0.4,
+    });
+    expect(assessRelevance([spoken(0.35)], 'hybrid', thresholds)).toEqual({
+      relevant: false,
+      bestScore: 0.35,
+      threshold: 0.4,
+    });
+  });
+
+  it('judges the passage that carries the notes the same way', () => {
+    expect(assessRelevance([notes(0.42)], 'hybrid', thresholds).relevant).toBe(true);
+    expect(assessRelevance([notes(0.38)], 'hybrid', thresholds).relevant).toBe(false);
+  });
+
+  it('keeps judging documents and code by their own thresholds', () => {
+    expect(assessRelevance([chunk(0.5)], 'hybrid', thresholds).relevant).toBe(false);
+    expect(assessRelevance([file(0.45)], 'hybrid', thresholds).relevant).toBe(false);
+    expect(assessRelevance([file(0.55)], 'hybrid', thresholds).relevant).toBe(true);
+  });
+
+  it('accepts when any kind passes its own threshold', () => {
+    expect(
+      assessRelevance([chunk(0.5), file(0.45), spoken(0.41)], 'hybrid', thresholds).relevant,
+    ).toBe(true);
+    expect(
+      assessRelevance([chunk(0.5), file(0.45), spoken(0.39)], 'hybrid', thresholds).relevant,
+    ).toBe(false);
+  });
+
+  it('reports the score and threshold of the passage that came closest to passing', () => {
+    expect(assessRelevance([chunk(0.6), spoken(0.3)], 'hybrid', thresholds)).toMatchObject({
+      bestScore: 0.6,
+      threshold: 0.65,
+    });
+    expect(assessRelevance([chunk(0.5), spoken(0.39)], 'hybrid', thresholds)).toMatchObject({
+      bestScore: 0.39,
+      threshold: 0.4,
+    });
+  });
+
+  it('treats a single number as the threshold for meetings too', () => {
+    expect(assessRelevance([spoken(0.6)], 'hybrid', 0.7).relevant).toBe(false);
+    expect(assessRelevance([spoken(0.7)], 'hybrid', 0.7).relevant).toBe(true);
+  });
+
+  it('still lets the model decide in keyword-only mode', () => {
+    expect(assessRelevance([spoken(null)], 'keyword-only', thresholds).relevant).toBe(true);
   });
 });

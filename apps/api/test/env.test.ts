@@ -105,6 +105,22 @@ describe('loadEnv', () => {
     );
   });
 
+  it('reads an optional relevance threshold for meetings, between 0 and 1', () => {
+    expect(loadEnv(base).MEETING_RELEVANCE_THRESHOLD).toBeUndefined();
+    expect(
+      loadEnv({ ...base, MEETING_RELEVANCE_THRESHOLD: '0.35' }).MEETING_RELEVANCE_THRESHOLD,
+    ).toBe(0.35);
+    expect(loadEnv({ ...base, MEETING_RELEVANCE_THRESHOLD: '0' }).MEETING_RELEVANCE_THRESHOLD).toBe(
+      0,
+    );
+    expect(() => loadEnv({ ...base, MEETING_RELEVANCE_THRESHOLD: '1.5' })).toThrow(
+      /MEETING_RELEVANCE_THRESHOLD/,
+    );
+    expect(() => loadEnv({ ...base, MEETING_RELEVANCE_THRESHOLD: 'loose' })).toThrow(
+      /MEETING_RELEVANCE_THRESHOLD/,
+    );
+  });
+
   it('only accepts a thinking level the model API knows', () => {
     expect(loadEnv({ ...base, CHAT_THINKING_LEVEL: 'low' }).CHAT_THINKING_LEVEL).toBe('low');
     expect(() => loadEnv({ ...base, CHAT_THINKING_LEVEL: 'extreme' })).toThrow(
