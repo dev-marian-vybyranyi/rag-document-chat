@@ -14,6 +14,7 @@ export const ERROR_CODES = [
   'invalid_file',
   'invalid_upload',
   'invalid_repository_url',
+  'invalid_transcript',
   'document_limit',
   'chat_limit',
   'chat_full',

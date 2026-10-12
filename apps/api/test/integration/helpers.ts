@@ -6,6 +6,8 @@ import { createApp } from '../../src/app.js';
 import { createDb, type Database } from '../../src/db/client.js';
 import type { ChatDeps } from '../../src/chat/responder.js';
 import type { IngestionService } from '../../src/documents/ingest.js';
+import type { MeetingIngestionService } from '../../src/meetings/ingest.js';
+import type { TranscriptLimits } from '../../src/meetings/limits.js';
 import type { RepositoryIngestionService } from '../../src/repositories/ingest.js';
 import type { UsageLimits } from '../../src/http/limits.js';
 import type { AuthRateLimits, ChatRateLimits, UploadRateLimit } from '../../src/http/rate-limit.js';
@@ -45,6 +47,8 @@ export function buildTestApp(
     maxUploadBytes?: number;
     ingestion?: IngestionService;
     repositoryIngestion?: RepositoryIngestionService;
+    meetingIngestion?: MeetingIngestionService;
+    transcriptLimits?: TranscriptLimits;
     maxArchiveBytes?: number;
     chat?: ChatDeps;
     chatRateLimits?: ChatRateLimits;

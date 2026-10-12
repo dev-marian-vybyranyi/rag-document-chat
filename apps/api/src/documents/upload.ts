@@ -6,10 +6,20 @@ export const DEFAULT_MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 const megabytes = (bytes: number) => Math.round((bytes / (1024 * 1024)) * 10) / 10;
 
-export function singleFileUpload(maxBytes: number): RequestHandler {
+const MAX_FIELD_BYTES = 1024;
+
+export function singleFileUpload(
+  maxBytes: number,
+  options: { textFields?: number } = {},
+): RequestHandler {
   const parse = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: maxBytes, files: 1, fields: 0 },
+    limits: {
+      fileSize: maxBytes,
+      files: 1,
+      fields: options.textFields ?? 0,
+      fieldSize: MAX_FIELD_BYTES,
+    },
     defParamCharset: 'utf8',
   }).single('file');
 

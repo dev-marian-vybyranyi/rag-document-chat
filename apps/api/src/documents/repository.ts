@@ -58,6 +58,8 @@ export function createDocumentRepository(db: Database) {
       repoRef?: string | null;
       commitSha?: string;
       meetingHeldOn?: string;
+      participants?: string[];
+      durationMs?: number;
       filename: string;
       mimeType: string;
       sizeBytes: number;
