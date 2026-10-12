@@ -118,6 +118,90 @@ describe('upgrading a database that already holds documents', () => {
     expect(rows.rows).toEqual([{ path: null, start_line: null }]);
   });
 
+  it('leaves the meeting fields of existing documents and chunks empty', async () => {
+    const [found] = await createDocumentRepository(db).listByUser(userId);
+    const chunkRows = await db.execute<{
+      start_ms: number | null;
+      end_ms: number | null;
+      speakers: string[] | null;
+    }>(sql`select start_ms, end_ms, speakers from chunks where document_id = ${documentId}`);
+
+    expect(found).toMatchObject({
+      meetingHeldOn: null,
+      participants: null,
+      durationMs: null,
+      notes: null,
+    });
+    expect(chunkRows.rows).toEqual([{ start_ms: null, end_ms: null, speakers: null }]);
+  });
+
+  it('accepts a transcript next to the existing documents and reads its time and speakers back', async () => {
+    const repository = createDocumentRepository(db);
+    const transcript = await repository.create({
+      userId,
+      kind: 'transcript',
+      filename: 'standup.txt',
+      mimeType: 'text/plain',
+      sizeBytes: 100,
+      meetingHeldOn: '2026-10-01',
+    });
+    const embedding = Array.from({ length: EMBEDDING_DIMENSIONS }, () => 0.01);
+    await repository.completeWithChunks({
+      documentId: transcript.id,
+      userId,
+      pageCount: null,
+      participants: ['Alice', 'Bob'],
+      durationMs: 90_000,
+      notes: {
+        summary: 'Short sync.',
+        topics: [],
+        decisions: [],
+        actionItems: [],
+        openQuestions: [],
+      },
+      chunks: [
+        {
+          ordinal: 0,
+          page: null,
+          content: '[00:00:05] Alice: Hello.',
+          tokenCount: 6,
+          embedding,
+          startMs: 5000,
+          endMs: 65_000,
+          speakers: ['Alice', 'Bob'],
+        },
+        {
+          ordinal: 1,
+          page: null,
+          content: 'Meeting notes',
+          tokenCount: 2,
+          embedding,
+          speakers: ['Alice', 'Bob'],
+        },
+      ],
+    });
+
+    const found = await repository.findForUser(transcript.id, userId);
+    const around = await repository.passagesAround(transcript.id, userId, 0, 1);
+    const documents = await repository.listByUser(userId);
+
+    expect(found).toMatchObject({
+      kind: 'transcript',
+      meetingHeldOn: '2026-10-01',
+      participants: ['Alice', 'Bob'],
+      durationMs: 90_000,
+      notes: { summary: 'Short sync.' },
+    });
+    expect(around?.passages.map((p) => p.meeting)).toEqual([
+      { startMs: 5000, endMs: 65_000, speakers: ['Alice', 'Bob'] },
+      { startMs: null, endMs: null, speakers: ['Alice', 'Bob'] },
+    ]);
+    expect(documents.map((d) => [d.filename, d.kind]).sort()).toEqual([
+      ['handbook.pdf', 'document'],
+      ['standup.txt', 'transcript'],
+    ]);
+  });
+
   it('leaves existing chats searching the whole library', async () => {
     const rows = await db.execute<{ title: string; source_ids: string[] | null }>(
       sql`select title, source_ids from chats where id = ${chatId}`,
