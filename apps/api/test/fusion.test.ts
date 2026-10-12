@@ -174,6 +174,28 @@ describe('fuseRankings', () => {
     expect(flat!.score).toBeCloseTo(1 / 1001, 10);
   });
 
+  describe('meeting location', () => {
+    const location = { startMs: 70_000, endMs: 120_000, speakers: ['Alice', 'Bob'] };
+
+    it('travels with the chunk through the fusion', () => {
+      const fused = fuseRankings([candidate('a', { meeting: location })], [], { limit: 5 });
+
+      expect(fused[0]!.meeting).toEqual(location);
+    });
+
+    it('is kept when only the keyword list found the chunk', () => {
+      const fused = fuseRankings([], [candidate('a', { meeting: location })], { limit: 5 });
+
+      expect(fused[0]!.meeting).toEqual(location);
+    });
+
+    it('is absent for a document passage', () => {
+      const fused = fuseRankings([candidate('a')], [], { limit: 5 });
+
+      expect(fused[0]).not.toHaveProperty('meeting');
+    });
+  });
+
   describe('code location', () => {
     const location = {
       path: 'src/a.ts',

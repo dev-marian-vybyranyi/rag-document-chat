@@ -1,6 +1,7 @@
 import { and, asc, cosineDistance, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import { chunks, documents } from '../db/schema.js';
+import type { MeetingLocation } from '../meetings/types.js';
 import type { CodeSource } from './code-source.js';
 import { codeSearchTerms, toTsQueryOr } from './code-terms.js';
 
@@ -11,6 +12,7 @@ export interface RetrievalCandidate {
   ordinal: number;
   page: number | null;
   code?: CodeSource;
+  meeting?: MeetingLocation;
   content: string;
   score: number;
 }
@@ -56,6 +58,9 @@ export function createRetrievalStore(
     startLine: chunks.startLine,
     endLine: chunks.endLine,
     symbol: chunks.symbol,
+    startMs: chunks.startMs,
+    endMs: chunks.endMs,
+    speakers: chunks.speakers,
   };
 
   function toCandidate<
@@ -65,12 +70,17 @@ export function createRetrievalStore(
       startLine: number | null;
       endLine: number | null;
       symbol: string | null;
+      startMs: number | null;
+      endMs: number | null;
+      speakers: string[] | null;
     },
-  >({ path, language, startLine, endLine, symbol, ...rest }: Row) {
-    const candidate: Omit<Row, 'path' | 'language' | 'startLine' | 'endLine' | 'symbol'> & {
-      code?: CodeSource;
-    } = rest;
+  >({ path, language, startLine, endLine, symbol, startMs, endMs, speakers, ...rest }: Row) {
+    const candidate: Omit<
+      Row,
+      'path' | 'language' | 'startLine' | 'endLine' | 'symbol' | 'startMs' | 'endMs' | 'speakers'
+    > & { code?: CodeSource; meeting?: MeetingLocation } = rest;
     if (path !== null) candidate.code = { path, language, startLine, endLine, symbol };
+    if (speakers !== null) candidate.meeting = { startMs, endMs, speakers };
     return candidate;
   }
 

@@ -197,3 +197,62 @@ describe('the code location in what the user sees and what is traced', () => {
     expect(traced).not.toHaveProperty('code', location);
   });
 });
+
+describe('the location of a meeting passage', () => {
+  const location = { startMs: 70_000, endMs: 120_000, speakers: ['Alice', 'Bob'] };
+  const chunk = (chunkId: string, withMeeting: boolean): RetrievedChunk => ({
+    chunkId,
+    documentId: 'doc',
+    filename: 'Release sync',
+    ordinal: 1,
+    page: null,
+    ...(withMeeting && { meeting: location }),
+    content: '[00:01:10] Alice: Hello.',
+    score: 0.03,
+    vectorScore: 0.7,
+    vectorRank: 1,
+    keywordScore: null,
+    keywordRank: null,
+  });
+
+  it('is kept on the sources shown with an answer', () => {
+    const sources = toMessageSources(
+      [
+        {
+          id: 1,
+          chunkId: 'm',
+          documentId: 'doc',
+          filename: 'Release sync',
+          page: null,
+          meeting: location,
+          ordinal: 1,
+        },
+        {
+          id: 2,
+          chunkId: 'd',
+          documentId: 'doc',
+          filename: 'Release sync',
+          page: null,
+          ordinal: 1,
+        },
+      ],
+      [chunk('m', true), chunk('d', false)],
+    );
+
+    expect(sources[0]!.meeting).toEqual(location);
+    expect(sources[1]).not.toHaveProperty('meeting');
+  });
+
+  it('is kept on the closest passages shown with a refusal', () => {
+    const [closest] = closestPassages([chunk('m', true)]);
+
+    expect(closest!.meeting).toEqual(location);
+    expect(closestPassages([chunk('d', false)])[0]).not.toHaveProperty('meeting');
+  });
+
+  it('is kept in the trace', () => {
+    const [traced] = toTracedChunks([chunk('m', true)], new Set(['m']));
+
+    expect(traced!.meeting).toEqual(location);
+  });
+});

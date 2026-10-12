@@ -99,6 +99,68 @@ describe('keyword search over meetings', () => {
     expect(found).toEqual([budget]);
   });
 
+  describe('what a hit says about where it comes from', () => {
+    async function seed() {
+      const ada = await createUser('ada@example.com');
+      await addSource(ada.id, 'transcript', 'Budget review', [standup, budget]);
+      await addSource(ada.id, 'document', 'handbook.pdf', [
+        'The marketing budget is set each spring.',
+      ]);
+      await db.insert(chunks).values({
+        documentId: (await db.select().from(documents)).find((d) => d.filename === 'Budget review')!
+          .id,
+        userId: ada.id,
+        ordinal: 5,
+        content: 'Meeting notes: Budget review\nSummary: They doubled the marketing budget.',
+        tokenCount: 5,
+        embedding: embedding(7),
+        speakers: ['Alice', 'Bob'],
+      });
+      return ada;
+    }
+
+    it('gives the time range and speakers of a passage of the transcript, by keyword', async () => {
+      const ada = await seed();
+
+      const hits = await store.keywordSearch(ada.id, 'Carol double', 5);
+
+      expect(hits.find((h) => h.content === budget)?.meeting).toEqual({
+        startMs: 60_000,
+        endMs: 119_000,
+        speakers: ['Alice', 'Bob'],
+      });
+    });
+
+    it('gives the same by vector', async () => {
+      const ada = await seed();
+
+      const hits = await store.vectorSearch(ada.id, embedding(1), 5);
+
+      expect(hits[0]).toMatchObject({
+        content: budget,
+        meeting: { startMs: 60_000, endMs: 119_000, speakers: ['Alice', 'Bob'] },
+      });
+    });
+
+    it('gives no times for the passage that carries the notes', async () => {
+      const ada = await seed();
+
+      const hits = await store.vectorSearch(ada.id, embedding(7), 5);
+
+      expect(hits[0]?.meeting).toEqual({ startMs: null, endMs: null, speakers: ['Alice', 'Bob'] });
+    });
+
+    it('gives no meeting for a document', async () => {
+      const ada = await seed();
+
+      const hits = await store.keywordSearch(ada.id, 'spring', 5);
+
+      expect(hits).toHaveLength(1);
+      expect(hits[0]).not.toHaveProperty('meeting');
+      expect(hits[0]).not.toHaveProperty('code');
+    });
+  });
+
   it('never returns another user’s meeting', async () => {
     const ada = await createUser('ada@example.com');
     const bob = await createUser('bob@example.com');

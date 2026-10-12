@@ -1,3 +1,5 @@
+import { formatTimestamp } from '../meetings/timestamp.js';
+import type { MeetingLocation } from '../meetings/types.js';
 import type { CodeSource } from './code-source.js';
 import type { RetrievedChunk } from './fusion.js';
 import { recentTurns, type ChatTurn } from './history.js';
@@ -28,6 +30,7 @@ export interface PromptSource {
   filename: string;
   page: number | null;
   code?: CodeSource;
+  meeting?: MeetingLocation;
   ordinal: number;
 }
 
@@ -72,6 +75,7 @@ export function buildChatPrompt(input: PromptInput): ChatPrompt {
 function kindsOf(sources: PromptSource[]): Set<SourceKind> {
   const kinds = new Set<SourceKind>();
   if (sources.some((source) => source.code)) kinds.add('code');
+  if (sources.some((source) => source.meeting)) kinds.add('meeting');
   return kinds;
 }
 
@@ -85,7 +89,7 @@ function buildSources(chunks: RetrievedChunk[], maxChars: number) {
     const page = chunk.page === null ? '' : ` page="${chunk.page}"`;
     const filename = escapeAttribute(stripInvisibleCharacters(chunk.filename));
     const content = escapeMarkup(stripInvisibleCharacters(chunk.content));
-    const block = `<source id="${id}" document="${filename}"${page}${codeAttributes(chunk.code)}>\n${content}\n</source>`;
+    const block = `<source id="${id}" document="${filename}"${page}${codeAttributes(chunk.code)}${meetingAttributes(chunk.meeting)}>\n${content}\n</source>`;
     if (sources.length > 0 && used + block.length > maxChars) break;
 
     used += block.length;
@@ -97,6 +101,7 @@ function buildSources(chunks: RetrievedChunk[], maxChars: number) {
       filename: chunk.filename,
       page: chunk.page,
       ...(chunk.code && { code: chunk.code }),
+      ...(chunk.meeting && { meeting: chunk.meeting }),
       ordinal: chunk.ordinal,
     });
   }
@@ -116,6 +121,24 @@ function codeAttributes(code: CodeSource | undefined): string {
     attribute('lines', lines) +
     attribute('symbol', code.symbol) +
     attribute('language', code.language)
+  );
+}
+
+const MAX_LISTED_SPEAKERS = 12;
+
+function meetingAttributes(meeting: MeetingLocation | undefined): string {
+  if (!meeting) return '';
+  const listed = meeting.speakers.slice(0, MAX_LISTED_SPEAKERS);
+  const more = meeting.speakers.length - listed.length;
+  const names = listed.map((name) => stripInvisibleCharacters(name)).join(', ');
+  const speakers = more > 0 ? `${names} and ${more} more` : names;
+  const transcript = meeting.startMs !== null && meeting.endMs !== null;
+  const time = transcript
+    ? ` time="${formatTimestamp(meeting.startMs!)}-${formatTimestamp(meeting.endMs!)}"`
+    : '';
+  return (
+    ` kind="${transcript ? 'transcript' : 'notes'}"${time}` +
+    (speakers === '' ? '' : ` speakers="${escapeAttribute(speakers)}"`)
   );
 }
 

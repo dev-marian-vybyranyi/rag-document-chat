@@ -1,4 +1,5 @@
 import type { ChatFailureKind } from '../chat/errors.js';
+import type { MeetingLocation } from '../meetings/types.js';
 import type { CodeSource } from '../rag/code-source.js';
 
 export type TraceOutcome = 'answered' | 'declined' | 'failed' | 'cancelled';
@@ -9,6 +10,7 @@ export interface TracedChunk {
   filename: string;
   page: number | null;
   code?: CodeSource;
+  meeting?: MeetingLocation;
   ordinal: number;
   vectorScore: number | null;
   vectorRank: number | null;
