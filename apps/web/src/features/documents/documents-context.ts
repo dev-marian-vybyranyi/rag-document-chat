@@ -23,6 +23,7 @@ export interface DocumentsContextValue {
   addRepositoryUrl: (url: string) => Promise<void>;
   addRepositoryZip: (file: File) => Promise<void>;
   addMeeting: (file: File, details?: MeetingDetails) => Promise<void>;
+  regenerateNotes: (id: string) => Promise<void>;
   dismissUpload: (key: number) => void;
   remove: (id: string) => Promise<void>;
 }

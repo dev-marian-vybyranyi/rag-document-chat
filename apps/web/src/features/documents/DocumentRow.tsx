@@ -1,9 +1,11 @@
-import { FileTextIcon, FolderGit2Icon, Trash2Icon } from 'lucide-react';
+import { FileTextIcon, FolderGit2Icon, Trash2Icon, UsersIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { DocumentItem } from './api';
 import { useStartChat } from '../chats/useStartChat';
 import { useDocuments } from './documents-context';
+import { MeetingNotesDialog } from './MeetingNotesDialog';
+import { describeMeetingCounts, describeNotesCounts, shownSpeakers } from './meeting-status';
 import {
   commitUrl,
   describeProgress,
@@ -20,12 +22,20 @@ function plural(count: number, word: string): string {
 
 function describeStatus(document: DocumentItem): string {
   if (document.kind === 'repository') return describeRepositoryStatus(document);
+  if (document.kind === 'transcript') return describeMeetingStatus(document);
   if (document.status === 'processing') return 'Processing…';
   if (document.status === 'failed') return 'Failed';
   const parts = ['Ready'];
   if (document.pageCount !== null) parts.push(plural(document.pageCount, 'page'));
   parts.push(plural(document.chunkCount, 'passage'));
   return parts.join(' · ');
+}
+
+function describeMeetingStatus(document: DocumentItem): string {
+  if (document.status === 'processing') return describeProgress(document.progress);
+  if (document.status === 'failed') return 'Failed';
+  const counts = describeMeetingCounts(document);
+  return document.notes ? `${counts} · ${describeNotesCounts(document.notes)}` : counts;
 }
 
 function describeRepositoryStatus(document: DocumentItem): string {
@@ -77,8 +87,10 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
   }
 
   const isRepository = document.kind === 'repository';
+  const isMeeting = document.kind === 'transcript';
   const repositoryUrl = isRepository ? safeGithubUrl(document.repoUrl) : null;
-  const Icon = isRepository ? FolderGit2Icon : FileTextIcon;
+  const Icon = isRepository ? FolderGit2Icon : isMeeting ? UsersIcon : FileTextIcon;
+  const speakers = isMeeting && document.participants ? shownSpeakers(document.participants) : null;
   const fraction = progressFraction(document.progress);
 
   return (
@@ -102,7 +114,7 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
             )}
           </p>
           <p className="text-xs text-muted-foreground">
-            {isRepository ? (
+            {isRepository || isMeeting ? (
               <>
                 {describeStatus(document)}
                 <RepositoryDetails document={document} />
@@ -112,6 +124,9 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
             )}
           </p>
         </div>
+        {isMeeting && document.status === 'ready' && !confirming && (
+          <MeetingNotesDialog document={document} />
+        )}
         {confirming ? (
           <div className="flex items-center gap-2">
             <span className="text-sm">Delete?</span>
@@ -161,6 +176,18 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
             />
           )}
         </div>
+      )}
+      {speakers && speakers.shown.length > 0 && (
+        <ul className="flex flex-wrap gap-1.5 pt-1" aria-label={`Speakers in ${document.filename}`}>
+          {speakers.shown.map((name) => (
+            <li key={name} className="rounded-full bg-muted px-2 py-0.5 text-xs">
+              {name}
+            </li>
+          ))}
+          {speakers.more > 0 && (
+            <li className="px-1 py-0.5 text-xs text-muted-foreground">+{speakers.more} more</li>
+          )}
+        </ul>
       )}
       {document.status === 'ready' && document.suggestions.length > 0 && (
         <ul

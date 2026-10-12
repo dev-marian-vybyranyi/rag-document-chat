@@ -146,6 +146,18 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     [addDocument],
   );
 
+  const regenerateNotes = useCallback(async (id: string) => {
+    const fresh = await documentsApi.regenerateNotes(id);
+    setState((current) =>
+      current.status === 'ready'
+        ? {
+            ...current,
+            documents: current.documents.map((doc) => (doc.id === fresh.id ? fresh : doc)),
+          }
+        : current,
+    );
+  }, []);
+
   const dismissUpload = useCallback((key: number) => {
     setUploads((current) => current.filter((entry) => entry.key !== key));
   }, []);
@@ -172,6 +184,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       addRepositoryUrl,
       addRepositoryZip,
       addMeeting,
+      regenerateNotes,
       dismissUpload,
       remove,
     }),
@@ -185,6 +198,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       addRepositoryUrl,
       addRepositoryZip,
       addMeeting,
+      regenerateNotes,
       dismissUpload,
       remove,
     ],

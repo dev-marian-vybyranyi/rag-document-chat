@@ -118,6 +118,10 @@ export const documentsApi = {
       signal,
     }).then((r) => r.document);
   },
+  regenerateNotes: (id: string, signal?: AbortSignal) =>
+    api<{ document: DocumentItem }>(`/meetings/${id}/notes`, { method: 'POST', signal }).then(
+      (r) => r.document,
+    ),
   passages: (documentId: string, ordinal: number, radius: number, signal?: AbortSignal) =>
     api<PassagesResponse>(`/documents/${documentId}/passages?ordinal=${ordinal}&radius=${radius}`, {
       signal,
