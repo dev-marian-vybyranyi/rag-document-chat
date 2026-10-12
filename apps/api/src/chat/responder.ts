@@ -278,6 +278,7 @@ export function createChatResponder(
             query: rewritten.query,
             rewritten: rewritten.rewritten,
             mode: result.mode,
+            ...(result.filters && { filters: result.filters }),
             bestScore: relevance.bestScore,
             threshold: relevance.threshold,
             timings: {

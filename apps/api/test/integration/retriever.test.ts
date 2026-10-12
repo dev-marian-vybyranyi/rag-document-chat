@@ -137,6 +137,7 @@ describe('retriever', () => {
   it('asks each search for the configured number of candidates', async () => {
     const ada = await createUser('ada@example.com');
     const spy: RetrievalStore = {
+      meetingFacts: vi.fn(store.meetingFacts),
       vectorSearch: vi.fn(store.vectorSearch),
       keywordSearch: vi.fn(store.keywordSearch),
     };
@@ -151,6 +152,7 @@ describe('retriever', () => {
   it('passes the chosen sources to both searches', async () => {
     const ada = await createUser('ada@example.com');
     const spy: RetrievalStore = {
+      meetingFacts: vi.fn(store.meetingFacts),
       vectorSearch: vi.fn(store.vectorSearch),
       keywordSearch: vi.fn(store.keywordSearch),
     };

@@ -1,3 +1,4 @@
+import type { AppliedFilters } from '../meetings/question-filters.js';
 import type { MeetingLocation } from '../meetings/types.js';
 import type { CodeSource } from '../rag/code-source.js';
 
@@ -32,6 +33,7 @@ export interface MessageRetrieval {
   mode: 'hybrid' | 'keyword-only';
   bestScore: number | null;
   threshold: number;
+  filters?: AppliedFilters;
   outcome: 'answered' | 'declined';
   timings: { rewriteMs: number; retrievalMs: number };
   closest: ClosestPassage[];
