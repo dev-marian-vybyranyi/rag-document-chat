@@ -73,7 +73,7 @@ function readCues(lines: string[]): Cue[] {
 function speakerAndText(payload: string): { speaker: string | null; text: string } {
   const voice = VOICE_TAG.exec(payload);
   const spoken = voice ? payload.slice(voice[0].length) : payload;
-  const text = collapse(decodeEntities(spoken.replace(/<[^>]*>/g, '')));
+  const text = collapse(decodeEntities(spoken.replace(/<[^<>]*>/g, '')));
   if (voice) return { speaker: cleanSpeakerName(decodeEntities(voice[1]!)), text };
 
   const prefixed = NAME_PREFIX.exec(text);
