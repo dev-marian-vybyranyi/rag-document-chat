@@ -211,6 +211,14 @@ describe('buildChatPrompt', () => {
       expect(SYSTEM_PROMPT).toContain('Never write markdown images or HTML');
     });
 
+    it('allow the refusal sentence only when nothing helps, never in front of an answer', () => {
+      expect(SYSTEM_PROMPT).toMatch(/Only if nothing in the sources helps/);
+      expect(SYSTEM_PROMPT).toMatch(/Never write that sentence in front of an answer/);
+      expect(SYSTEM_PROMPT).toMatch(
+        /only indirectly, answer that part.*without the opening sentence/,
+      );
+    });
+
     it('define the refusal sentence the application itself uses', () => {
       expect(NO_ANSWER_PREFIX).toBe("I couldn't find this in your documents.");
     });

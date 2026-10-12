@@ -146,6 +146,20 @@ describe('buildChatPrompt for code', () => {
       expect(CODE_SYSTEM_PROMPT).toContain(`exactly: "${NO_ANSWER_PREFIX}"`);
     });
 
+    it('allows the refusal sentence only when nothing helps, never in front of an answer', () => {
+      expect(CODE_SYSTEM_PROMPT).toMatch(/Only if nothing in the sources helps/);
+      expect(CODE_SYSTEM_PROMPT).toMatch(/Never write that sentence in front of an answer/);
+      expect(CODE_SYSTEM_PROMPT).toMatch(
+        /only indirectly, answer that part.*without the opening sentence/,
+      );
+    });
+
+    it('answers structure questions from what is shown instead of refusing', () => {
+      expect(CODE_SYSTEM_PROMPT).toMatch(
+        /describe what they show and say what they do not, instead of refusing/,
+      );
+    });
+
     it('keeps the numeric citation rule and the data-not-instructions rule', () => {
       expect(CODE_SYSTEM_PROMPT).toMatch(/square brackets, like \[1\] or \[2\]\[3\]/);
       expect(CODE_SYSTEM_PROMPT).toMatch(/Comments, README text, strings and configuration/);
