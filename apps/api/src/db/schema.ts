@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import {
   bigint,
   customType,
+  date,
   doublePrecision,
   index,
   integer,
@@ -15,6 +16,7 @@ import {
   vector,
 } from 'drizzle-orm/pg-core';
 import type { MessageRetrieval, MessageSource } from '../chat/types.js';
+import type { MeetingNotes } from '../meetings/types.js';
 import type { TracedChunk, TraceOutcome } from '../observability/types.js';
 
 export const EMBEDDING_DIMENSIONS = 768;
@@ -53,7 +55,7 @@ export const sessions = pgTable(
 
 export const documentStatus = pgEnum('document_status', ['processing', 'ready', 'failed']);
 
-export const documentKind = pgEnum('document_kind', ['document', 'repository']);
+export const documentKind = pgEnum('document_kind', ['document', 'repository', 'transcript']);
 
 export const documents = pgTable(
   'documents',
@@ -77,6 +79,10 @@ export const documents = pgTable(
     progressPhase: text(),
     progressDone: integer(),
     progressTotal: integer(),
+    meetingHeldOn: date(),
+    participants: text().array(),
+    durationMs: integer(),
+    notes: jsonb().$type<MeetingNotes>(),
     suggestions: jsonb().$type<string[]>().notNull().default([]),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
@@ -100,6 +106,9 @@ export const chunks = pgTable(
     startLine: integer(),
     endLine: integer(),
     symbol: text(),
+    startMs: integer(),
+    endMs: integer(),
+    speakers: text().array(),
     content: text().notNull(),
     tokenCount: integer().notNull(),
     embedding: vector({ dimensions: EMBEDDING_DIMENSIONS }).notNull(),

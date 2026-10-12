@@ -1,6 +1,7 @@
 import { and, asc, count, desc, eq, getTableColumns, gte, lte, sql } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import { chunks, documents } from '../db/schema.js';
+import type { MeetingLocation, MeetingNotes } from '../meetings/types.js';
 import type { CodeSource } from '../rag/code-source.js';
 
 export type DocumentRecord = typeof documents.$inferSelect;
@@ -18,6 +19,9 @@ export interface CodeLocation {
 }
 
 export interface NewChunk extends Partial<CodeLocation> {
+  startMs?: number | null;
+  endMs?: number | null;
+  speakers?: string[] | null;
   ordinal: number;
   page: number | null;
   content: string;
@@ -37,6 +41,7 @@ export interface Passage {
   ordinal: number;
   page: number | null;
   code?: CodeSource;
+  meeting?: MeetingLocation;
   content: string;
 }
 
@@ -52,6 +57,7 @@ export function createDocumentRepository(db: Database) {
       repoUrl?: string;
       repoRef?: string | null;
       commitSha?: string;
+      meetingHeldOn?: string;
       filename: string;
       mimeType: string;
       sizeBytes: number;
@@ -106,6 +112,9 @@ export function createDocumentRepository(db: Database) {
           startLine: chunks.startLine,
           endLine: chunks.endLine,
           symbol: chunks.symbol,
+          startMs: chunks.startMs,
+          endMs: chunks.endMs,
+          speakers: chunks.speakers,
         })
         .from(chunks)
         .where(
@@ -118,8 +127,11 @@ export function createDocumentRepository(db: Database) {
         )
         .orderBy(asc(chunks.ordinal));
       const passages: Passage[] = rows.map(
-        ({ path, language, startLine, endLine, symbol, ...rest }) =>
-          path === null ? rest : { ...rest, code: { path, language, startLine, endLine, symbol } },
+        ({ path, language, startLine, endLine, symbol, startMs, endMs, speakers, ...rest }) => ({
+          ...rest,
+          ...(path !== null && { code: { path, language, startLine, endLine, symbol } }),
+          ...(speakers !== null && { meeting: { startMs, endMs, speakers } }),
+        }),
       );
       return { document, passages };
     },
@@ -140,6 +152,9 @@ export function createDocumentRepository(db: Database) {
       suggestions?: string[];
       fileCount?: number;
       commitSha?: string;
+      participants?: string[];
+      durationMs?: number;
+      notes?: MeetingNotes | null;
       chunks: NewChunk[];
     }): Promise<void> {
       await db.transaction(async (tx) => {
@@ -166,6 +181,9 @@ export function createDocumentRepository(db: Database) {
             progressTotal: null,
             ...(input.fileCount !== undefined && { fileCount: input.fileCount }),
             ...(input.commitSha !== undefined && { commitSha: input.commitSha }),
+            ...(input.participants !== undefined && { participants: input.participants }),
+            ...(input.durationMs !== undefined && { durationMs: input.durationMs }),
+            ...(input.notes !== undefined && { notes: input.notes }),
           })
           .where(eq(documents.id, input.documentId));
       });

@@ -92,6 +92,13 @@
       "when": 1791550180824,
       "tag": "0012_chat_source_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791785479914,
+      "tag": "0013_transcript_source_and_meeting_metadata",
+      "breakpoints": true
     }
   ]
 }
