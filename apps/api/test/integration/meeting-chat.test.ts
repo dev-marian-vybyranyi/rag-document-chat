@@ -100,7 +100,7 @@ describe('asking about meetings', () => {
   }
 
   const spoken = <T extends { meeting?: { startMs: number | null } }>(sources: T[]) =>
-    sources.filter((source) => source.meeting?.startMs != null);
+    sources.filter((source) => typeof source.meeting?.startMs === 'number');
   const notesOf = <T extends { meeting?: { startMs: number | null } }>(sources: T[]) =>
     sources.filter((source) => source.meeting && source.meeting.startMs === null);
 

@@ -1,0 +1,32 @@
+Gus (00:00:06): Thanks for joining the review of Tuesday's checkout outage. Dana, can you walk us through the timeline?
+Dana (00:00:20): Sure. At 21:42 on Tuesday the payment gateway started returning TLS errors. Checkout failed for every customer paying by card.
+Erik (00:00:48): And the root cause, as we found out later, was an expired certificate on the gateway proxy. It expired at 21:40.
+Gus (00:01:10): How long was checkout down in total?
+Dana (00:01:18): My first estimate was about forty minutes.
+Fatima (00:01:34): Support tickets started at 21:45, and the last one came in around 22:34.
+Dana (00:01:52): Let me correct myself then. Looking at the logs again, the outage lasted fifty-two minutes, from 21:42 to 22:34. Forty minutes was wrong.
+Gus (00:02:20): Fifty-two minutes it is. How did we find out?
+Fatima (00:02:30): Customers told us. Support noticed the spike in tickets before any alert fired.
+Dana (00:02:55): Our monitoring only checked the gateway's health endpoint, which stayed green because the proxy still answered. Only the TLS handshake with the bank failed. The first alert fired at 22:00, eighteen minutes after the start.
+Erik (00:03:30): Once we knew, the fix was simple. I installed the renewed certificate at 22:30 and restarted the proxy. But we lost twenty-five minutes looking for the person who held the renewal credentials.
+Gus (00:04:10): What do we change? Ideas please.
+Erik (00:04:25): Certificates should rotate automatically. I suggest a rotation script that renews them thirty days before they expire.
+Dana (00:04:50): And an alert. We should get warned fourteen days before any certificate expires.
+Gus (00:05:12): Agreed on both. Erik writes the rotation script, Dana sets up the expiry alert.
+Erik (00:05:30): I can have the script done by October 3rd.
+Dana (00:05:44): The alert I can do this week, by Friday.
+Gus (00:06:05): Another thing I have been wondering about: should we move to a different payment provider?
+Erik (00:06:24): That is a big project, and the outage wasn't the provider's fault. The certificate was ours.
+Dana (00:06:40): Agreed, switching providers doesn't fix the root cause.
+Gus (00:06:55): Fair enough. We are not switching providers for now.
+Fatima (00:07:20): What do we tell customers? Forty-one orders were charged twice because people retried during the outage.
+Gus (00:07:48): We refund all forty-one automatically. Fatima, please draft the customer email today.
+Fatima (00:08:05): I'll draft the email today and send it to you for review.
+Gus (00:08:30): And I'll write the post-mortem document and share it by Friday.
+Erik (00:08:52): Do we also want a runbook that says who holds the certificate credentials? That cost us twenty-five minutes.
+Gus (00:09:10): Good point. Erik, put the credential owners into a runbook as part of the rotation work.
+Erik (00:09:25): Okay, I'll add the runbook to the rotation script ticket.
+Dana (00:09:45): One open question: do we have certificates on internal services that might expire soon? Nobody has audited them.
+Gus (00:10:05): That is an open question. Dana, can you check?
+Dana (00:10:12): I'll take a look, but I can't promise a date.
+Gus (00:10:30): Alright, thanks all. Let's close.
