@@ -32,6 +32,8 @@ export function describeProgress(progress: IngestionProgress | null): string {
       return 'Downloading from GitHub…';
     case 'reading':
       return 'Reading files…';
+    case 'analyzing':
+      return 'Writing the notes…';
     case 'embedding':
       return progress.total > 0
         ? `Indexing: ${progress.done} of ${plural(progress.total, 'passage')}`

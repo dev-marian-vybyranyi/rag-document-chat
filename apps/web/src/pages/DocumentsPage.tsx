@@ -1,6 +1,7 @@
 import { Loader2Icon, XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AddMeetingDialog } from '@/features/documents/AddMeetingDialog';
 import { AddRepositoryDialog } from '@/features/documents/AddRepositoryDialog';
 import { useDocuments } from '@/features/documents/documents-context';
 import { DocumentRow } from '@/features/documents/DocumentRow';
@@ -13,7 +14,10 @@ export function DocumentsPage() {
     <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">Your documents</h2>
-        <AddRepositoryDialog />
+        <div className="flex flex-wrap gap-2">
+          <AddMeetingDialog />
+          <AddRepositoryDialog />
+        </div>
       </div>
       <Dropzone onFiles={upload} />
       <p role="status" className="sr-only">
@@ -73,8 +77,8 @@ export function DocumentsPage() {
 
       {state.status === 'ready' && state.documents.length === 0 && (
         <p className="text-center text-sm text-muted-foreground">
-          No documents yet. Add a file above, or a code repository, to start asking questions about
-          it.
+          No documents yet. Add a file above, a meeting transcript or a code repository to start
+          asking questions about it.
         </p>
       )}
 

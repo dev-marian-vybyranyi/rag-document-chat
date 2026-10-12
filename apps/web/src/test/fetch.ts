@@ -15,6 +15,7 @@ export function stubFetch() {
 
 type Handler = (request: {
   body: unknown;
+  form?: FormData;
   signal?: AbortSignal | null;
 }) => Response | Promise<Response>;
 
@@ -24,7 +25,7 @@ const DEFAULT_ROUTES: Record<string, Handler | Response> = {
 
 export function stubApi(overrides: Record<string, Handler | Response>) {
   const routes = { ...DEFAULT_ROUTES, ...overrides };
-  const calls: Array<{ route: string; body: unknown }> = [];
+  const calls: Array<{ route: string; body: unknown; form?: FormData }> = [];
   const fetchMock = stubFetch();
   fetchMock.mockImplementation(async (input, init) => {
     const method = init?.method ?? 'GET';
@@ -32,9 +33,10 @@ export function stubApi(overrides: Record<string, Handler | Response>) {
     const handler = routes[route];
     if (!handler) throw new Error(`Unexpected request: ${route}`);
     const body = typeof init?.body === 'string' ? (JSON.parse(init.body) as unknown) : undefined;
-    calls.push({ route, body });
+    const form = init?.body instanceof FormData ? init.body : undefined;
+    calls.push({ route, body, ...(form && { form }) });
     return typeof handler === 'function'
-      ? handler({ body, signal: init?.signal })
+      ? handler({ body, ...(form && { form }), signal: init?.signal })
       : handler.clone();
   });
   return { fetchMock, calls };

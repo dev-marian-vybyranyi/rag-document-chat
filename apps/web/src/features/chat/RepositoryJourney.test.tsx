@@ -28,6 +28,10 @@ function repository(overrides: Partial<DocumentItem> = {}): DocumentItem {
     repoUrl: 'https://github.com/acme/shop',
     repoRef: null,
     commitSha: SHA,
+    meetingHeldOn: null,
+    participants: null,
+    durationMs: null,
+    notes: null,
     progress: null,
     suggestions: [
       'How is this project structured?',
@@ -47,6 +51,10 @@ const importing = (progress: DocumentItem['progress']) =>
     chunkCount: 0,
     fileCount: null,
     commitSha: null,
+    meetingHeldOn: null,
+    participants: null,
+    durationMs: null,
+    notes: null,
     suggestions: [],
   });
 
@@ -94,6 +102,10 @@ const passages = {
     kind: 'repository',
     repoUrl: 'https://github.com/acme/shop',
     commitSha: SHA,
+    meetingHeldOn: null,
+    participants: null,
+    durationMs: null,
+    notes: null,
   },
   target: 7,
   passages: [

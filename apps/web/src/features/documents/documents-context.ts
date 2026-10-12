@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { DocumentItem } from './api';
+import type { DocumentItem, MeetingDetails } from './api';
 
 export type DocumentsState =
   | { status: 'loading' }
@@ -22,6 +22,7 @@ export interface DocumentsContextValue {
   upload: (files: File[]) => void;
   addRepositoryUrl: (url: string) => Promise<void>;
   addRepositoryZip: (file: File) => Promise<void>;
+  addMeeting: (file: File, details?: MeetingDetails) => Promise<void>;
   dismissUpload: (key: number) => void;
   remove: (id: string) => Promise<void>;
 }

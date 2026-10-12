@@ -2,12 +2,31 @@ import { api } from '../../lib/api';
 
 export type DocumentStatus = 'processing' | 'ready' | 'failed';
 
-export type DocumentKind = 'document' | 'repository';
+export type DocumentKind = 'document' | 'repository' | 'transcript';
 
 export interface IngestionProgress {
-  phase: 'downloading' | 'reading' | 'embedding';
+  phase: 'downloading' | 'reading' | 'analyzing' | 'embedding';
   done: number;
   total: number;
+}
+
+export interface MeetingNotes {
+  summary: string;
+  topics: string[];
+  decisions: Array<{ text: string; startMs: number; evidence: string }>;
+  actionItems: Array<{
+    task: string;
+    owner: string | null;
+    due: string | null;
+    startMs: number;
+    evidence: string;
+  }>;
+  openQuestions: string[];
+}
+
+export interface MeetingDetails {
+  title?: string;
+  heldOn?: string;
 }
 
 export interface DocumentItem {
@@ -24,6 +43,10 @@ export interface DocumentItem {
   repoUrl: string | null;
   repoRef: string | null;
   commitSha: string | null;
+  meetingHeldOn: string | null;
+  participants: string[] | null;
+  durationMs: number | null;
+  notes: MeetingNotes | null;
   progress: IngestionProgress | null;
   suggestions: string[];
   createdAt: string;
@@ -79,6 +102,17 @@ export const documentsApi = {
     const form = new FormData();
     form.append('file', file);
     return api<{ document: DocumentItem }>('/repositories/upload', {
+      method: 'POST',
+      body: form,
+      signal,
+    }).then((r) => r.document);
+  },
+  addMeeting: (file: File, details: MeetingDetails = {}, signal?: AbortSignal) => {
+    const form = new FormData();
+    if (details.title) form.append('title', details.title);
+    if (details.heldOn) form.append('heldOn', details.heldOn);
+    form.append('file', file);
+    return api<{ document: DocumentItem }>('/meetings', {
       method: 'POST',
       body: form,
       signal,

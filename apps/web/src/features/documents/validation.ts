@@ -30,6 +30,23 @@ export function validateArchive(file: File): string | null {
   return null;
 }
 
+export const MAX_TRANSCRIPT_BYTES = 1_000_000;
+export const TRANSCRIPT_LIMIT_LABEL = '1 MB';
+export const MAX_MEETING_TITLE_LENGTH = 120;
+export const TRANSCRIPT_EXTENSIONS = ['.txt', '.vtt'];
+
+export function validateTranscript(file: File): string | null {
+  const name = file.name.toLowerCase();
+  if (!TRANSCRIPT_EXTENSIONS.some((extension) => name.endsWith(extension))) {
+    return 'Choose a transcript as a .txt or .vtt file.';
+  }
+  if (file.size === 0) return 'The file is empty.';
+  if (file.size > MAX_TRANSCRIPT_BYTES) {
+    return `The file is too large (limit ${TRANSCRIPT_LIMIT_LABEL}).`;
+  }
+  return null;
+}
+
 const GITHUB_ADDRESS = /^https:\/\/(?:www\.)?github\.com\/[^/\s]+\/[^/\s]+(?:\/tree\/\S+)?\/?$/i;
 
 export function validateGithubAddress(address: string): string | null {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ApiError } from '../../lib/api';
-import { documentsApi, type DocumentItem } from './api';
+import { documentsApi, type DocumentItem, type MeetingDetails } from './api';
 import {
   DocumentsContext,
   type DocumentsContextValue,
@@ -140,6 +140,12 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     [addDocument],
   );
 
+  const addMeeting = useCallback(
+    async (file: File, details?: MeetingDetails) =>
+      addDocument(await documentsApi.addMeeting(file, details)),
+    [addDocument],
+  );
+
   const dismissUpload = useCallback((key: number) => {
     setUploads((current) => current.filter((entry) => entry.key !== key));
   }, []);
@@ -165,6 +171,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       upload,
       addRepositoryUrl,
       addRepositoryZip,
+      addMeeting,
       dismissUpload,
       remove,
     }),
@@ -177,6 +184,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       upload,
       addRepositoryUrl,
       addRepositoryZip,
+      addMeeting,
       dismissUpload,
       remove,
     ],

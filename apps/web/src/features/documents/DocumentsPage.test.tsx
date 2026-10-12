@@ -24,6 +24,10 @@ function doc(overrides: Partial<DocumentItem> = {}): DocumentItem {
     repoUrl: null,
     repoRef: null,
     commitSha: null,
+    meetingHeldOn: null,
+    participants: null,
+    durationMs: null,
+    notes: null,
     progress: null,
     suggestions: [],
     createdAt: '2026-10-07T10:00:00Z',
@@ -105,7 +109,7 @@ describe('documents page', () => {
       setup();
 
       expect(await screen.findByText(/No documents yet/)).toHaveTextContent(
-        'Add a file above, or a code repository',
+        'Add a file above, a meeting transcript or a code repository',
       );
     });
 
