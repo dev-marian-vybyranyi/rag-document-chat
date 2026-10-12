@@ -60,10 +60,17 @@ export interface CodeLocation {
   symbol: string | null;
 }
 
+export interface MeetingLocation {
+  startMs: number | null;
+  endMs: number | null;
+  speakers: string[];
+}
+
 export interface Passage {
   ordinal: number;
   page: number | null;
   code?: CodeLocation;
+  meeting?: MeetingLocation;
   content: string;
 }
 

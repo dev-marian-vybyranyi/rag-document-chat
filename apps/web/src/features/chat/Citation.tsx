@@ -1,5 +1,11 @@
 import type { ReactNode } from 'react';
-import { describeMatch, describeSource, describeLines } from './source-format';
+import {
+  describeMatch,
+  describeMeetingPart,
+  describeSource,
+  describeLines,
+  describeSpeakers,
+} from './source-format';
 import { useSourceViewer } from './source-viewer-context';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import type { ChatSource } from './types';
@@ -26,6 +32,10 @@ export function Citation({ source, children }: { source: ChatSource; children: R
         <p className="text-sm font-medium break-words">{source.code?.path ?? source.filename}</p>
         <p className="text-xs text-muted-foreground">
           {source.page !== null && `Page ${source.page} · `}
+          {source.meeting && `${describeMeetingPart(source.meeting)} · `}
+          {source.meeting &&
+            source.meeting.speakers.length > 0 &&
+            `${describeSpeakers(source.meeting.speakers)} · `}
           {source.code && describeLines(source.code) && `Lines ${describeLines(source.code)} · `}
           {describeMatch(source.score)}
         </p>

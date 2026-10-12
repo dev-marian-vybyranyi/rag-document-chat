@@ -3,7 +3,10 @@ import {
   describeLines,
   describeLocation,
   describeMatch,
+  describeMeetingPart,
   describeSource,
+  describeSpeakers,
+  isMeetingNotes,
   formatDuration,
   formatPercent,
   formatScoreAgainst,
@@ -120,5 +123,59 @@ describe('describing a file passage', () => {
     expect(describeLines(code())).toBe('12-18');
     expect(describeLines(code({ startLine: 3, endLine: 3 }))).toBe('3');
     expect(describeLines(code({ startLine: null }))).toBeNull();
+  });
+});
+
+describe('naming a passage of a meeting', () => {
+  const spoken = { startMs: 70_000, endMs: 3_725_000, speakers: ['Alice', 'Bob', 'Carol'] };
+  const notes = { startMs: null, endMs: null, speakers: ['Alice', 'Bob'] };
+  const base = { filename: 'Release sync', page: null };
+
+  it('gives the meeting, the time it starts and who speaks', () => {
+    expect(describeLocation({ ...base, meeting: spoken })).toBe(
+      'Release sync · 00:01:10 · Alice, Bob +1',
+    );
+    expect(describeLocation({ ...base, meeting: { ...spoken, speakers: ['Alice'] } })).toBe(
+      'Release sync · 00:01:10 · Alice',
+    );
+    expect(describeLocation({ ...base, meeting: { ...spoken, speakers: [] } })).toBe(
+      'Release sync · 00:01:10',
+    );
+  });
+
+  it('calls the passage that carries the notes notes', () => {
+    expect(describeLocation({ ...base, meeting: notes })).toBe('Release sync · notes');
+  });
+
+  it('is the same through describeSource', () => {
+    expect(describeSource({ ...source(null), filename: 'Release sync', meeting: spoken })).toBe(
+      'Release sync · 00:01:10 · Alice, Bob +1',
+    );
+  });
+
+  it('still names documents and code as before', () => {
+    expect(describeLocation({ filename: 'handbook.pdf', page: 4 })).toBe('handbook.pdf, page 4');
+    expect(
+      describeLocation({
+        filename: 'acme/shop',
+        page: null,
+        code: { path: 'a.ts', language: null, startLine: 1, endLine: 2, symbol: null },
+      }),
+    ).toBe('a.ts:1-2');
+  });
+
+  it('names who speaks, at most two people and then how many more', () => {
+    expect(describeSpeakers([])).toBe('');
+    expect(describeSpeakers(['A', 'B'])).toBe('A, B');
+    expect(describeSpeakers(['A', 'B', 'C', 'D', 'E'])).toBe('A, B +3');
+  });
+
+  it('describes the part of the meeting that was read', () => {
+    expect(describeMeetingPart(spoken)).toBe('Transcript 00:01:10–01:02:05');
+    expect(describeMeetingPart({ ...spoken, endMs: 70_000 })).toBe('Transcript 00:01:10');
+    expect(describeMeetingPart({ ...spoken, endMs: null })).toBe('Transcript 00:01:10');
+    expect(describeMeetingPart(notes)).toBe('Meeting notes');
+    expect(isMeetingNotes(notes)).toBe(true);
+    expect(isMeetingNotes(spoken)).toBe(false);
   });
 });

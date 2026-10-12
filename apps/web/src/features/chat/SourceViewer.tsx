@@ -8,7 +8,14 @@ import { documentsApi, type PassagesResponse } from '@/features/documents/api';
 import { cn } from '@/lib/utils';
 import { CodeSnippet } from './CodeSnippet';
 import { githubPermalink } from './permalink';
-import { describeLines, describeMatch, OVERVIEW_PATH } from './source-format';
+import {
+  describeLines,
+  describeMatch,
+  describeMeetingPart,
+  isMeetingNotes,
+  OVERVIEW_PATH,
+} from './source-format';
+import { TranscriptView } from './TranscriptView';
 import { useSourceViewer } from './source-viewer-context';
 import type { ChatSource } from './types';
 
@@ -51,12 +58,14 @@ function Panel({ source, onClose }: { source: ChatSource; onClose: () => void })
   const isFile = code !== undefined && code.path !== OVERVIEW_PATH;
   const title = !code ? source.filename : isFile ? code.path : `Overview of ${source.filename}`;
   const origin = isFile ? `${source.filename} · ` : '';
+  const meeting = source.meeting;
+  const isTranscript = meeting !== undefined && !isMeetingNotes(meeting);
 
   return (
     <SidePanel
       label="Source viewer"
       title={title}
-      subtitle={`${origin}Source [${source.id}]${source.page !== null ? ` · Page ${source.page}` : ''} · ${describeMatch(source.score)}`}
+      subtitle={`${origin}Source [${source.id}]${source.page !== null ? ` · Page ${source.page}` : ''}${meeting ? ` · ${describeMeetingPart(meeting)}` : ''} · ${describeMatch(source.score)}`}
       closeLabel="Close source viewer"
       onClose={onClose}
     >
@@ -93,30 +102,36 @@ function Panel({ source, onClose }: { source: ChatSource; onClose: () => void })
         <FileView data={loaded.data} source={source} target={target} />
       )}
 
-      {loaded.status === 'ready' && !isFile && (
+      {loaded.status === 'ready' && isTranscript && (
+        <TranscriptView data={loaded.data} target={target} />
+      )}
+
+      {loaded.status === 'ready' && !isFile && !isTranscript && (
         <ol className="flex flex-col gap-3">
-          {loaded.data.passages.map((passage) => {
-            const cited = passage.ordinal === loaded.data.target;
-            return (
-              <li
-                key={passage.ordinal}
-                ref={cited ? target : undefined}
-                aria-current={cited ? 'true' : undefined}
-                className={cn(
-                  'rounded-lg border px-3 py-2 text-sm whitespace-pre-line break-words',
-                  cited
-                    ? 'border-amber-500/60 bg-amber-100 text-foreground dark:bg-amber-400/15'
-                    : 'text-muted-foreground',
-                )}
-              >
-                <p className="mb-1 text-xs font-medium">
-                  {cited ? 'Cited passage' : 'Nearby'}
-                  {passage.page !== null && ` · Page ${passage.page}`}
-                </p>
-                {passage.content}
-              </li>
-            );
-          })}
+          {loaded.data.passages
+            .filter((passage) => !meeting || passage.meeting?.startMs === null)
+            .map((passage) => {
+              const cited = passage.ordinal === loaded.data.target;
+              return (
+                <li
+                  key={passage.ordinal}
+                  ref={cited ? target : undefined}
+                  aria-current={cited ? 'true' : undefined}
+                  className={cn(
+                    'rounded-lg border px-3 py-2 text-sm whitespace-pre-line break-words',
+                    cited
+                      ? 'border-amber-500/60 bg-amber-100 text-foreground dark:bg-amber-400/15'
+                      : 'text-muted-foreground',
+                  )}
+                >
+                  <p className="mb-1 text-xs font-medium">
+                    {cited ? 'Cited passage' : 'Nearby'}
+                    {passage.page !== null && ` · Page ${passage.page}`}
+                  </p>
+                  {passage.content}
+                </li>
+              );
+            })}
         </ol>
       )}
     </SidePanel>
