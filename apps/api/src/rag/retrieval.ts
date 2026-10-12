@@ -15,6 +15,8 @@ export interface RetrievalCandidate {
   score: number;
 }
 
+const PROSE_KINDS: Array<(typeof documents.kind.enumValues)[number]> = ['document', 'transcript'];
+
 export interface SearchScope {
   documentIds?: string[];
 }
@@ -86,7 +88,7 @@ export function createRetrievalStore(
       .where(
         and(
           eq(chunks.userId, userId),
-          eq(documents.kind, 'document'),
+          inArray(documents.kind, PROSE_KINDS),
           sameModel,
           inScope(scope),
           sql`${chunks.searchVector} @@ ${anyTerm}`,
