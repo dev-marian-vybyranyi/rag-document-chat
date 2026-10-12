@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import type { DocumentItem } from './api';
 import { useStartChat } from '../chats/useStartChat';
 import { useDocuments } from './documents-context';
+import { suggestionsOf } from './meeting-questions';
 import { MeetingNotesDialog } from './MeetingNotesDialog';
 import { describeMeetingCounts, describeNotesCounts, shownSpeakers } from './meeting-status';
 import {
@@ -92,6 +93,7 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
   const Icon = isRepository ? FolderGit2Icon : isMeeting ? UsersIcon : FileTextIcon;
   const speakers = isMeeting && document.participants ? shownSpeakers(document.participants) : null;
   const fraction = progressFraction(document.progress);
+  const suggestions = suggestionsOf(document);
 
   return (
     <li className="flex flex-col gap-1 rounded-lg border bg-background px-4 py-3">
@@ -189,12 +191,12 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
           )}
         </ul>
       )}
-      {document.status === 'ready' && document.suggestions.length > 0 && (
+      {document.status === 'ready' && suggestions.length > 0 && (
         <ul
           className="flex flex-wrap gap-1.5 pt-1"
           aria-label={`Questions to ask about ${document.filename}`}
         >
-          {document.suggestions.map((question) => (
+          {suggestions.map((question) => (
             <li key={question} className="max-w-full">
               <Button
                 variant="outline"

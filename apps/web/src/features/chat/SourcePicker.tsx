@@ -1,11 +1,18 @@
-import { ChevronDownIcon, FileTextIcon, FolderGit2Icon } from 'lucide-react';
+import { ChevronDownIcon, FileTextIcon, FolderGit2Icon, UsersIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useChats } from '@/features/chats/chats-context';
 import { useDocuments } from '@/features/documents/documents-context';
+import type { DocumentItem } from '@/features/documents/api';
 import { describeScope, idsOf, liveIds, normalizeScope } from './scope';
+
+const GROUPS: Array<{ kind: DocumentItem['kind']; label: string; Icon: typeof FileTextIcon }> = [
+  { kind: 'document', label: 'Documents', Icon: FileTextIcon },
+  { kind: 'repository', label: 'Code repositories', Icon: FolderGit2Icon },
+  { kind: 'transcript', label: 'Meetings', Icon: UsersIcon },
+];
 
 export function SourcePicker({
   chatId,
@@ -23,6 +30,11 @@ export function SourcePicker({
   const { label, missing, empty } = describeScope(sourceIds, library);
   const documents = library.filter((source) => source.kind === 'document');
   const repositories = library.filter((source) => source.kind === 'repository');
+  const meetings = library.filter((source) => source.kind === 'transcript');
+  const groups = GROUPS.map((group) => ({
+    ...group,
+    sources: library.filter((source) => source.kind === group.kind),
+  })).filter((group) => group.sources.length > 0);
 
   async function apply(next: string[] | null) {
     setPending(true);
@@ -89,6 +101,10 @@ export function SourcePicker({
             'Code only',
             repositories.map((source) => source.id),
           )}
+          {preset(
+            'Meetings only',
+            meetings.map((source) => source.id),
+          )}
         </div>
 
         {state.status !== 'ready' && (
@@ -96,42 +112,52 @@ export function SourcePicker({
         )}
         {state.status === 'ready' && library.length === 0 && (
           <p className="text-xs text-muted-foreground">
-            You have no sources yet. Add a document or a code repository first.
+            You have no sources yet. Add a document, a code repository or a meeting first.
           </p>
         )}
 
         {library.length > 0 && (
           <ul
             aria-label="Sources to search"
-            className="flex max-h-64 flex-col gap-0.5 overflow-y-auto"
+            className="flex max-h-64 flex-col gap-2 overflow-y-auto"
           >
-            {library.map((source) => {
-              const Icon = source.kind === 'repository' ? FolderGit2Icon : FileTextIcon;
-              const only = chosen.length === 1 && isChosen(source.id);
-              return (
-                <li key={source.id}>
-                  <label className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-sm hover:bg-muted">
-                    <input
-                      type="checkbox"
-                      checked={isChosen(source.id)}
-                      disabled={pending || only}
-                      onChange={() => toggle(source.id)}
-                      className="size-4 accent-primary"
-                    />
-                    <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                    <span className="min-w-0 flex-1 truncate" title={source.filename}>
-                      {source.filename}
-                    </span>
-                    {source.status === 'processing' && (
-                      <span className="text-xs text-muted-foreground">indexing…</span>
-                    )}
-                    {source.status === 'failed' && (
-                      <span className="text-xs text-destructive">failed</span>
-                    )}
-                  </label>
-                </li>
-              );
-            })}
+            {groups.map(({ kind, label: groupLabel, Icon, sources }) => (
+              <li key={kind}>
+                {groups.length > 1 && (
+                  <p className="px-1.5 pb-0.5 text-xs font-medium text-muted-foreground">
+                    {groupLabel}
+                  </p>
+                )}
+                <ul aria-label={groupLabel} className="flex flex-col gap-0.5">
+                  {sources.map((source) => {
+                    const only = chosen.length === 1 && isChosen(source.id);
+                    return (
+                      <li key={source.id}>
+                        <label className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-sm hover:bg-muted">
+                          <input
+                            type="checkbox"
+                            checked={isChosen(source.id)}
+                            disabled={pending || only}
+                            onChange={() => toggle(source.id)}
+                            className="size-4 accent-primary"
+                          />
+                          <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                          <span className="min-w-0 flex-1 truncate" title={source.filename}>
+                            {source.filename}
+                          </span>
+                          {source.status === 'processing' && (
+                            <span className="text-xs text-muted-foreground">indexing…</span>
+                          )}
+                          {source.status === 'failed' && (
+                            <span className="text-xs text-destructive">failed</span>
+                          )}
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </li>
+            ))}
           </ul>
         )}
 
