@@ -17,6 +17,7 @@ import { defaultImportLimits } from './repositories/filter.js';
 import type { RepositoryIngestionService } from './repositories/ingest.js';
 import { defaultTranscriptLimits, type TranscriptLimits } from './meetings/limits.js';
 import type { MeetingIngestionService } from './meetings/ingest.js';
+import type { MeetingNotesService } from './meetings/regenerate.js';
 import { createMeetingsRouter } from './meetings/routes.js';
 import { createRepositoriesRouter } from './repositories/routes.js';
 import { DEFAULT_MAX_UPLOAD_BYTES } from './documents/upload.js';
@@ -50,6 +51,7 @@ interface AppDeps {
   ingestion: IngestionService;
   repositoryIngestion?: RepositoryIngestionService;
   meetingIngestion?: MeetingIngestionService;
+  meetingNotes?: MeetingNotesService;
   transcriptLimits?: TranscriptLimits;
   maxArchiveBytes?: number;
   chat?: ChatDeps;
@@ -67,6 +69,7 @@ export function createApp({
   ingestion,
   repositoryIngestion = { enqueue: () => {}, idle: async () => {} },
   meetingIngestion = { enqueue: () => {}, idle: async () => {} },
+  meetingNotes = { regenerate: async () => ({ status: 'unavailable' }) },
   transcriptLimits = defaultTranscriptLimits,
   maxArchiveBytes = defaultImportLimits.maxArchiveBytes,
   chat,
@@ -124,6 +127,7 @@ export function createApp({
     createMeetingsRouter({
       documents: createDocumentRepository(db),
       ingestion: meetingIngestion,
+      notes: meetingNotes,
       limits: transcriptLimits,
       maxDocumentsPerUser: usageLimits.maxDocumentsPerUser,
       uploadLimiter: createUploadRateLimiter(uploadRateLimit),

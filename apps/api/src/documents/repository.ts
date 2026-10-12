@@ -29,7 +29,7 @@ export interface NewChunk extends Partial<CodeLocation> {
   embedding: number[];
 }
 
-export type ProgressPhase = 'downloading' | 'reading' | 'embedding';
+export type ProgressPhase = 'downloading' | 'reading' | 'analyzing' | 'embedding';
 
 export interface Progress {
   phase: ProgressPhase;
@@ -136,6 +136,53 @@ export function createDocumentRepository(db: Database) {
         }),
       );
       return { document, passages };
+    },
+
+    async transcriptPassages(id: string, userId: string): Promise<string[]> {
+      const rows = await db
+        .select({ content: chunks.content })
+        .from(chunks)
+        .where(
+          and(
+            eq(chunks.documentId, id),
+            eq(chunks.userId, userId),
+            sql`${chunks.startMs} is not null`,
+          ),
+        )
+        .orderBy(asc(chunks.ordinal));
+      return rows.map((row) => row.content);
+    },
+
+    async replaceNotes(input: {
+      documentId: string;
+      userId: string;
+      notes: MeetingNotes;
+      chunks: Omit<NewChunk, 'ordinal'>[];
+    }): Promise<void> {
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(chunks)
+          .where(and(eq(chunks.documentId, input.documentId), sql`${chunks.startMs} is null`));
+        const [last] = await tx
+          .select({ ordinal: sql<number>`coalesce(max(${chunks.ordinal}), -1)::int` })
+          .from(chunks)
+          .where(eq(chunks.documentId, input.documentId));
+        const first = (last?.ordinal ?? -1) + 1;
+        if (input.chunks.length > 0) {
+          await tx.insert(chunks).values(
+            input.chunks.map((chunk, i) => ({
+              ...chunk,
+              ordinal: first + i,
+              documentId: input.documentId,
+              userId: input.userId,
+            })),
+          );
+        }
+        await tx
+          .update(documents)
+          .set({ notes: input.notes })
+          .where(eq(documents.id, input.documentId));
+      });
     },
 
     async deleteForUser(id: string, userId: string): Promise<boolean> {

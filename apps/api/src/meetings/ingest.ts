@@ -1,11 +1,14 @@
 import type { Logger } from 'pino';
 import { EmbeddingError, type Embedder } from '../ai/embeddings.js';
 import { PG_FOREIGN_KEY_VIOLATION, pgErrorCode } from '../db/errors.js';
+import { estimateTokens } from '../documents/chunker.js';
 import { embedInGroups } from '../documents/embedding-groups.js';
 import { IngestionError } from '../documents/ingest.js';
 import { createJobQueue } from '../documents/queue.js';
 import type { DocumentRepository, NewChunk } from '../documents/repository.js';
 import { chunkTranscript, type MeetingChunkOptions } from './chunker.js';
+import { createNoopNotesExtractor, type NotesExtractor } from './notes-extractor.js';
+import { notesPassages } from './notes-text.js';
 import type { ParsedTranscript } from './transcript.js';
 
 export const DEFAULT_MAX_MEETING_CHUNKS = 1_500;
@@ -27,6 +30,7 @@ export interface MeetingIngestionOptions {
   embedder: Embedder;
   logger: Logger;
   embeddingModel?: string;
+  notes?: NotesExtractor;
   chunkOptions?: Pick<MeetingChunkOptions, 'maxTokens' | 'maxGapMs'>;
   maxChunks?: number;
   concurrency?: number;
@@ -40,6 +44,7 @@ export function createMeetingIngestion(options: MeetingIngestionOptions): Meetin
     embeddingModel,
     chunkOptions,
     maxChunks = DEFAULT_MAX_MEETING_CHUNKS,
+    notes: notesExtractor = createNoopNotesExtractor(),
   } = options;
 
   const queue = createJobQueue(options.concurrency ?? 1, (error) =>
@@ -72,16 +77,29 @@ export function createMeetingIngestion(options: MeetingIngestionOptions): Meetin
         'transcript chunked',
       );
 
+      await repository.setProgress(job.document.id, { phase: 'analyzing', done: 0, total: 0 });
+      const notes = await notesExtractor.extract({
+        title: job.document.filename,
+        heldOn: job.heldOn ?? null,
+        turns: transcript.turns,
+      });
+
+      const noteTexts = notes
+        ? notesPassages(notes, {
+            title: job.document.filename,
+            heldOn: job.heldOn ?? null,
+            participants: transcript.participants,
+          })
+        : [];
+      const texts = [...chunks.map((chunk) => chunk.content), ...noteTexts];
+
       await repository.setProgress(job.document.id, {
         phase: 'embedding',
         done: 0,
-        total: chunks.length,
+        total: texts.length,
       });
-      const vectors = await embedInGroups(
-        embedder,
-        chunks.map((chunk) => chunk.content),
-        (done, total) =>
-          repository.setProgress(job.document.id, { phase: 'embedding', done, total }),
+      const vectors = await embedInGroups(embedder, texts, (done, total) =>
+        repository.setProgress(job.document.id, { phase: 'embedding', done, total }),
       );
 
       await repository.completeWithChunks({
@@ -89,16 +107,28 @@ export function createMeetingIngestion(options: MeetingIngestionOptions): Meetin
         userId: job.document.userId,
         pageCount: null,
         embeddingModel,
-        chunks: chunks.map((chunk, i): NewChunk => ({
-          ordinal: i,
-          page: null,
-          content: chunk.content,
-          tokenCount: chunk.tokenCount,
-          embedding: vectors[i]!,
-          startMs: chunk.startMs,
-          endMs: chunk.endMs,
-          speakers: chunk.speakers,
-        })),
+        notes,
+        chunks: chunks
+          .map((chunk, i): NewChunk => ({
+            ordinal: i,
+            page: null,
+            content: chunk.content,
+            tokenCount: chunk.tokenCount,
+            embedding: vectors[i]!,
+            startMs: chunk.startMs,
+            endMs: chunk.endMs,
+            speakers: chunk.speakers,
+          }))
+          .concat(
+            noteTexts.map((content, i): NewChunk => ({
+              ordinal: chunks.length + i,
+              page: null,
+              content,
+              tokenCount: estimateTokens(content),
+              embedding: vectors[chunks.length + i]!,
+              speakers: transcript.participants,
+            })),
+          ),
       });
       log.info({ chunks: chunks.length, durationMs: Date.now() - startedAt }, 'meeting indexed');
     } catch (error) {

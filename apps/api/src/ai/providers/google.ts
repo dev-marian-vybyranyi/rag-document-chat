@@ -1,6 +1,7 @@
 import { createGoogle } from '@ai-sdk/google';
 import type { Env } from '../../config/env.js';
 import { EMBEDDING_DIMENSIONS } from '../../db/schema.js';
+import { createNoopNotesExtractor, createNotesExtractor } from '../../meetings/notes-extractor.js';
 import { createPassthroughRewriter, createQueryRewriter } from '../../rag/rewrite.js';
 import { createNoopSuggester, createQuestionSuggester } from '../../rag/suggest.js';
 import {
@@ -45,6 +46,7 @@ export function createGoogleProvider(env: GoogleProviderEnv): AiProvider {
       chat: { model: null },
       createRewriter: () => createPassthroughRewriter(),
       createSuggester: () => createNoopSuggester(),
+      createNotesExtractor: () => createNoopNotesExtractor(),
       createJudgeModel: () => {
         throw new Error(`${KEY_VARIABLE} is not set`);
       },
@@ -52,6 +54,7 @@ export function createGoogleProvider(env: GoogleProviderEnv): AiProvider {
   }
 
   const google = createGoogle({ apiKey });
+  const lowThinking = { google: { thinkingConfig: { thinkingLevel: 'low' } } } as const;
   const minimalThinking = { google: { thinkingConfig: { thinkingLevel: 'minimal' } } } as const;
 
   return {
@@ -81,6 +84,12 @@ export function createGoogleProvider(env: GoogleProviderEnv): AiProvider {
         model: google(env.REWRITE_MODEL),
         logger,
         providerOptions: minimalThinking,
+      }),
+    createNotesExtractor: (logger) =>
+      createNotesExtractor({
+        model: google(env.REWRITE_MODEL),
+        logger,
+        providerOptions: lowThinking,
       }),
     createJudgeModel: (modelId, thinkingLevel) => ({
       model: google(modelId),

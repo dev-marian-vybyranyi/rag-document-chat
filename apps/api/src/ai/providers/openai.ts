@@ -1,6 +1,7 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import type { Env } from '../../config/env.js';
 import { EMBEDDING_DIMENSIONS } from '../../db/schema.js';
+import { createNoopNotesExtractor, createNotesExtractor } from '../../meetings/notes-extractor.js';
 import { createPassthroughRewriter, createQueryRewriter } from '../../rag/rewrite.js';
 import { createNoopSuggester, createQuestionSuggester } from '../../rag/suggest.js';
 import {
@@ -37,6 +38,7 @@ export function createOpenAiProvider(env: OpenAiProviderEnv): AiProvider {
       chat: { model: null },
       createRewriter: () => createPassthroughRewriter(),
       createSuggester: () => createNoopSuggester(),
+      createNotesExtractor: () => createNoopNotesExtractor(),
       createJudgeModel: () => {
         throw new Error(`${KEY_VARIABLE} is not set`);
       },
@@ -44,6 +46,7 @@ export function createOpenAiProvider(env: OpenAiProviderEnv): AiProvider {
   }
 
   const openai = createOpenAI({ apiKey });
+  const lowReasoning = { openai: { reasoningEffort: 'low' } } as const;
   const minimalReasoning = { openai: { reasoningEffort: 'minimal' } } as const;
 
   return {
@@ -71,6 +74,12 @@ export function createOpenAiProvider(env: OpenAiProviderEnv): AiProvider {
         model: openai.chat(env.REWRITE_MODEL),
         logger,
         providerOptions: minimalReasoning,
+      }),
+    createNotesExtractor: (logger) =>
+      createNotesExtractor({
+        model: openai.chat(env.REWRITE_MODEL),
+        logger,
+        providerOptions: lowReasoning,
       }),
     createJudgeModel: (modelId, thinkingLevel) => ({
       model: openai.chat(modelId),

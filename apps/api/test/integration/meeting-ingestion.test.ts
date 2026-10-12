@@ -132,6 +132,160 @@ describe('meeting ingestion', () => {
     });
   });
 
+  describe('meeting notes', () => {
+    const notes = {
+      summary: 'The team planned the release.',
+      topics: ['Release'],
+      decisions: [{ text: 'Ship on Friday.', startMs: 120_000, evidence: 'we ship on Friday' }],
+      actionItems: [
+        {
+          task: 'Update the changelog.',
+          owner: 'Carol',
+          due: 'today',
+          startMs: 70_000,
+          evidence: 'I will update the changelog today',
+        },
+      ],
+      openQuestions: [],
+    };
+
+    it('are stored with the meeting and shown to its owner', async () => {
+      const { app, ingestion } = setup({ notes: { extract: async () => notes } });
+
+      const { agent, id } = await upload(app, standup);
+      await ingestion.idle();
+
+      expect((await documentRow(id)).notes).toEqual(notes);
+      const res = await agent.get(`/documents/${id}`);
+      expect(res.body.document).toMatchObject({ status: 'ready', notes });
+    });
+
+    it('are asked for with the title, the date and every turn', async () => {
+      const received: unknown[] = [];
+      const { app, ingestion } = setup({
+        notes: {
+          extract: async (input) => {
+            received.push(input);
+            return null;
+          },
+        },
+      });
+
+      await upload(app, standup, { title: 'Release sync', heldOn: '2026-10-01' });
+      await ingestion.idle();
+
+      expect(received).toEqual([
+        {
+          title: 'Release sync',
+          heldOn: '2026-10-01',
+          turns: [
+            {
+              speaker: 'Alice',
+              startMs: 5000,
+              text: 'Morning everyone. Let us start with the release plan.',
+            },
+            { speaker: 'Bob', startMs: 20_000, text: 'The build is green and QA has signed off.' },
+            { speaker: 'Carol', startMs: 70_000, text: 'I will update the changelog today.' },
+            { speaker: 'Alice', startMs: 120_000, text: 'Good. Then we ship on Friday.' },
+          ],
+        },
+      ]);
+    });
+
+    it('are indexed as passages of their own, after those of the transcript', async () => {
+      const embedder = createFakeEmbedder();
+      const { app, ingestion } = setup({ embedder, notes: { extract: async () => notes } });
+
+      const { id } = await upload(app, standup, { heldOn: '2026-10-01' });
+      await ingestion.idle();
+
+      const rows = await chunkRows(id);
+      expect(rows.map((r) => r.ordinal)).toEqual([0, 1]);
+      expect(rows[0]).toMatchObject({ startMs: 5000, endMs: 120_000 });
+      expect(rows[1]).toMatchObject({
+        page: null,
+        path: null,
+        startMs: null,
+        endMs: null,
+        speakers: ['Alice', 'Bob', 'Carol'],
+      });
+      expect(rows[1]?.content).toContain('Meeting notes: standup (2026-10-01)');
+      expect(rows[1]?.content).toContain('- [00:02:00] Ship on Friday.');
+      expect(rows[1]?.content).toContain(
+        '- [00:01:10] Update the changelog. (owner: Carol, due: today)',
+      );
+      expect(embedder.documentCalls.flat()).toEqual(rows.map((r) => r.content));
+    });
+
+    it('count towards the passages shown while embedding', async () => {
+      const seen: Array<number | null> = [];
+      const embedder = createFakeEmbedder({
+        beforeEmbedDocuments: async () => {
+          seen.push((await db.select().from(documents))[0]!.progressTotal);
+        },
+      });
+      const { app, ingestion } = setup({ embedder, notes: { extract: async () => notes } });
+
+      const { id } = await upload(app, standup);
+      await ingestion.idle();
+
+      expect(seen).toEqual([2]);
+      expect((await documentRow(id)).status).toBe('ready');
+    });
+
+    it('add no passage when the model found nothing to note', async () => {
+      const blank = { summary: '', topics: [], decisions: [], actionItems: [], openQuestions: [] };
+      const { app, ingestion } = setup({ notes: { extract: async () => blank } });
+
+      const { id } = await upload(app, standup);
+      await ingestion.idle();
+
+      expect(await chunkRows(id)).toHaveLength(1);
+      expect((await documentRow(id)).notes).toEqual(blank);
+    });
+
+    it('can be missing: the meeting is still ready and searchable', async () => {
+      const { app, ingestion } = setup({ notes: { extract: async () => null } });
+
+      const { id } = await upload(app, standup);
+      await ingestion.idle();
+
+      expect(await documentRow(id)).toMatchObject({ status: 'ready', error: null, notes: null });
+      expect(await chunkRows(id)).toHaveLength(1);
+    });
+
+    it('are written before the passages are embedded, and show as a step of their own', async () => {
+      const steps: Array<string | null> = [];
+      const phase = async () => (await db.select().from(documents))[0]!.progressPhase;
+      const embedder = createFakeEmbedder({
+        beforeEmbedDocuments: async () => void steps.push(await phase()),
+      });
+      const { app, ingestion } = setup({
+        embedder,
+        notes: {
+          extract: async () => {
+            steps.push(await phase());
+            return null;
+          },
+        },
+      });
+
+      await upload(app, standup);
+      await ingestion.idle();
+
+      expect(steps).toEqual(['analyzing', 'embedding']);
+    });
+
+    it('are left out when no model is configured', async () => {
+      const { app, ingestion } = setup();
+
+      const { id } = await upload(app, standup);
+      await ingestion.idle();
+
+      expect((await documentRow(id)).notes).toBeNull();
+    });
+  });
+
   it('names the meeting after the given title', async () => {
     const { app, ingestion } = setup();
 

@@ -9,6 +9,7 @@ import { AppError } from '../http/errors.js';
 import { plural } from '../http/limits.js';
 import { stripInvisibleCharacters } from '../rag/sanitize.js';
 import type { MeetingIngestionService } from './ingest.js';
+import type { MeetingNotesService } from './regenerate.js';
 import type { TranscriptLimits } from './limits.js';
 import { parseTranscript } from './parser.js';
 import { TranscriptParseError, type ParsedTranscript } from './transcript.js';
@@ -29,6 +30,7 @@ const EXTENSION = /\.(txt|vtt)$/i;
 interface MeetingsRouterDeps {
   documents: DocumentRepository;
   ingestion: MeetingIngestionService;
+  notes: MeetingNotesService;
   limits: TranscriptLimits;
   maxDocumentsPerUser: number;
   uploadLimiter?: RequestHandler;
@@ -41,6 +43,7 @@ function cleanTitle(raw: string): string {
 export function createMeetingsRouter({
   documents,
   ingestion,
+  notes,
   limits,
   maxDocumentsPerUser,
   uploadLimiter = (_req, _res, next) => next(),
@@ -138,6 +141,37 @@ export function createMeetingsRouter({
       res.status(202).json({ document: toPublicDocument({ ...document, chunkCount: 0 }) });
     },
   );
+
+  router.post('/:id/notes', uploadLimiter, async (req, res) => {
+    const id = z.uuid().safeParse(req.params.id);
+    const userId = userOf(req).id;
+    const result = id.success
+      ? await notes.regenerate(id.data, userId)
+      : ({ status: 'not_found' } as const);
+
+    switch (result.status) {
+      case 'not_found':
+        throw new AppError(404, 'not_found', 'Meeting not found');
+      case 'not_ready':
+        throw new AppError(409, 'conflict', 'The meeting is still being processed');
+      case 'other_model':
+        throw new AppError(
+          409,
+          'conflict',
+          'This meeting was indexed with a different embedding model. Upload it again.',
+        );
+      case 'unavailable':
+        throw new AppError(
+          503,
+          'ai_busy',
+          'The notes could not be generated right now. Try again in a minute.',
+        );
+      case 'done': {
+        const document = await documents.findForUser(id.data!, userId);
+        res.json({ document: toPublicDocument(document!) });
+      }
+    }
+  });
 
   return router;
 }

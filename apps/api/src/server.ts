@@ -8,6 +8,7 @@ import { createDocumentRepository } from './documents/repository.js';
 import { defaultImportLimits } from './repositories/filter.js';
 import { createGithubImporter } from './repositories/github.js';
 import { createMeetingIngestion } from './meetings/ingest.js';
+import { createMeetingNotesService } from './meetings/regenerate.js';
 import { createRepositoryIngestion } from './repositories/ingest.js';
 import { relevanceThresholds } from './rag/relevance.js';
 import { createRetriever } from './rag/retriever.js';
@@ -61,10 +62,20 @@ const repositoryIngestion = createRepositoryIngestion({
   maxChunks: env.REPOSITORY_MAX_CHUNKS,
 });
 
+const notesExtractor = ai.createNotesExtractor(logger);
+
 const meetingIngestion = createMeetingIngestion({
   repository: documentRepository,
   embedder,
   logger,
+  embeddingModel: env.EMBEDDING_MODEL,
+  notes: notesExtractor,
+});
+
+const meetingNotes = createMeetingNotesService({
+  repository: documentRepository,
+  embedder,
+  extractor: notesExtractor,
   embeddingModel: env.EMBEDDING_MODEL,
 });
 
@@ -79,6 +90,7 @@ const app = createApp({
   ingestion,
   repositoryIngestion,
   meetingIngestion,
+  meetingNotes,
   chat: {
     retriever: createRetriever({
       store: createRetrievalStore(db, { embeddingModel: env.EMBEDDING_MODEL }),
