@@ -5,6 +5,7 @@ import { afterAll, beforeEach, inject } from 'vitest';
 import { createApp } from '../../src/app.js';
 import { createDb, type Database } from '../../src/db/client.js';
 import type { CareerIngestionService } from '../../src/career/ingest.js';
+import type { CareerProfileService } from '../../src/career/regenerate.js';
 import type { CareerLimits } from '../../src/career/limits.js';
 import type { ChatDeps } from '../../src/chat/responder.js';
 import type { IngestionService } from '../../src/documents/ingest.js';
@@ -53,6 +54,7 @@ export function buildTestApp(
     meetingIngestion?: MeetingIngestionService;
     meetingNotes?: MeetingNotesService;
     careerIngestion?: CareerIngestionService;
+    careerProfiles?: CareerProfileService;
     careerLimits?: CareerLimits;
     transcriptLimits?: TranscriptLimits;
     maxArchiveBytes?: number;

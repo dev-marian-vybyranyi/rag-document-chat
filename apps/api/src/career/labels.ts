@@ -27,3 +27,13 @@ export function sectionLabel(section: CareerSection, heading: string | null): st
   if (fixed !== '') return fixed;
   return heading === null ? '' : cleanLabel(heading, 60);
 }
+
+export function careerLabel(document: {
+  kind: string;
+  filename: string;
+  jobNumber: number | null;
+}): string {
+  if (document.kind === 'resume') return 'Resume';
+  const name = cleanLabel(document.filename);
+  return document.jobNumber === null ? name : `Job #${document.jobNumber} · ${name}`;
+}

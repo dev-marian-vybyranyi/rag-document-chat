@@ -4,6 +4,7 @@ import { loadEnv } from './config/env.js';
 import { createDb } from './db/client.js';
 import { runMigrations } from './db/migrate.js';
 import { createCareerIngestion } from './career/ingest.js';
+import { createCareerProfileService } from './career/regenerate.js';
 import { createIngestionService, INTERRUPTED_MESSAGE } from './documents/ingest.js';
 import { createDocumentRepository } from './documents/repository.js';
 import { defaultImportLimits } from './repositories/filter.js';
@@ -63,10 +64,23 @@ const repositoryIngestion = createRepositoryIngestion({
   maxChunks: env.REPOSITORY_MAX_CHUNKS,
 });
 
+const resumeProfiles = ai.createResumeProfileExtractor(logger);
+const jobProfiles = ai.createJobProfileExtractor(logger);
+
 const careerIngestion = createCareerIngestion({
   repository: documentRepository,
   embedder,
   logger,
+  embeddingModel: env.EMBEDDING_MODEL,
+  resumeProfiles,
+  jobProfiles,
+});
+
+const careerProfiles = createCareerProfileService({
+  repository: documentRepository,
+  embedder,
+  resumeProfiles,
+  jobProfiles,
   embeddingModel: env.EMBEDDING_MODEL,
 });
 
@@ -101,6 +115,7 @@ const app = createApp({
   meetingIngestion,
   meetingNotes,
   careerIngestion,
+  careerProfiles,
   chat: {
     retriever: createRetriever({
       store: createRetrievalStore(db, { embeddingModel: env.EMBEDDING_MODEL }),

@@ -1,5 +1,5 @@
 import { and, asc, count, desc, eq, getTableColumns, gte, lte, sql } from 'drizzle-orm';
-import type { CareerSection } from '../career/types.js';
+import type { CareerProfile, CareerSection } from '../career/types.js';
 import type { Database } from '../db/client.js';
 import { PG_UNIQUE_VIOLATION, pgErrorCode } from '../db/errors.js';
 import { chunks, documents } from '../db/schema.js';
@@ -190,6 +190,53 @@ export function createDocumentRepository(db: Database) {
       return rows.map((row) => row.content);
     },
 
+    async careerPassages(id: string, userId: string): Promise<string[]> {
+      const rows = await db
+        .select({ content: chunks.content })
+        .from(chunks)
+        .where(
+          and(
+            eq(chunks.documentId, id),
+            eq(chunks.userId, userId),
+            sql`${chunks.section} is null or ${chunks.section} not in ('profile', 'fit', 'overview')`,
+          ),
+        )
+        .orderBy(asc(chunks.ordinal));
+      return rows.map((row) => row.content);
+    },
+
+    async replaceProfile(input: {
+      documentId: string;
+      userId: string;
+      profile: CareerProfile;
+      chunks: Omit<NewChunk, 'ordinal'>[];
+    }): Promise<void> {
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(chunks)
+          .where(and(eq(chunks.documentId, input.documentId), eq(chunks.section, 'profile')));
+        const [last] = await tx
+          .select({ ordinal: sql<number>`coalesce(max(${chunks.ordinal}), -1)::int` })
+          .from(chunks)
+          .where(eq(chunks.documentId, input.documentId));
+        const first = (last?.ordinal ?? -1) + 1;
+        if (input.chunks.length > 0) {
+          await tx.insert(chunks).values(
+            input.chunks.map((chunk, i) => ({
+              ...chunk,
+              ordinal: first + i,
+              documentId: input.documentId,
+              userId: input.userId,
+            })),
+          );
+        }
+        await tx
+          .update(documents)
+          .set({ profile: input.profile })
+          .where(eq(documents.id, input.documentId));
+      });
+    },
+
     async replaceNotes(input: {
       documentId: string;
       userId: string;
@@ -241,6 +288,7 @@ export function createDocumentRepository(db: Database) {
       participants?: string[];
       durationMs?: number;
       notes?: MeetingNotes | null;
+      profile?: CareerProfile | null;
       chunks: NewChunk[];
     }): Promise<void> {
       await db.transaction(async (tx) => {
@@ -270,6 +318,7 @@ export function createDocumentRepository(db: Database) {
             ...(input.participants !== undefined && { participants: input.participants }),
             ...(input.durationMs !== undefined && { durationMs: input.durationMs }),
             ...(input.notes !== undefined && { notes: input.notes }),
+            ...(input.profile !== undefined && { profile: input.profile }),
           })
           .where(eq(documents.id, input.documentId));
       });

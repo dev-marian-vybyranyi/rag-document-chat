@@ -8,6 +8,7 @@ import { createUserRepository } from './auth/users.js';
 import { createPassthroughRewriter } from './rag/rewrite.js';
 import type { CareerIngestionService } from './career/ingest.js';
 import { defaultCareerLimits, type CareerLimits } from './career/limits.js';
+import type { CareerProfileService } from './career/regenerate.js';
 import { createCareerRouter } from './career/routes.js';
 import { createChatRepository } from './chat/repository.js';
 import { createChatResponder, type ChatDeps } from './chat/responder.js';
@@ -56,6 +57,7 @@ interface AppDeps {
   meetingIngestion?: MeetingIngestionService;
   meetingNotes?: MeetingNotesService;
   careerIngestion?: CareerIngestionService;
+  careerProfiles?: CareerProfileService;
   careerLimits?: CareerLimits;
   transcriptLimits?: TranscriptLimits;
   maxArchiveBytes?: number;
@@ -76,6 +78,7 @@ export function createApp({
   meetingIngestion = { enqueue: () => {}, pendingRecordings: () => 0, idle: async () => {} },
   meetingNotes = { regenerate: async () => ({ status: 'unavailable' }) },
   careerIngestion = { enqueue: () => {}, idle: async () => {} },
+  careerProfiles = { regenerate: async () => ({ status: 'unavailable' }) },
   careerLimits = defaultCareerLimits,
   transcriptLimits = defaultTranscriptLimits,
   maxArchiveBytes = defaultImportLimits.maxArchiveBytes,
@@ -146,6 +149,7 @@ export function createApp({
     createCareerRouter({
       documents: createDocumentRepository(db),
       ingestion: careerIngestion,
+      profiles: careerProfiles,
       limits: careerLimits,
       maxDocumentsPerUser: usageLimits.maxDocumentsPerUser,
       uploadLimiter: createUploadRateLimiter(uploadRateLimit),

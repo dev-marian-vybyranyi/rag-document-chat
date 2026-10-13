@@ -16,6 +16,7 @@ import { plural } from '../http/limits.js';
 import type { CareerIngestionService } from './ingest.js';
 import { cleanLabel } from './labels.js';
 import type { CareerLimits } from './limits.js';
+import type { CareerProfileService } from './regenerate.js';
 
 const MAX_TITLE_LENGTH = 120;
 const MAX_COMPANY_LENGTH = 80;
@@ -35,6 +36,7 @@ const jobDetails = resumeDetails.extend({
 interface CareerRouterDeps {
   documents: DocumentRepository;
   ingestion: CareerIngestionService;
+  profiles: CareerProfileService;
   limits: CareerLimits;
   maxDocumentsPerUser: number;
   uploadLimiter?: RequestHandler;
@@ -43,6 +45,7 @@ interface CareerRouterDeps {
 export function createCareerRouter({
   documents,
   ingestion,
+  profiles,
   limits,
   maxDocumentsPerUser,
   uploadLimiter = (_req, _res, next) => next(),
@@ -172,6 +175,37 @@ export function createCareerRouter({
       res.status(202).json({ document: toPublicDocument({ ...document, chunkCount: 0 }) });
     },
   );
+
+  router.post('/:id/analysis', uploadLimiter, async (req, res) => {
+    const id = z.uuid().safeParse(req.params.id);
+    const userId = userOf(req).id;
+    const result = id.success
+      ? await profiles.regenerate(id.data, userId)
+      : ({ status: 'not_found' } as const);
+
+    switch (result.status) {
+      case 'not_found':
+        throw new AppError(404, 'not_found', 'Resume or job posting not found');
+      case 'not_ready':
+        throw new AppError(409, 'conflict', 'The file is still being processed');
+      case 'other_model':
+        throw new AppError(
+          409,
+          'conflict',
+          'This file was indexed with a different embedding model. Upload it again.',
+        );
+      case 'unavailable':
+        throw new AppError(
+          503,
+          'ai_busy',
+          'The analysis could not be made right now. Try again in a minute.',
+        );
+      case 'done': {
+        const document = await documents.findForUser(id.data!, userId);
+        res.json({ document: toPublicDocument(document!) });
+      }
+    }
+  });
 
   return router;
 }

@@ -8,9 +8,12 @@ import { IngestionError } from '../documents/ingest.js';
 import { createJobQueue } from '../documents/queue.js';
 import type { DocumentRecord, DocumentRepository, NewChunk } from '../documents/repository.js';
 import { chunkSections, type CareerChunkOptions } from './chunker.js';
-import { cleanLabel } from './labels.js';
+import { createNoopJobProfileExtractor, type JobProfileExtractor } from './job-profile.js';
+import { careerLabel } from './labels.js';
 import { defaultCareerLimits, type CareerLimits } from './limits.js';
+import { profileSections } from './profile-text.js';
 import { redactResume, type RedactionCounts } from './redact.js';
+import { createNoopResumeProfileExtractor, type ResumeProfileExtractor } from './resume-profile.js';
 import { splitIntoSections } from './sections.js';
 
 export const DEFAULT_MAX_CAREER_CHUNKS = 200;
@@ -32,6 +35,8 @@ export interface CareerIngestionOptions {
   embedder: Embedder;
   logger: Logger;
   embeddingModel?: string;
+  resumeProfiles?: ResumeProfileExtractor;
+  jobProfiles?: JobProfileExtractor;
   limits?: CareerLimits;
   chunkOptions?: Pick<CareerChunkOptions, 'maxChars'>;
   maxChunks?: number;
@@ -47,13 +52,6 @@ function careerKindOf(job: CareerJob): CareerKind {
   return job.document.kind;
 }
 
-function labelOf(job: CareerJob, kind: CareerKind): string {
-  if (kind === 'resume') return 'Resume';
-  const number = job.document.jobNumber;
-  const name = cleanLabel(job.document.filename);
-  return number === null ? name : `Job #${number} · ${name}`;
-}
-
 function characterCount(extracted: ExtractedText): number {
   return extracted.segments.reduce((sum, segment) => sum + segment.text.length, 0);
 }
@@ -66,6 +64,8 @@ export function createCareerIngestion(options: CareerIngestionOptions): CareerIn
     embeddingModel,
     chunkOptions,
     limits = defaultCareerLimits,
+    resumeProfiles = createNoopResumeProfileExtractor(),
+    jobProfiles = createNoopJobProfileExtractor(),
     maxChunks = DEFAULT_MAX_CAREER_CHUNKS,
   } = options;
 
@@ -104,10 +104,8 @@ export function createCareerIngestion(options: CareerIngestionOptions): CareerIn
             })
           : extracted.segments;
 
-      const chunks = chunkSections(splitIntoSections(kind, segments), {
-        label: labelOf(job, kind),
-        ...chunkOptions,
-      });
+      const label = careerLabel(job.document);
+      const chunks = chunkSections(splitIntoSections(kind, segments), { label, ...chunkOptions });
       if (chunks.length === 0) {
         throw new IngestionError(`The ${what} contains no readable text`);
       }
@@ -119,14 +117,25 @@ export function createCareerIngestion(options: CareerIngestionOptions): CareerIn
         'career text prepared',
       );
 
+      await repository.setProgress(job.document.id, { phase: 'analyzing', done: 0, total: 0 });
+      const fullText = segments.map((segment) => segment.text).join('\n\n');
+      const profile =
+        kind === 'resume'
+          ? await resumeProfiles.extract(fullText)
+          : await jobProfiles.extract({ name: job.document.filename, text: fullText });
+      const passages = chunkSections(profileSections(profile), { label, ...chunkOptions }).map(
+        (chunk) => ({ ...chunk, ordinal: chunks.length + chunk.ordinal }),
+      );
+      const all = [...chunks, ...passages];
+
       await repository.setProgress(job.document.id, {
         phase: 'embedding',
         done: 0,
-        total: chunks.length,
+        total: all.length,
       });
       const vectors = await embedInGroups(
         embedder,
-        chunks.map((chunk) => chunk.content),
+        all.map((chunk) => chunk.content),
         (done, total) =>
           repository.setProgress(job.document.id, { phase: 'embedding', done, total }),
       );
@@ -136,7 +145,8 @@ export function createCareerIngestion(options: CareerIngestionOptions): CareerIn
         userId: job.document.userId,
         pageCount: extracted.pageCount,
         embeddingModel,
-        chunks: chunks.map((chunk, i): NewChunk => ({
+        profile,
+        chunks: all.map((chunk, i): NewChunk => ({
           ordinal: chunk.ordinal,
           page: chunk.page,
           section: chunk.section,

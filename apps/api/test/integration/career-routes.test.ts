@@ -177,6 +177,7 @@ describe('resume and job posting endpoints', () => {
         createCareerRouter({
           documents: stub,
           ingestion: careerIngestion,
+          profiles: { regenerate: async () => ({ status: 'unavailable' }) },
           limits,
           maxDocumentsPerUser: 10,
         }),

@@ -7,6 +7,7 @@ import { createCareerIngestion, type CareerIngestionOptions } from '../../src/ca
 import { defaultCareerLimits } from '../../src/career/limits.js';
 import { chunks, documents } from '../../src/db/schema.js';
 import { createDocumentRepository } from '../../src/documents/repository.js';
+import type { JobProfile, ResumeProfile } from '../../src/career/types.js';
 import { createFakeEmbedder } from '../helpers/embedder.js';
 import { buildPdf } from '../helpers/pdf.js';
 import { buildTestApp, useTestDb } from './helpers.js';
@@ -182,6 +183,170 @@ describe('resume and job posting ingestion', () => {
       expect(rows.map((r) => r.content).join('\n')).toContain('jobs@acme.com');
       expect((await chunkRows(second.id))[0]?.content.startsWith('Job #2 · platform')).toBe(true);
       expect(await documentRow(first.id)).toMatchObject({ kind: 'job_posting', status: 'ready' });
+    });
+  });
+
+  describe('the profile', () => {
+    const resumeProfile: ResumeProfile = {
+      role: 'resume',
+      headline: 'Backend Engineer',
+      skills: [{ name: 'TypeScript', quote: 'TypeScript, PostgreSQL, Docker' }],
+      roles: [
+        {
+          title: 'Senior Engineer',
+          company: 'Acme',
+          start: '2021-03',
+          end: '2024-06',
+          quote: 'Senior Engineer, Acme (2021-03 – 2024-06)',
+        },
+      ],
+      education: [],
+      totalExperienceYears: 3.3,
+    };
+    const jobProfile: JobProfile = {
+      role: 'job',
+      title: 'Backend Engineer',
+      company: null,
+      minYearsExperience: 5,
+      requirements: [
+        {
+          id: 'r1',
+          text: 'PostgreSQL',
+          skill: 'PostgreSQL',
+          importance: 'must',
+          quote: '- PostgreSQL',
+        },
+      ],
+      responsibilities: [],
+    };
+
+    const extractors = () => {
+      const seen: { resume: string[]; job: Array<{ name: string; text: string }> } = {
+        resume: [],
+        job: [],
+      };
+      return {
+        seen,
+        resumeProfiles: {
+          extract: async (text: string) => {
+            seen.resume.push(text);
+            return resumeProfile;
+          },
+        },
+        jobProfiles: {
+          extract: async (input: { name: string; text: string }) => {
+            seen.job.push(input);
+            return jobProfile;
+          },
+        },
+      };
+    };
+
+    it('is stored with the resume and indexed as passages after the text', async () => {
+      const embedder = createFakeEmbedder();
+      const { resumeProfiles, jobProfiles } = extractors();
+      const { app, ingestion } = setup({ embedder, resumeProfiles, jobProfiles });
+      const agent = await signedIn(app);
+
+      const { id } = await addResume(agent);
+      await ingestion.idle();
+
+      expect((await documentRow(id)).profile).toEqual(resumeProfile);
+      const rows = await chunkRows(id);
+      const last = rows.at(-1)!;
+      expect(rows.map((r) => r.ordinal)).toEqual(rows.map((_, i) => i));
+      expect(rows.filter((r) => r.section === 'profile')).toHaveLength(1);
+      expect(last).toMatchObject({ section: 'profile', page: null });
+      expect(last.content).toBe(
+        [
+          'Resume · Profile',
+          'Headline: Backend Engineer',
+          'Total professional experience: 3.3 years (computed from the dates of the roles)',
+          'Skills: TypeScript',
+          'Roles:',
+          '- Senior Engineer, Acme, 2021-03 to 2024-06',
+        ].join('\n'),
+      );
+      expect(embedder.documentCalls.flat()).toEqual(rows.map((r) => r.content));
+    });
+
+    it('is built from the text that was indexed, without the contact details', async () => {
+      const { seen, resumeProfiles, jobProfiles } = extractors();
+      const { app, ingestion } = setup({ resumeProfiles, jobProfiles });
+      const agent = await signedIn(app);
+
+      await addResume(agent);
+      await ingestion.idle();
+
+      expect(seen.resume).toHaveLength(1);
+      expect(seen.resume[0]).toContain('Senior Engineer, Acme (2021-03 – 2024-06)');
+      expect(seen.resume[0]).toContain('[email] | [phone] | [link]');
+      expect(seen.resume[0]).not.toMatch(/alex\.morgan@example\.com|555-0134|1990/);
+      expect(seen.job).toEqual([]);
+    });
+
+    it('is built for a posting from its name and its full text', async () => {
+      const { seen, resumeProfiles, jobProfiles } = extractors();
+      const { app, ingestion } = setup({ resumeProfiles, jobProfiles });
+      const agent = await signedIn(app);
+
+      const { id } = await addJob(agent);
+      await ingestion.idle();
+
+      expect(seen.job).toEqual([{ name: 'backend', text: posting }]);
+      expect(seen.resume).toEqual([]);
+      expect((await documentRow(id)).profile).toEqual(jobProfile);
+      const last = (await chunkRows(id)).at(-1)!;
+      expect(last.section).toBe('profile');
+      expect(last.content).toBe(
+        [
+          'Job #1 · backend · Profile',
+          'Role: Backend Engineer',
+          'Minimum years of professional experience: 5',
+          'Must have:',
+          '- PostgreSQL',
+        ].join('\n'),
+      );
+    });
+
+    it('counts towards the passages that are embedded', async () => {
+      const seen: Array<number | null> = [];
+      const embedder = createFakeEmbedder({
+        beforeEmbedDocuments: async () => {
+          seen.push((await db.select().from(documents))[0]!.progressTotal);
+        },
+      });
+      const { resumeProfiles, jobProfiles } = extractors();
+      const { app, ingestion } = setup({ embedder, resumeProfiles, jobProfiles });
+      const agent = await signedIn(app);
+
+      const { id } = await addResume(agent);
+      await ingestion.idle();
+
+      expect(seen).toEqual([(await chunkRows(id)).length]);
+    });
+
+    it('can be missing: the resume is still ready and searchable', async () => {
+      const { app, ingestion } = setup({
+        resumeProfiles: { extract: async () => null },
+      });
+      const agent = await signedIn(app);
+
+      const { id } = await addResume(agent);
+      await ingestion.idle();
+
+      expect(await documentRow(id)).toMatchObject({ status: 'ready', profile: null });
+      expect((await chunkRows(id)).some((r) => r.section === 'profile')).toBe(false);
+    });
+
+    it('is left out when no model is configured', async () => {
+      const { app, ingestion } = setup();
+      const agent = await signedIn(app);
+
+      const { id } = await addJob(agent);
+      await ingestion.idle();
+
+      expect(await documentRow(id)).toMatchObject({ status: 'ready', profile: null });
     });
   });
 
@@ -365,6 +530,7 @@ describe('resume and job posting ingestion', () => {
       const total = (await chunkRows(id)).length;
       expect(steps).toEqual([
         ['reading', 0, 0],
+        ['analyzing', 0, 0],
         ['embedding', 0, total],
         ['embedding', total, total],
       ]);
