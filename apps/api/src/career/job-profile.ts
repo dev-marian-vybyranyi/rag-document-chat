@@ -163,7 +163,6 @@ export function verifyJobProfile(raw: ModelJob, postingText: string): VerifiedJo
   const experienceQuote = raw.experienceQuote === null ? null : locate(raw.experienceQuote);
   const yearsSupported =
     minYears !== null &&
-    Number.isInteger(minYears) &&
     minYears >= 1 &&
     minYears <= MAX_YEARS &&
     experienceQuote !== null &&
