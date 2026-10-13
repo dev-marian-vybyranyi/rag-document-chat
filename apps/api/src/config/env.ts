@@ -6,12 +6,14 @@ const PROVIDER_DEFAULTS = {
     EMBEDDING_TOKENS_PER_MINUTE: 25_000,
     REWRITE_MODEL: 'gemini-3.5-flash-lite',
     CHAT_MODEL: 'gemini-3.5-flash-lite',
+    TRANSCRIPTION_MODEL: 'gemini-3.5-flash-lite',
   },
   openai: {
     EMBEDDING_MODEL: 'text-embedding-3-small',
     EMBEDDING_TOKENS_PER_MINUTE: 200_000,
     REWRITE_MODEL: 'gpt-5-nano',
     CHAT_MODEL: 'gpt-5-nano',
+    TRANSCRIPTION_MODEL: 'gpt-4o-transcribe-diarize',
   },
 } as const;
 
@@ -34,6 +36,7 @@ const envSchema = z
     EMBEDDING_MODEL: z.string().min(1).optional(),
     EMBEDDING_TOKENS_PER_MINUTE: z.coerce.number().int().positive().optional(),
     REWRITE_MODEL: z.string().min(1).optional(),
+    TRANSCRIPTION_MODEL: z.string().min(1).optional(),
     RELEVANCE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.65),
     CODE_RELEVANCE_THRESHOLD: z.coerce.number().min(0).max(1).optional(),
     MEETING_RELEVANCE_THRESHOLD: z.coerce.number().min(0).max(1).optional(),
@@ -56,6 +59,8 @@ const envSchema = z
       PROVIDER_DEFAULTS[env.AI_PROVIDER].EMBEDDING_TOKENS_PER_MINUTE,
     REWRITE_MODEL: env.REWRITE_MODEL ?? PROVIDER_DEFAULTS[env.AI_PROVIDER].REWRITE_MODEL,
     CHAT_MODEL: env.CHAT_MODEL ?? PROVIDER_DEFAULTS[env.AI_PROVIDER].CHAT_MODEL,
+    TRANSCRIPTION_MODEL:
+      env.TRANSCRIPTION_MODEL ?? PROVIDER_DEFAULTS[env.AI_PROVIDER].TRANSCRIPTION_MODEL,
     COOKIE_SECURE: env.COOKIE_SECURE ?? env.NODE_ENV === 'production',
   }));
 

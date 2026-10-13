@@ -2,6 +2,8 @@ import { createGoogle } from '@ai-sdk/google';
 import type { Env } from '../../config/env.js';
 import { EMBEDDING_DIMENSIONS } from '../../db/schema.js';
 import { createNoopNotesExtractor, createNotesExtractor } from '../../meetings/notes-extractor.js';
+import { createLanguageModelTranscriber } from '../../meetings/transcribe-with-language-model.js';
+import { createUnconfiguredTranscriber } from '../../meetings/transcriber.js';
 import { createPassthroughRewriter, createQueryRewriter } from '../../rag/rewrite.js';
 import { createNoopSuggester, createQuestionSuggester } from '../../rag/suggest.js';
 import {
@@ -20,6 +22,7 @@ export type GoogleProviderEnv = Pick<
   | 'REWRITE_MODEL'
   | 'CHAT_MODEL'
   | 'CHAT_THINKING_LEVEL'
+  | 'TRANSCRIPTION_MODEL'
 >;
 
 const KEY_VARIABLE = 'GOOGLE_GENERATIVE_AI_API_KEY';
@@ -47,6 +50,7 @@ export function createGoogleProvider(env: GoogleProviderEnv): AiProvider {
       createRewriter: () => createPassthroughRewriter(),
       createSuggester: () => createNoopSuggester(),
       createNotesExtractor: () => createNoopNotesExtractor(),
+      createTranscriber: () => createUnconfiguredTranscriber(KEY_VARIABLE),
       createJudgeModel: () => {
         throw new Error(`${KEY_VARIABLE} is not set`);
       },
@@ -90,6 +94,12 @@ export function createGoogleProvider(env: GoogleProviderEnv): AiProvider {
         model: google(env.REWRITE_MODEL),
         logger,
         providerOptions: lowThinking,
+      }),
+    createTranscriber: (logger) =>
+      createLanguageModelTranscriber({
+        model: google(env.TRANSCRIPTION_MODEL),
+        logger,
+        providerOptions: minimalThinking,
       }),
     createJudgeModel: (modelId, thinkingLevel) => ({
       model: google(modelId),
