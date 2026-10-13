@@ -5,6 +5,7 @@ import {
   createJobProfileExtractor,
   createNoopJobProfileExtractor,
 } from '../../career/job-profile.js';
+import { createFitMatcher, createNoopFitMatcher } from '../../career/matcher.js';
 import {
   createNoopResumeProfileExtractor,
   createResumeProfileExtractor,
@@ -60,6 +61,7 @@ export function createGoogleProvider(env: GoogleProviderEnv): AiProvider {
       createNotesExtractor: () => createNoopNotesExtractor(),
       createResumeProfileExtractor: () => createNoopResumeProfileExtractor(),
       createJobProfileExtractor: () => createNoopJobProfileExtractor(),
+      createFitMatcher: () => createNoopFitMatcher(),
       createTranscriber: () => createUnconfiguredTranscriber(KEY_VARIABLE),
       createJudgeModel: () => {
         throw new Error(`${KEY_VARIABLE} is not set`);
@@ -113,6 +115,12 @@ export function createGoogleProvider(env: GoogleProviderEnv): AiProvider {
       }),
     createJobProfileExtractor: (logger) =>
       createJobProfileExtractor({
+        model: google(env.REWRITE_MODEL),
+        logger,
+        providerOptions: lowThinking,
+      }),
+    createFitMatcher: (logger) =>
+      createFitMatcher({
         model: google(env.REWRITE_MODEL),
         logger,
         providerOptions: lowThinking,
