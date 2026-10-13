@@ -15,6 +15,7 @@ import {
   uuid,
   vector,
 } from 'drizzle-orm/pg-core';
+import type { CareerProfile, CareerSection, Fit } from '../career/types.js';
 import type { MessageRetrieval, MessageSource } from '../chat/types.js';
 import type { MeetingNotes } from '../meetings/types.js';
 import type { TracedChunk, TraceOutcome } from '../observability/types.js';
@@ -55,7 +56,13 @@ export const sessions = pgTable(
 
 export const documentStatus = pgEnum('document_status', ['processing', 'ready', 'failed']);
 
-export const documentKind = pgEnum('document_kind', ['document', 'repository', 'transcript']);
+export const documentKind = pgEnum('document_kind', [
+  'document',
+  'repository',
+  'transcript',
+  'resume',
+  'job_posting',
+]);
 
 export const documents = pgTable(
   'documents',
@@ -83,10 +90,16 @@ export const documents = pgTable(
     participants: text().array(),
     durationMs: integer(),
     notes: jsonb().$type<MeetingNotes>(),
+    profile: jsonb().$type<CareerProfile>(),
+    jobNumber: integer(),
+    fit: jsonb().$type<Fit>(),
     suggestions: jsonb().$type<string[]>().notNull().default([]),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index('documents_user_id_created_at_idx').on(table.userId, table.createdAt)],
+  (table) => [
+    index('documents_user_id_created_at_idx').on(table.userId, table.createdAt),
+    unique('documents_user_id_job_number_unique').on(table.userId, table.jobNumber),
+  ],
 );
 
 export const chunks = pgTable(
@@ -109,6 +122,7 @@ export const chunks = pgTable(
     startMs: integer(),
     endMs: integer(),
     speakers: text().array(),
+    section: text().$type<CareerSection>(),
     content: text().notNull(),
     tokenCount: integer().notNull(),
     embedding: vector({ dimensions: EMBEDDING_DIMENSIONS }).notNull(),

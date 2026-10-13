@@ -1,4 +1,5 @@
 import { and, asc, count, desc, eq, getTableColumns, gte, lte, sql } from 'drizzle-orm';
+import type { CareerSection } from '../career/types.js';
 import type { Database } from '../db/client.js';
 import { chunks, documents } from '../db/schema.js';
 import type { MeetingLocation, MeetingNotes } from '../meetings/types.js';
@@ -22,6 +23,7 @@ export interface NewChunk extends Partial<CodeLocation> {
   startMs?: number | null;
   endMs?: number | null;
   speakers?: string[] | null;
+  section?: CareerSection | null;
   ordinal: number;
   page: number | null;
   content: string;
@@ -60,6 +62,7 @@ export function createDocumentRepository(db: Database) {
       meetingHeldOn?: string;
       participants?: string[];
       durationMs?: number;
+      jobNumber?: number;
       filename: string;
       mimeType: string;
       sizeBytes: number;
