@@ -27,6 +27,7 @@ const limits: CareerLimits = {
   maxResumeCharacters: 1500,
   maxResumePages: 10,
   maxJobBytes: 2048,
+  maxJobPages: 10,
   maxJobCharacters: 800,
   maxJobs: 3,
 };

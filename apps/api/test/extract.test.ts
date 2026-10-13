@@ -93,6 +93,26 @@ describe('extractText', () => {
       expect(result.segments[0]?.text).toBe('Retrieval- Augmented Generation');
     });
 
+    it('keeps the lines of a page when asked to, so headings and lists survive', async () => {
+      const result = await extractText(
+        pdf,
+        buildPdf([
+          [
+            'EXPERIENCE',
+            'Engineer, Acme',
+            '- Built APIs',
+            'It crosses the inter-',
+            'national border.',
+          ],
+        ]),
+        { preserveLines: true },
+      );
+
+      expect(result.segments[0]?.text).toBe(
+        'EXPERIENCE\nEngineer, Acme\n- Built APIs\nIt crosses the inter-\nnational border.',
+      );
+    });
+
     it('keeps page numbers true when a page has no text', async () => {
       const result = await extractText(pdf, buildPdf([['First'], [], ['Third']]));
 

@@ -3,6 +3,7 @@ export interface CareerLimits {
   maxResumeCharacters: number;
   maxResumePages: number;
   maxJobBytes: number;
+  maxJobPages: number;
   maxJobCharacters: number;
   maxJobs: number;
 }
@@ -12,6 +13,7 @@ export const defaultCareerLimits: CareerLimits = {
   maxResumeCharacters: 40_000,
   maxResumePages: 10,
   maxJobBytes: 1_000_000,
+  maxJobPages: 10,
   maxJobCharacters: 25_000,
   maxJobs: 10,
 };

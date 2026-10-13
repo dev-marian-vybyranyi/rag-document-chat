@@ -3,6 +3,7 @@ import { createAiProvider } from './ai/index.js';
 import { loadEnv } from './config/env.js';
 import { createDb } from './db/client.js';
 import { runMigrations } from './db/migrate.js';
+import { createCareerIngestion } from './career/ingest.js';
 import { createIngestionService, INTERRUPTED_MESSAGE } from './documents/ingest.js';
 import { createDocumentRepository } from './documents/repository.js';
 import { defaultImportLimits } from './repositories/filter.js';
@@ -62,6 +63,13 @@ const repositoryIngestion = createRepositoryIngestion({
   maxChunks: env.REPOSITORY_MAX_CHUNKS,
 });
 
+const careerIngestion = createCareerIngestion({
+  repository: documentRepository,
+  embedder,
+  logger,
+  embeddingModel: env.EMBEDDING_MODEL,
+});
+
 const notesExtractor = ai.createNotesExtractor(logger);
 
 const meetingIngestion = createMeetingIngestion({
@@ -92,6 +100,7 @@ const app = createApp({
   repositoryIngestion,
   meetingIngestion,
   meetingNotes,
+  careerIngestion,
   chat: {
     retriever: createRetriever({
       store: createRetrievalStore(db, { embeddingModel: env.EMBEDDING_MODEL }),
