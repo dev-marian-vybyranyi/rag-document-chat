@@ -204,7 +204,7 @@ export function createCareerRouter({
           'The analysis could not be made right now. Try again in a minute.',
         );
       case 'done': {
-        fits.schedule(id.data!, userId);
+        fits.schedule(id.data!, userId, { force: true });
         const document = await documents.findForUser(id.data!, userId);
         res.json({ document: toPublicDocument(document!) });
       }

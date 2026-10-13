@@ -62,7 +62,7 @@ export interface CareerOverview {
 
 export interface FitService {
   analyze(jobId: string, userId: string, options?: AnalyzeOptions): Promise<{ status: FitStatus }>;
-  schedule(documentId: string, userId: string): void;
+  schedule(documentId: string, userId: string, options?: { force?: boolean }): void;
   afterDelete(document: { kind: string; userId: string }): Promise<void>;
   overview(userId: string): Promise<CareerOverview>;
   idle(): Promise<void>;
@@ -207,12 +207,12 @@ export function createFitService({
     return status;
   }
 
-  async function analyzeStale(userId: string): Promise<void> {
+  async function analyzeStale(userId: string, force: boolean): Promise<void> {
     const { resume, jobs } = await sources(userId);
     if (!resume || resume.status !== 'ready') return;
     let changed = false;
     for (const job of jobs) {
-      if (job.status !== 'ready' || isCurrent(job, resume)) continue;
+      if (job.status !== 'ready' || (!force && isCurrent(job, resume))) continue;
       if ((await analyzeOne(job, resume, {})) === 'done') changed = true;
     }
     if (changed) await rebuildOverview(userId);
@@ -221,7 +221,6 @@ export function createFitService({
   async function clearFits(userId: string): Promise<void> {
     const { jobs } = await sources(userId);
     for (const job of jobs) {
-      if (job.fit === null) continue;
       await repository.replaceFit({ documentId: job.id, userId, fit: null, chunks: [] });
     }
   }
@@ -233,12 +232,12 @@ export function createFitService({
       }));
     },
 
-    schedule(documentId, userId) {
+    schedule(documentId, userId, { force = false } = {}) {
       void serialized(async () => {
         const { resume, jobs } = await sources(userId);
-        if (resume?.id === documentId) return analyzeStale(userId);
+        if (resume?.id === documentId) return analyzeStale(userId, force);
         if (jobs.some((job) => job.id === documentId)) {
-          await analyzeAndSummarize(documentId, userId, {});
+          await analyzeAndSummarize(documentId, userId, { force });
         }
       }).catch((error: unknown) => logger.error({ err: error }, 'analysing the fit failed'));
     },

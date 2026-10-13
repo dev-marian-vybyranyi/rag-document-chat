@@ -210,6 +210,68 @@ describe('replacing the passages that are made from other passages', () => {
     });
   });
 
+  describe('reading the passages of a source back', () => {
+    it('gives the text passages of that document only, in order, without the generated ones', async () => {
+      const resume = await readyDocument('resume');
+      await repository.replaceOverview({
+        documentId: resume.id,
+        userId: resume.userId,
+        chunks: [passage('overview')],
+      });
+      await repository.replaceFit({
+        documentId: resume.id,
+        userId: resume.userId,
+        fit: null,
+        chunks: [passage('fit')],
+      });
+
+      expect(await repository.careerPassages(resume.id, resume.userId)).toEqual([
+        'first',
+        'second',
+      ]);
+    });
+
+    it('does not read the passages of another document of the same user', async () => {
+      const resume = await readyDocument('resume');
+      const other = await repository.create({
+        userId: resume.userId,
+        kind: 'job_posting',
+        filename: 'other job',
+        mimeType: 'text/plain',
+        sizeBytes: 10,
+        jobNumber: 1,
+      });
+      await repository.completeWithChunks({
+        documentId: other.id,
+        userId: resume.userId,
+        pageCount: null,
+        chunks: [
+          { ...passage('from the job'), ordinal: 0, section: 'requirements' },
+          { ...passage('untagged'), ordinal: 1 },
+        ],
+      });
+
+      expect(await repository.careerPassages(resume.id, resume.userId)).toEqual([
+        'first',
+        'second',
+      ]);
+      expect(await repository.careerPassages(other.id, resume.userId)).toEqual([
+        'from the job',
+        'untagged',
+      ]);
+    });
+
+    it('does not read the passages of another user', async () => {
+      const resume = await readyDocument('resume');
+      const [stranger] = await db
+        .insert(users)
+        .values({ email: 'stranger@example.com', passwordHash: 'hash' })
+        .returning();
+
+      expect(await repository.careerPassages(resume.id, stranger!.id)).toEqual([]);
+    });
+  });
+
   it('writes the profile passages with the same care', async () => {
     const { id, userId } = await readyDocument('resume');
 

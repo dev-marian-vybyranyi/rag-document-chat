@@ -225,7 +225,7 @@ export function createDocumentRepository(db: Database) {
           and(
             eq(chunks.documentId, id),
             eq(chunks.userId, userId),
-            sql`${chunks.section} is null or ${chunks.section} not in ('profile', 'fit', 'overview')`,
+            sql`(${chunks.section} is null or ${chunks.section} not in ('profile', 'fit', 'overview'))`,
           ),
         )
         .orderBy(asc(chunks.ordinal));
