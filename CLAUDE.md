@@ -4,10 +4,13 @@ Guidance for AI coding assistants working in this repository.
 
 ## Project
 
-RAG chat over the user's own sources: English documents (PDF, TXT, MD) and code repositories (a public
-GitHub address or a zip archive). Answers are grounded in the sources and cite them: a document by name
-and page, a repository file by `path:lines`. A repository is a row of the same `documents` table
-(`kind = repository`) whose chunks carry `path`, `language`, `start_line`, `end_line` and `symbol`.
+RAG chat over the user's own sources: English documents (PDF, TXT, MD), code repositories (a public
+GitHub address or a zip archive) and meeting transcripts (TXT or WebVTT with speakers and times).
+Answers are grounded in the sources and cite them: a document by name and page, a repository file by
+`path:lines`, a meeting by title, time and speakers. A repository is a row of the same `documents` table
+(`kind = repository`) whose chunks carry `path`, `language`, `start_line`, `end_line` and `symbol`; a
+meeting is a row with `kind = transcript` whose chunks carry `start_ms`, `end_ms` and `speakers`
+(a chunk with no start time is a passage of the generated meeting notes).
 
 Two services in an npm-workspaces monorepo:
 
@@ -20,9 +23,10 @@ Everything must work on free tiers. Development and tests run on Gemini; a deplo
 
 Where things are (`apps/api/src`): `documents` (upload, extraction, chunking, ingestion queue),
 `repositories` (import from GitHub or zip, file filter and secret guard, code chunker, overview,
-ingestion, suggestions), `rag` (retrieval, fusion, relevance, prompts, sanitising), `chat`, `ai` (provider
+ingestion, suggestions), `meetings` (transcript parser, turn chunker, notes with verified quotes,
+speaker and time filters, ingestion), `rag` (retrieval, fusion, relevance, prompts, sanitising), `chat`, `ai` (provider
 interface and the Google and OpenAI implementations, quota classification), `eval` (retrieval and
-faithfulness evaluation, code corpus). `docs/DECISIONS.md` records why each non-obvious choice was made.
+faithfulness evaluation, code and meeting corpora). `docs/DECISIONS.md` records why each non-obvious choice was made.
 
 ## Commands
 
@@ -48,6 +52,7 @@ Evaluations call real models and use free quota, so they are run by hand and nev
 npm run eval:retrieval -w @rag-chat/api     # documents: hit@k, MRR, relevance threshold sweep
 npm run eval:faithfulness -w @rag-chat/api  # documents: grounded answers graded by a second model
 npm run eval:code -w @rag-chat/api          # code: downloads the pinned reference repository, same metrics
+npm run eval:meetings -w @rag-chat/api      # meetings: hit@k with speaker and time filters, notes against a key, threshold sweep
 ```
 
 ## Conventions
@@ -71,6 +76,10 @@ npm run eval:code -w @rag-chat/api          # code: downloads the pinned referen
   APIs from the test suite.
 - Record non-obvious design decisions in `docs/DECISIONS.md`: what was chosen, why, what it costs and when
   to revisit. Put measured numbers there, and only numbers that were really measured.
+- Everything from a transcript (speaker names, title, words spoken, the notes a model wrote from them) is
+  untrusted: strip invisible characters, cap lengths, escape it in prompts and attributes, never build a
+  URL from it, and keep a speaker's words as data that no instruction in them can change. A meeting's
+  notes are kept only if each item quotes the transcript word for word.
 - Do not add third-party source code or documents to the repository to evaluate against; fetch them at a
   pinned commit at run time and record the source and licence in `samples/SOURCES.md`.
 
