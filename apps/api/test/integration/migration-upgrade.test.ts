@@ -2,12 +2,12 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } f
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Client } from 'pg';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { createDb } from '../../src/db/client.js';
-import { EMBEDDING_DIMENSIONS } from '../../src/db/schema.js';
+import { documents, EMBEDDING_DIMENSIONS } from '../../src/db/schema.js';
 import { createDocumentRepository } from '../../src/documents/repository.js';
 
 const MIGRATIONS = fileURLToPath(new URL('../../drizzle', import.meta.url));
@@ -200,6 +200,109 @@ describe('upgrading a database that already holds documents', () => {
       ['handbook.pdf', 'document'],
       ['standup.txt', 'transcript'],
     ]);
+  });
+
+  it('leaves the career fields of existing documents and chunks empty', async () => {
+    const [found] = await db.select().from(documents).where(eq(documents.id, documentId));
+    const chunkRows = await db.execute<{ section: string | null }>(
+      sql`select section from chunks where document_id = ${documentId}`,
+    );
+
+    expect(found).toMatchObject({ profile: null, jobNumber: null, fit: null });
+    expect(chunkRows.rows).toEqual([{ section: null }]);
+  });
+
+  it('accepts a resume and a job posting next to the existing sources and reads their career fields back', async () => {
+    const repository = createDocumentRepository(db);
+    const embedding = Array.from({ length: EMBEDDING_DIMENSIONS }, () => 0.01);
+    const resume = await repository.create({
+      userId,
+      kind: 'resume',
+      filename: 'cv.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 100,
+    });
+    const job = await repository.create({
+      userId,
+      kind: 'job_posting',
+      filename: 'Backend Engineer',
+      mimeType: 'text/plain',
+      sizeBytes: 100,
+      jobNumber: 1,
+    });
+    await repository.completeWithChunks({
+      documentId: resume.id,
+      userId,
+      pageCount: 1,
+      chunks: [
+        {
+          ordinal: 0,
+          page: 1,
+          content: 'Resume · Experience',
+          tokenCount: 3,
+          embedding,
+          section: 'experience',
+        },
+      ],
+    });
+    await db
+      .update(documents)
+      .set({
+        profile: {
+          role: 'job',
+          title: 'Backend Engineer',
+          company: 'Acme',
+          minYearsExperience: 5,
+          requirements: [],
+          responsibilities: [],
+        },
+        fit: {
+          resumeId: resume.id,
+          analyzedAt: '2026-10-13T10:00:00.000Z',
+          requirements: [],
+          coverage: 72,
+          mustCoverage: 80,
+        },
+      })
+      .where(eq(documents.id, job.id));
+
+    const foundResume = await repository.findForUser(resume.id, userId);
+    const foundJob = await repository.findForUser(job.id, userId);
+    const sections = await db.execute<{ section: string | null }>(
+      sql`select section from chunks where document_id = ${resume.id}`,
+    );
+
+    expect(foundResume).toMatchObject({ kind: 'resume', jobNumber: null, chunkCount: 1 });
+    expect(foundJob).toMatchObject({
+      kind: 'job_posting',
+      jobNumber: 1,
+      profile: { role: 'job', company: 'Acme' },
+      fit: { resumeId: resume.id, coverage: 72 },
+    });
+    expect(sections.rows).toEqual([{ section: 'experience' }]);
+  });
+
+  it('numbers job postings per user and lets documents without a number repeat', async () => {
+    const repository = createDocumentRepository(db);
+    const otherUserId = '00000000-0000-4000-8000-000000000009';
+    await db.execute(
+      sql`insert into users (id, email, password_hash) values (${otherUserId}, 'grace@example.com', 'hash')`,
+    );
+    const posting = (owner: string, jobNumber?: number) =>
+      repository.create({
+        userId: owner,
+        kind: 'job_posting',
+        filename: 'Posting',
+        mimeType: 'text/plain',
+        sizeBytes: 10,
+        ...(jobNumber !== undefined && { jobNumber }),
+      });
+
+    await expect(posting(userId, 1)).rejects.toThrow();
+    await expect(posting(userId, 2)).resolves.toMatchObject({ jobNumber: 2 });
+    await expect(posting(otherUserId, 1)).resolves.toMatchObject({ jobNumber: 1 });
+    await expect(posting(userId)).resolves.toMatchObject({ jobNumber: null });
+    await expect(posting(userId)).resolves.toMatchObject({ jobNumber: null });
   });
 
   it('leaves existing chats searching the whole library', async () => {
