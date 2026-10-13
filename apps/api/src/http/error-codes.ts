@@ -17,6 +17,8 @@ export const ERROR_CODES = [
   'invalid_transcript',
   'conflict',
   'document_limit',
+  'resume_exists',
+  'job_limit',
   'chat_limit',
   'chat_full',
   'chat_unavailable',

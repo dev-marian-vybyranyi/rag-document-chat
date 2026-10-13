@@ -12,6 +12,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
   vector,
 } from 'drizzle-orm/pg-core';
@@ -99,6 +100,9 @@ export const documents = pgTable(
   (table) => [
     index('documents_user_id_created_at_idx').on(table.userId, table.createdAt),
     unique('documents_user_id_job_number_unique').on(table.userId, table.jobNumber),
+    uniqueIndex('documents_one_resume_per_user_idx')
+      .on(table.userId)
+      .where(sql`${table.kind} = 'resume'`),
   ],
 );
 

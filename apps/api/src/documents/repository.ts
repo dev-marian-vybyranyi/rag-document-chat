@@ -1,6 +1,7 @@
 import { and, asc, count, desc, eq, getTableColumns, gte, lte, sql } from 'drizzle-orm';
 import type { CareerSection } from '../career/types.js';
 import type { Database } from '../db/client.js';
+import { PG_UNIQUE_VIOLATION, pgErrorCode } from '../db/errors.js';
 import { chunks, documents } from '../db/schema.js';
 import type { MeetingLocation, MeetingNotes } from '../meetings/types.js';
 import type { CodeSource } from '../rag/code-source.js';
@@ -48,27 +49,60 @@ export interface Passage {
 }
 
 const CHUNK_INSERT_BATCH_SIZE = 100;
+const MAX_NUMBERING_ATTEMPTS = 5;
+
+export interface NewDocument {
+  userId: string;
+  kind?: DocumentKind;
+  repoUrl?: string;
+  repoRef?: string | null;
+  commitSha?: string;
+  meetingHeldOn?: string;
+  participants?: string[];
+  durationMs?: number;
+  jobNumber?: number;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+}
 
 const chunkCountOf = sql<number>`(select count(*)::int from "chunks" c where c."document_id" = "documents"."id")`;
 
 export function createDocumentRepository(db: Database) {
   return {
-    async create(input: {
-      userId: string;
-      kind?: DocumentKind;
-      repoUrl?: string;
-      repoRef?: string | null;
-      commitSha?: string;
-      meetingHeldOn?: string;
-      participants?: string[];
-      durationMs?: number;
-      jobNumber?: number;
-      filename: string;
-      mimeType: string;
-      sizeBytes: number;
-    }): Promise<DocumentRecord> {
+    async create(input: NewDocument): Promise<DocumentRecord> {
       const [document] = await db.insert(documents).values(input).returning();
       return document!;
+    },
+
+    async createJobPosting(
+      input: Omit<NewDocument, 'kind' | 'jobNumber'>,
+    ): Promise<DocumentRecord> {
+      for (let attempt = 1; ; attempt++) {
+        const [last] = await db
+          .select({ number: sql<number>`coalesce(max(${documents.jobNumber}), 0)::int` })
+          .from(documents)
+          .where(and(eq(documents.userId, input.userId), eq(documents.kind, 'job_posting')));
+        try {
+          const [document] = await db
+            .insert(documents)
+            .values({ ...input, kind: 'job_posting', jobNumber: (last?.number ?? 0) + 1 })
+            .returning();
+          return document!;
+        } catch (error) {
+          if (pgErrorCode(error) !== PG_UNIQUE_VIOLATION || attempt >= MAX_NUMBERING_ATTEMPTS) {
+            throw error;
+          }
+        }
+      }
+    },
+
+    async countByKind(userId: string, kind: DocumentKind): Promise<number> {
+      const [row] = await db
+        .select({ total: count() })
+        .from(documents)
+        .where(and(eq(documents.userId, userId), eq(documents.kind, kind)));
+      return row?.total ?? 0;
     },
 
     async countByUser(userId: string): Promise<number> {

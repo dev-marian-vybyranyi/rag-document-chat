@@ -6,6 +6,9 @@ import { createAuthRouter } from './auth/routes.js';
 import { createSessionRepository } from './auth/sessions.js';
 import { createUserRepository } from './auth/users.js';
 import { createPassthroughRewriter } from './rag/rewrite.js';
+import type { CareerIngestionService } from './career/ingest.js';
+import { defaultCareerLimits, type CareerLimits } from './career/limits.js';
+import { createCareerRouter } from './career/routes.js';
 import { createChatRepository } from './chat/repository.js';
 import { createChatResponder, type ChatDeps } from './chat/responder.js';
 import { createChatsRouter } from './chat/routes.js';
@@ -52,6 +55,8 @@ interface AppDeps {
   repositoryIngestion?: RepositoryIngestionService;
   meetingIngestion?: MeetingIngestionService;
   meetingNotes?: MeetingNotesService;
+  careerIngestion?: CareerIngestionService;
+  careerLimits?: CareerLimits;
   transcriptLimits?: TranscriptLimits;
   maxArchiveBytes?: number;
   chat?: ChatDeps;
@@ -70,6 +75,8 @@ export function createApp({
   repositoryIngestion = { enqueue: () => {}, idle: async () => {} },
   meetingIngestion = { enqueue: () => {}, pendingRecordings: () => 0, idle: async () => {} },
   meetingNotes = { regenerate: async () => ({ status: 'unavailable' }) },
+  careerIngestion = { enqueue: () => {}, idle: async () => {} },
+  careerLimits = defaultCareerLimits,
   transcriptLimits = defaultTranscriptLimits,
   maxArchiveBytes = defaultImportLimits.maxArchiveBytes,
   chat,
@@ -129,6 +136,17 @@ export function createApp({
       ingestion: meetingIngestion,
       notes: meetingNotes,
       limits: transcriptLimits,
+      maxDocumentsPerUser: usageLimits.maxDocumentsPerUser,
+      uploadLimiter: createUploadRateLimiter(uploadRateLimit),
+    }),
+  );
+
+  app.use(
+    '/career',
+    createCareerRouter({
+      documents: createDocumentRepository(db),
+      ingestion: careerIngestion,
+      limits: careerLimits,
       maxDocumentsPerUser: usageLimits.maxDocumentsPerUser,
       uploadLimiter: createUploadRateLimiter(uploadRateLimit),
     }),

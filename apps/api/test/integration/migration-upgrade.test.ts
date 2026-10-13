@@ -282,6 +282,25 @@ describe('upgrading a database that already holds documents', () => {
     expect(sections.rows).toEqual([{ section: 'experience' }]);
   });
 
+  it('keeps one resume per user, whatever the application checks first', async () => {
+    const repository = createDocumentRepository(db);
+    const otherUserId = '00000000-0000-4000-8000-000000000008';
+    await db.execute(
+      sql`insert into users (id, email, password_hash) values (${otherUserId}, 'linus@example.com', 'hash')`,
+    );
+    const resume = (owner: string) =>
+      repository.create({
+        userId: owner,
+        kind: 'resume',
+        filename: 'second.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 10,
+      });
+
+    await expect(resume(userId)).rejects.toThrow();
+    await expect(resume(otherUserId)).resolves.toMatchObject({ kind: 'resume' });
+  });
+
   it('numbers job postings per user and lets documents without a number repeat', async () => {
     const repository = createDocumentRepository(db);
     const otherUserId = '00000000-0000-4000-8000-000000000009';
