@@ -24,7 +24,12 @@ const STREET_ADDRESS = new RegExp(
   'g',
 );
 
-const ADDRESS_LINE = /^\s*(?:[-•*]\s*)?(?:home\s+|postal\s+|mailing\s+)?address\s*[:\-–]/i;
+const LABEL_END = '(?::|\\s[-–]\\s)';
+
+const ADDRESS_LINE = new RegExp(
+  `^\\s*(?:[-•*]\\s*)?(?:home\\s+|postal\\s+|mailing\\s+)?address\\s*${LABEL_END}`,
+  'i',
+);
 
 const ATTRIBUTE_LABELS = [
   'date of birth',
@@ -45,7 +50,7 @@ const ATTRIBUTE_LABELS = [
 ].join('|');
 
 const LABELLED_ATTRIBUTE = new RegExp(
-  `^\\s*(?:[-•*]\\s*)?(?:${ATTRIBUTE_LABELS})\\s*[:\\-–]\\s*\\S`,
+  `^\\s*(?:[-•*]\\s*)?(?:${ATTRIBUTE_LABELS})\\s*${LABEL_END}\\s*\\S`,
   'i',
 );
 const UNLABELLED_BIRTH = /^\s*(?:[-•*]\s*)?(?:born(?:\s+on)?|date of birth)\s+\d/i;
@@ -53,6 +58,8 @@ const UNLABELLED_BIRTH = /^\s*(?:[-•*]\s*)?(?:born(?:\s+on)?|date of birth)\s+
 const SEGMENT_SEPARATOR = /\s+[|•·]\s+/;
 
 const PHONE_CANDIDATE = /(?<![\w.])\+?\(?\d[\d\s().-]{7,}\d(?![\w])/g;
+
+const YEAR = /(?<!\d)(?:19|20)\d{2}(?!\d)/g;
 
 const SPACED_PHONE_SHAPES = [
   /^\d{3} \d{3} \d{4}$/,
@@ -68,7 +75,8 @@ function isAttribute(line: string): boolean {
 function looksLikePhone(candidate: string): boolean {
   const digits = candidate.replace(/\D/g, '').length;
   if (digits < 9 || digits > 15) return false;
-  if (candidate.startsWith('+') || candidate.includes('(')) return true;
+  if ((candidate.match(YEAR) ?? []).length >= 2) return false;
+  if (candidate.startsWith('+') || /\(\d{2,4}\)/.test(candidate)) return true;
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(candidate)) return false;
   if (/^(?:19|20)\d{2}[-.]\d{2}[-.]\d{2}$/.test(candidate)) return false;
   if (/^\d{2}[-.]\d{2}[-.](?:19|20)\d{2}$/.test(candidate)) return false;
