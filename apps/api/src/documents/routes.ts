@@ -24,6 +24,7 @@ interface DocumentsRouterDeps {
   maxUploadBytes: number;
   maxDocumentsPerUser: number;
   uploadLimiter?: RequestHandler;
+  afterDelete?: (document: { kind: string; userId: string }) => Promise<void>;
 }
 
 export function createDocumentsRouter({
@@ -32,6 +33,7 @@ export function createDocumentsRouter({
   maxUploadBytes,
   maxDocumentsPerUser,
   uploadLimiter = (_req, _res, next) => next(),
+  afterDelete,
 }: DocumentsRouterDeps) {
   const router = Router();
 
@@ -77,8 +79,12 @@ export function createDocumentsRouter({
   });
 
   router.delete('/:id', async (req, res) => {
-    const deleted = await documents.deleteForUser(idParam(req.params.id), userOf(req).id);
+    const id = idParam(req.params.id);
+    const userId = userOf(req).id;
+    const document = await documents.findForUser(id, userId);
+    const deleted = await documents.deleteForUser(id, userId);
     if (!deleted) throw notFound();
+    if (document) await afterDelete?.({ kind: document.kind, userId });
     res.status(204).end();
   });
 

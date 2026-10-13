@@ -4,6 +4,7 @@ import { loadEnv } from './config/env.js';
 import { createDb } from './db/client.js';
 import { runMigrations } from './db/migrate.js';
 import { createCareerIngestion } from './career/ingest.js';
+import { createFitService } from './career/fit-service.js';
 import { createCareerProfileService } from './career/regenerate.js';
 import { createIngestionService, INTERRUPTED_MESSAGE } from './documents/ingest.js';
 import { createDocumentRepository } from './documents/repository.js';
@@ -67,6 +68,23 @@ const repositoryIngestion = createRepositoryIngestion({
 const resumeProfiles = ai.createResumeProfileExtractor(logger);
 const jobProfiles = ai.createJobProfileExtractor(logger);
 
+const careerProfiles = createCareerProfileService({
+  repository: documentRepository,
+  embedder,
+  resumeProfiles,
+  jobProfiles,
+  embeddingModel: env.EMBEDDING_MODEL,
+});
+
+const careerFits = createFitService({
+  repository: documentRepository,
+  embedder,
+  matcher: ai.createFitMatcher(logger),
+  profiles: careerProfiles,
+  logger,
+  embeddingModel: env.EMBEDDING_MODEL,
+});
+
 const careerIngestion = createCareerIngestion({
   repository: documentRepository,
   embedder,
@@ -74,14 +92,7 @@ const careerIngestion = createCareerIngestion({
   embeddingModel: env.EMBEDDING_MODEL,
   resumeProfiles,
   jobProfiles,
-});
-
-const careerProfiles = createCareerProfileService({
-  repository: documentRepository,
-  embedder,
-  resumeProfiles,
-  jobProfiles,
-  embeddingModel: env.EMBEDDING_MODEL,
+  afterIndexed: (document) => careerFits.schedule(document.id, document.userId),
 });
 
 const notesExtractor = ai.createNotesExtractor(logger);
@@ -116,6 +127,7 @@ const app = createApp({
   meetingNotes,
   careerIngestion,
   careerProfiles,
+  careerFits,
   chat: {
     retriever: createRetriever({
       store: createRetrievalStore(db, { embeddingModel: env.EMBEDDING_MODEL }),

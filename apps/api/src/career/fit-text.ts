@@ -76,7 +76,7 @@ const postingName = (posting: UncomparedPosting) =>
     ? cleanLabel(posting.name)
     : `Job #${posting.jobNumber} (${cleanLabel(posting.name)})`;
 
-function byFitness(a: ComparedPosting, b: ComparedPosting): number {
+export function byFitness(a: ComparedPosting, b: ComparedPosting): number {
   return (
     b.fit.coverage - a.fit.coverage ||
     (b.fit.mustCoverage ?? -1) - (a.fit.mustCoverage ?? -1) ||
@@ -84,13 +84,13 @@ function byFitness(a: ComparedPosting, b: ComparedPosting): number {
   );
 }
 
-interface SharedGap {
+export interface SharedGap {
   label: string;
   postings: number;
   musts: number;
 }
 
-function sharedGaps(compared: ComparedPosting[]): SharedGap[] {
+export function sharedGaps(compared: ComparedPosting[]): SharedGap[] {
   const gaps = new Map<string, SharedGap>();
   for (const { fit } of compared) {
     const seen = new Set<string>();

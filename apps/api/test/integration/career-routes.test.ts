@@ -178,6 +178,13 @@ describe('resume and job posting endpoints', () => {
           documents: stub,
           ingestion: careerIngestion,
           profiles: { regenerate: async () => ({ status: 'unavailable' }) },
+          fits: {
+            analyze: async () => ({ status: 'unavailable' }),
+            schedule: () => {},
+            afterDelete: async () => {},
+            overview: async () => ({ resume: null, postings: [], compared: 0, gaps: [] }),
+            idle: async () => {},
+          },
           limits,
           maxDocumentsPerUser: 10,
         }),

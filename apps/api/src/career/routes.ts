@@ -16,6 +16,7 @@ import { plural } from '../http/limits.js';
 import type { CareerIngestionService } from './ingest.js';
 import { cleanLabel } from './labels.js';
 import type { CareerLimits } from './limits.js';
+import type { FitService } from './fit-service.js';
 import type { CareerProfileService } from './regenerate.js';
 
 const MAX_TITLE_LENGTH = 120;
@@ -37,6 +38,7 @@ interface CareerRouterDeps {
   documents: DocumentRepository;
   ingestion: CareerIngestionService;
   profiles: CareerProfileService;
+  fits: FitService;
   limits: CareerLimits;
   maxDocumentsPerUser: number;
   uploadLimiter?: RequestHandler;
@@ -46,6 +48,7 @@ export function createCareerRouter({
   documents,
   ingestion,
   profiles,
+  fits,
   limits,
   maxDocumentsPerUser,
   uploadLimiter = (_req, _res, next) => next(),
@@ -201,10 +204,55 @@ export function createCareerRouter({
           'The analysis could not be made right now. Try again in a minute.',
         );
       case 'done': {
+        fits.schedule(id.data!, userId);
         const document = await documents.findForUser(id.data!, userId);
         res.json({ document: toPublicDocument(document!) });
       }
     }
+  });
+
+  router.post('/jobs/:id/fit', uploadLimiter, async (req, res) => {
+    const id = z.uuid().safeParse(req.params.id);
+    const userId = userOf(req).id;
+    const { status } = id.success
+      ? await fits.analyze(id.data, userId, { force: true, buildProfile: true })
+      : { status: 'not_found' as const };
+
+    switch (status) {
+      case 'not_found':
+        throw new AppError(404, 'not_found', 'Job posting not found');
+      case 'not_ready':
+        throw new AppError(409, 'conflict', 'The file is still being processed');
+      case 'no_resume':
+        throw new AppError(
+          409,
+          'conflict',
+          'Add your resume first, then compare it with the posting',
+        );
+      case 'other_model':
+        throw new AppError(
+          409,
+          'conflict',
+          'These files were indexed with a different embedding model. Upload them again.',
+        );
+      case 'no_profile':
+        throw new AppError(409, 'conflict', 'The posting lists no requirements to compare');
+      case 'unavailable':
+        throw new AppError(
+          503,
+          'ai_busy',
+          'The comparison could not be made right now. Try again in a minute.',
+        );
+      case 'done':
+      case 'fresh': {
+        const document = await documents.findForUser(id.data!, userId);
+        res.json({ document: toPublicDocument(document!) });
+      }
+    }
+  });
+
+  router.get('/overview', async (req, res) => {
+    res.json(await fits.overview(userOf(req).id));
   });
 
   return router;

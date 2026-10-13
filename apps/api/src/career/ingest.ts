@@ -38,6 +38,7 @@ export interface CareerIngestionOptions {
   resumeProfiles?: ResumeProfileExtractor;
   jobProfiles?: JobProfileExtractor;
   limits?: CareerLimits;
+  afterIndexed?: (document: { id: string; userId: string }) => void;
   chunkOptions?: Pick<CareerChunkOptions, 'maxChars'>;
   maxChunks?: number;
   concurrency?: number;
@@ -64,6 +65,7 @@ export function createCareerIngestion(options: CareerIngestionOptions): CareerIn
     embeddingModel,
     chunkOptions,
     limits = defaultCareerLimits,
+    afterIndexed,
     resumeProfiles = createNoopResumeProfileExtractor(),
     jobProfiles = createNoopJobProfileExtractor(),
     maxChunks = DEFAULT_MAX_CAREER_CHUNKS,
@@ -159,6 +161,11 @@ export function createCareerIngestion(options: CareerIngestionOptions): CareerIn
         { kind, chunks: chunks.length, durationMs: Date.now() - startedAt },
         'career source indexed',
       );
+      try {
+        afterIndexed?.(job.document);
+      } catch (hookError) {
+        log.error({ err: hookError }, 'the step after indexing a career source failed');
+      }
     } catch (error) {
       await recordFailure(job, error, log);
     }

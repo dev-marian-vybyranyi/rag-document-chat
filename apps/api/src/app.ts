@@ -8,6 +8,7 @@ import { createUserRepository } from './auth/users.js';
 import { createPassthroughRewriter } from './rag/rewrite.js';
 import type { CareerIngestionService } from './career/ingest.js';
 import { defaultCareerLimits, type CareerLimits } from './career/limits.js';
+import type { FitService } from './career/fit-service.js';
 import type { CareerProfileService } from './career/regenerate.js';
 import { createCareerRouter } from './career/routes.js';
 import { createChatRepository } from './chat/repository.js';
@@ -42,6 +43,14 @@ import {
 import { requestLogger } from './http/request-logger.js';
 import { createTraceRecorder } from './observability/traces.js';
 
+const unavailableFits: FitService = {
+  analyze: async () => ({ status: 'unavailable' }),
+  schedule: () => {},
+  afterDelete: async () => {},
+  overview: async () => ({ resume: null, postings: [], compared: 0, gaps: [] }),
+  idle: async () => {},
+};
+
 const unavailableChat: ChatDeps = {
   retriever: { retrieve: async () => ({ chunks: [], mode: 'hybrid' }) },
   rewriter: createPassthroughRewriter(),
@@ -58,6 +67,7 @@ interface AppDeps {
   meetingNotes?: MeetingNotesService;
   careerIngestion?: CareerIngestionService;
   careerProfiles?: CareerProfileService;
+  careerFits?: FitService;
   careerLimits?: CareerLimits;
   transcriptLimits?: TranscriptLimits;
   maxArchiveBytes?: number;
@@ -79,6 +89,7 @@ export function createApp({
   meetingNotes = { regenerate: async () => ({ status: 'unavailable' }) },
   careerIngestion = { enqueue: () => {}, idle: async () => {} },
   careerProfiles = { regenerate: async () => ({ status: 'unavailable' }) },
+  careerFits = unavailableFits,
   careerLimits = defaultCareerLimits,
   transcriptLimits = defaultTranscriptLimits,
   maxArchiveBytes = defaultImportLimits.maxArchiveBytes,
@@ -118,6 +129,7 @@ export function createApp({
       maxUploadBytes,
       maxDocumentsPerUser: usageLimits.maxDocumentsPerUser,
       uploadLimiter: createUploadRateLimiter(uploadRateLimit),
+      afterDelete: careerFits.afterDelete,
     }),
   );
 
@@ -150,6 +162,7 @@ export function createApp({
       documents: createDocumentRepository(db),
       ingestion: careerIngestion,
       profiles: careerProfiles,
+      fits: careerFits,
       limits: careerLimits,
       maxDocumentsPerUser: usageLimits.maxDocumentsPerUser,
       uploadLimiter: createUploadRateLimiter(uploadRateLimit),
