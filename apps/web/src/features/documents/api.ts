@@ -5,7 +5,7 @@ export type DocumentStatus = 'processing' | 'ready' | 'failed';
 export type DocumentKind = 'document' | 'repository' | 'transcript';
 
 export interface IngestionProgress {
-  phase: 'downloading' | 'reading' | 'analyzing' | 'embedding';
+  phase: 'downloading' | 'reading' | 'analyzing' | 'transcribing' | 'embedding';
   done: number;
   total: number;
 }
@@ -120,6 +120,17 @@ export const documentsApi = {
     if (details.heldOn) form.append('heldOn', details.heldOn);
     form.append('file', file);
     return api<{ document: DocumentItem }>('/meetings', {
+      method: 'POST',
+      body: form,
+      signal,
+    }).then((r) => r.document);
+  },
+  addRecording: (file: File, details: MeetingDetails = {}, signal?: AbortSignal) => {
+    const form = new FormData();
+    if (details.title) form.append('title', details.title);
+    if (details.heldOn) form.append('heldOn', details.heldOn);
+    form.append('file', file);
+    return api<{ document: DocumentItem }>('/meetings/audio', {
       method: 'POST',
       body: form,
       signal,

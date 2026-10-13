@@ -146,6 +146,12 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     [addDocument],
   );
 
+  const addRecording = useCallback(
+    async (file: File, details?: MeetingDetails) =>
+      addDocument(await documentsApi.addRecording(file, details)),
+    [addDocument],
+  );
+
   const regenerateNotes = useCallback(async (id: string) => {
     const fresh = await documentsApi.regenerateNotes(id);
     setState((current) =>
@@ -184,6 +190,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       addRepositoryUrl,
       addRepositoryZip,
       addMeeting,
+      addRecording,
       regenerateNotes,
       dismissUpload,
       remove,
@@ -198,6 +205,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       addRepositoryUrl,
       addRepositoryZip,
       addMeeting,
+      addRecording,
       regenerateNotes,
       dismissUpload,
       remove,

@@ -1,5 +1,5 @@
 import { CalendarClockIcon, Loader2Icon } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useCallback, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,10 +13,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ApiError } from '../../lib/api';
 import { useDocuments } from './documents-context';
+import { RecordingField } from './RecordingField';
 import { MAX_MEETING_TITLE_LENGTH, TRANSCRIPT_LIMIT_LABEL, validateTranscript } from './validation';
+
+type Mode = 'transcript' | 'recording';
+
+const MODES: Array<{ mode: Mode; label: string }> = [
+  { mode: 'transcript', label: 'Transcript' },
+  { mode: 'recording', label: 'Recording' },
+];
 
 function failureMessage(error: unknown): string {
   if (error instanceof ApiError) {
+    if (error.code === 'ai_busy') return error.message;
     if (error.isUnavailable) return 'The server is not responding. Try again in a moment.';
     return error.message;
   }
@@ -24,7 +33,8 @@ function failureMessage(error: unknown): string {
 }
 
 export function AddMeetingDialog() {
-  const { addMeeting } = useDocuments();
+  const { addMeeting, addRecording } = useDocuments();
+  const [mode, setMode] = useState<Mode>('transcript');
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [fileKey, setFileKey] = useState(0);
@@ -34,6 +44,7 @@ export function AddMeetingDialog() {
   const [problem, setProblem] = useState<string | null>(null);
 
   function reset() {
+    setMode('transcript');
     setFile(null);
     setFileKey((key) => key + 1);
     setTitle('');
@@ -46,6 +57,19 @@ export function AddMeetingDialog() {
     setOpen(next);
     if (!next) reset();
   }
+
+  function chooseMode(next: Mode) {
+    if (pending || next === mode) return;
+    setMode(next);
+    setFile(null);
+    setFileKey((key) => key + 1);
+    setProblem(null);
+  }
+
+  const changeRecording = useCallback((chosen: File | null, invalid: string | null) => {
+    setFile(chosen);
+    setProblem(invalid);
+  }, []);
 
   function chooseFile(chosen: File | undefined) {
     if (!chosen) {
@@ -61,13 +85,17 @@ export function AddMeetingDialog() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!file) {
-      setProblem(problem ?? 'Choose a transcript file.');
+      setProblem(
+        problem ??
+          (mode === 'recording' ? 'Choose or record a recording.' : 'Choose a transcript file.'),
+      );
       return;
     }
     setPending(true);
     setProblem(null);
     try {
-      await addMeeting(file, { title: title.trim(), heldOn });
+      const details = { title: title.trim(), heldOn };
+      await (mode === 'recording' ? addRecording(file, details) : addMeeting(file, details));
       setOpen(false);
       reset();
     } catch (error) {
@@ -89,27 +117,50 @@ export function AddMeetingDialog() {
         <DialogHeader>
           <DialogTitle>Add a meeting</DialogTitle>
           <DialogDescription id="add-meeting-description">
-            Ask about decisions, action items and who said what. The transcript needs a speaker and
-            a time on each turn, like [00:01:05] Alice: Hello. A .txt or .vtt (WebVTT) file.
+            Ask about decisions, action items and who said what.{' '}
+            {mode === 'transcript'
+              ? 'The transcript needs a speaker and a time on each turn, like [00:01:05] Alice: Hello. A .txt or .vtt (WebVTT) file.'
+              : 'Upload a recording or record one, and it is transcribed first.'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="meeting-file">Transcript file</Label>
-            <Input
-              key={fileKey}
-              id="meeting-file"
-              type="file"
-              accept=".txt,.vtt,text/plain,text/vtt"
-              disabled={pending}
-              aria-describedby="meeting-file-hint"
-              onChange={(event) => chooseFile(event.target.files?.[0])}
-            />
-            <p id="meeting-file-hint" className="text-xs text-muted-foreground">
-              Up to {TRANSCRIPT_LIMIT_LABEL}.
-            </p>
+          <div role="radiogroup" aria-label="What to add" className="flex gap-2">
+            {MODES.map((option) => (
+              <Button
+                key={option.mode}
+                type="button"
+                role="radio"
+                aria-checked={mode === option.mode}
+                variant={mode === option.mode ? 'default' : 'outline'}
+                size="sm"
+                disabled={pending}
+                onClick={() => chooseMode(option.mode)}
+              >
+                {option.label}
+              </Button>
+            ))}
           </div>
+
+          {mode === 'recording' ? (
+            <RecordingField disabled={pending} onChange={changeRecording} />
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="meeting-file">Transcript file</Label>
+              <Input
+                key={fileKey}
+                id="meeting-file"
+                type="file"
+                accept=".txt,.vtt,text/plain,text/vtt"
+                disabled={pending}
+                aria-describedby="meeting-file-hint"
+                onChange={(event) => chooseFile(event.target.files?.[0])}
+              />
+              <p id="meeting-file-hint" className="text-xs text-muted-foreground">
+                Up to {TRANSCRIPT_LIMIT_LABEL}.
+              </p>
+            </div>
+          )}
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="meeting-title">Title (optional)</Label>

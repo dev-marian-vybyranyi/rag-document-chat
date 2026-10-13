@@ -47,6 +47,22 @@ export function validateTranscript(file: File): string | null {
   return null;
 }
 
+export const MAX_RECORDING_BYTES = 15 * 1024 * 1024;
+export const RECORDING_LIMIT_LABEL = '15 MB';
+export const RECORDING_EXTENSIONS = ['.mp3', '.wav', '.m4a', '.webm'];
+
+export function validateRecording(file: File): string | null {
+  const name = file.name.toLowerCase();
+  if (!RECORDING_EXTENSIONS.some((extension) => name.endsWith(extension))) {
+    return 'Choose a recording as an .mp3, .wav, .m4a or .webm file.';
+  }
+  if (file.size === 0) return 'The file is empty.';
+  if (file.size > MAX_RECORDING_BYTES) {
+    return `The file is too large (limit ${RECORDING_LIMIT_LABEL}).`;
+  }
+  return null;
+}
+
 const GITHUB_ADDRESS = /^https:\/\/(?:www\.)?github\.com\/[^/\s]+\/[^/\s]+(?:\/tree\/\S+)?\/?$/i;
 
 export function validateGithubAddress(address: string): string | null {

@@ -79,6 +79,8 @@ describe('describeProgress', () => {
     [null, 'Processing…'],
     [{ phase: 'downloading', done: 0, total: 0 }, 'Downloading from GitHub…'],
     [{ phase: 'reading', done: 0, total: 0 }, 'Reading files…'],
+    [{ phase: 'analyzing', done: 0, total: 0 }, 'Writing the notes…'],
+    [{ phase: 'transcribing', done: 0, total: 0 }, 'Transcribing the recording…'],
     [{ phase: 'embedding', done: 0, total: 0 }, 'Indexing…'],
     [{ phase: 'embedding', done: 100, total: 380 }, 'Indexing: 100 of 380 passages'],
     [{ phase: 'embedding', done: 0, total: 1 }, 'Indexing: 0 of 1 passage'],
@@ -88,6 +90,10 @@ describe('describeProgress', () => {
 });
 
 describe('progressFraction', () => {
+  it('is unknown while a recording is being transcribed', () => {
+    expect(progressFraction({ phase: 'transcribing', done: 0, total: 0 })).toBeNull();
+  });
+
   it('is the share of passages embedded', () => {
     expect(progressFraction({ phase: 'embedding', done: 100, total: 400 })).toBe(0.25);
     expect(progressFraction({ phase: 'embedding', done: 400, total: 400 })).toBe(1);

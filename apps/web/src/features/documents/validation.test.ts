@@ -6,6 +6,8 @@ import {
   validateArchive,
   validateFile,
   validateGithubAddress,
+  MAX_RECORDING_BYTES,
+  validateRecording,
 } from './validation';
 
 function file(name: string, size: number): File {
@@ -108,5 +110,33 @@ describe('validateGithubAddress', () => {
   it('asks for an address when there is none', () => {
     expect(validateGithubAddress('')).toBe('Enter the address of a GitHub repository.');
     expect(validateGithubAddress('   ')).toBe('Enter the address of a GitHub repository.');
+  });
+});
+
+describe('validateRecording', () => {
+  const file = (name: string, size = 10) => new File([new Uint8Array(size)], name);
+
+  it.each(['talk.mp3', 'talk.WAV', 'talk.m4a', 'talk.webm'])('accepts %s', (name) => {
+    expect(validateRecording(file(name))).toBeNull();
+  });
+
+  it.each(['talk.ogg', 'talk.txt', 'talk', 'talk.mp3.exe'])('refuses the name %s', (name) => {
+    expect(validateRecording(file(name))).toBe(
+      'Choose a recording as an .mp3, .wav, .m4a or .webm file.',
+    );
+  });
+
+  it('refuses an empty file', () => {
+    expect(validateRecording(file('a.mp3', 0))).toBe('The file is empty.');
+  });
+
+  it('accepts a file at the limit and refuses one byte more', () => {
+    const at = file('a.mp3', 10);
+    Object.defineProperty(at, 'size', { value: MAX_RECORDING_BYTES });
+    const over = file('a.mp3', 10);
+    Object.defineProperty(over, 'size', { value: MAX_RECORDING_BYTES + 1 });
+
+    expect(validateRecording(at)).toBeNull();
+    expect(validateRecording(over)).toBe('The file is too large (limit 15 MB).');
   });
 });
