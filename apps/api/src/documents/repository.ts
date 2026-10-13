@@ -1,5 +1,5 @@
 import { and, asc, count, desc, eq, getTableColumns, gte, lte, sql } from 'drizzle-orm';
-import type { CareerProfile, CareerSection } from '../career/types.js';
+import type { CareerProfile, CareerSection, Fit } from '../career/types.js';
 import type { Database } from '../db/client.js';
 import { PG_UNIQUE_VIOLATION, pgErrorCode } from '../db/errors.js';
 import { chunks, documents } from '../db/schema.js';
@@ -67,6 +67,33 @@ export interface NewDocument {
 }
 
 const chunkCountOf = sql<number>`(select count(*)::int from "chunks" c where c."document_id" = "documents"."id")`;
+
+type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];
+
+async function replaceChunksOfSection(
+  tx: Transaction,
+  section: CareerSection,
+  input: { documentId: string; userId: string; chunks: Omit<NewChunk, 'ordinal'>[] },
+): Promise<void> {
+  await tx
+    .delete(chunks)
+    .where(and(eq(chunks.documentId, input.documentId), eq(chunks.section, section)));
+  const [last] = await tx
+    .select({ ordinal: sql<number>`coalesce(max(${chunks.ordinal}), -1)::int` })
+    .from(chunks)
+    .where(eq(chunks.documentId, input.documentId));
+  const first = (last?.ordinal ?? -1) + 1;
+  if (input.chunks.length === 0) return;
+  await tx.insert(chunks).values(
+    input.chunks.map((chunk, i) => ({
+      ...chunk,
+      ordinal: first + i,
+      section,
+      documentId: input.documentId,
+      userId: input.userId,
+    })),
+  );
+}
 
 export function createDocumentRepository(db: Database) {
   return {
@@ -212,28 +239,36 @@ export function createDocumentRepository(db: Database) {
       chunks: Omit<NewChunk, 'ordinal'>[];
     }): Promise<void> {
       await db.transaction(async (tx) => {
-        await tx
-          .delete(chunks)
-          .where(and(eq(chunks.documentId, input.documentId), eq(chunks.section, 'profile')));
-        const [last] = await tx
-          .select({ ordinal: sql<number>`coalesce(max(${chunks.ordinal}), -1)::int` })
-          .from(chunks)
-          .where(eq(chunks.documentId, input.documentId));
-        const first = (last?.ordinal ?? -1) + 1;
-        if (input.chunks.length > 0) {
-          await tx.insert(chunks).values(
-            input.chunks.map((chunk, i) => ({
-              ...chunk,
-              ordinal: first + i,
-              documentId: input.documentId,
-              userId: input.userId,
-            })),
-          );
-        }
+        await replaceChunksOfSection(tx, 'profile', input);
         await tx
           .update(documents)
           .set({ profile: input.profile })
           .where(eq(documents.id, input.documentId));
+      });
+    },
+
+    async replaceFit(input: {
+      documentId: string;
+      userId: string;
+      fit: Fit | null;
+      chunks: Omit<NewChunk, 'ordinal'>[];
+    }): Promise<void> {
+      await db.transaction(async (tx) => {
+        await replaceChunksOfSection(tx, 'fit', input);
+        await tx
+          .update(documents)
+          .set({ fit: input.fit })
+          .where(eq(documents.id, input.documentId));
+      });
+    },
+
+    async replaceOverview(input: {
+      documentId: string;
+      userId: string;
+      chunks: Omit<NewChunk, 'ordinal'>[];
+    }): Promise<void> {
+      await db.transaction(async (tx) => {
+        await replaceChunksOfSection(tx, 'overview', input);
       });
     },
 
