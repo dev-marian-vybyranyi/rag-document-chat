@@ -1,6 +1,6 @@
 # Document Chat
 
-A web app where you upload documents (PDF, TXT, Markdown) or import a code repository (a public GitHub address or a zip archive) and ask questions about them. Answers are streamed, grounded in your sources, and cite the passages or the file and lines they came from. If the sources don't contain the answer, the app says so instead of guessing.
+A web app where you upload documents (PDF, TXT, Markdown), import a code repository (a public GitHub address or a zip archive) or add a meeting (a transcript as TXT or WebVTT with speakers and times, or a recording that is turned into one) and ask questions about them. Answers are streamed, grounded in your sources, and cite the passages, the file and lines, or the speakers and the moment they came from. If the sources don't contain the answer, the app says so instead of guessing.
 
 I treated it like a real first version: a simple stack, free tiers only, and most of the effort on what decides whether a RAG app can be trusted: retrieval quality, refusals, citations, prompt injection, quotas and observability.
 
@@ -19,13 +19,13 @@ cp .env.example .env          # put your key into GOOGLE_GENERATIVE_AI_API_KEY
 docker compose up --build     # open http://localhost:8080
 ```
 
-Register, open **Documents**, drop in files from `samples/` (a NIST PDF, two RFCs, two Rust Book chapters), wait for **Ready**, then ask e.g. _"Which roles does OAuth 2.0 define?"_. To ask about code, press **Add a code repository** and paste a public GitHub address (a small one such as `https://github.com/octocat/Spoon-Knife` indexes in seconds) or upload a zip archive, then ask e.g. _"How is this project structured?"_.
+Register, open **Documents**, drop in files from `samples/` (a NIST PDF, two RFCs, two Rust Book chapters), wait for **Ready**, then ask e.g. _"Which roles does OAuth 2.0 define?"_. To ask about code, press **Add a code repository** and paste a public GitHub address (a small one such as `https://github.com/octocat/Spoon-Knife` indexes in seconds) or upload a zip archive, then ask e.g. _"How is this project structured?"_. To ask about meetings, press **Add a meeting** and choose a file from `samples/meetings` (three invented meetings), wait for **Ready** (the notes are written then), and ask e.g. _"What did Marcus say about the effort for offline sync?"_ or _"What was decided about the Q4 roadmap?"_. Or choose **Recording** in the same dialog, upload a short mp3, wav, m4a or webm file, or record from the microphone; the recording is transcribed first, so it takes a little longer to become ready.
 
 - Development: `npm install`, `docker compose up -d db`, `npm run dev` (web :5173, API :3000).
-- Checks: `npm run lint && npm run typecheck && npm test && npm run build` (about 2,000 tests; none calls a real model).
-- Quality evaluation, run by hand because it uses Gemini quota: `npm run eval:retrieval -w @rag-chat/api` and `npm run eval:faithfulness -w @rag-chat/api` for documents, `npm run eval:code -w @rag-chat/api` for code.
+- Checks: `npm run lint && npm run typecheck && npm test && npm run build` (about 2,800 tests; none calls a real model).
+- Quality evaluation, run by hand because it uses Gemini quota: `npm run eval:retrieval -w @rag-chat/api` and `npm run eval:faithfulness -w @rag-chat/api` for documents, `npm run eval:code -w @rag-chat/api` for code, `npm run eval:meetings -w @rag-chat/api` for meetings.
 - Deploy: `render.yaml` is a Render Blueprint (free Postgres + two free Docker services). Create it from the dashboard, give it the model key (`GOOGLE_GENERATIVE_AI_API_KEY`, or `AI_PROVIDER=openai` with `OPENAI_API_KEY`) and set `API_UPSTREAM` to the API's public URL. Migrations run on API start; deploys wait for green CI.
-- All settings are environment variables, documented in `.env.example`. Optional ones for repositories: `GITHUB_TOKEN` (a token without scopes raises GitHub's 60 requests an hour per IP), `REPOSITORY_MAX_FILES` and `REPOSITORY_MAX_CHUNKS` (the size of a repository you accept; each passage is one embedding), `CODE_RELEVANCE_THRESHOLD`.
+- All settings are environment variables, documented in `.env.example`. Optional ones for repositories: `GITHUB_TOKEN` (a token without scopes raises GitHub's 60 requests an hour per IP), `REPOSITORY_MAX_FILES` and `REPOSITORY_MAX_CHUNKS` (the size of a repository you accept; each passage is one embedding), `CODE_RELEVANCE_THRESHOLD`. Optional for meetings: `MEETING_RELEVANCE_THRESHOLD` and `TRANSCRIPTION_MODEL` (a Gemini model that accepts audio, or an OpenAI transcription model that labels speakers).
 
 ## Architecture
 
@@ -43,7 +43,10 @@ flowchart LR
 - **Answering:** rewrite follow-ups into a standalone query → vector + keyword search (this user's chunks only) → fuse with RRF → if the best similarity is below 0.65, refuse without calling the model → otherwise stream a grounded answer, drop citations to sources that don't exist, save the answer with its sources and a trace row.
 - A chat can be limited to chosen sources: both searches filter by the chat's source list in SQL, so a conversation about a codebase is answered from the codebase only (a "Searching in" menu in the chat header; a chat started from a source's card is limited to that source).
 - A repository is a row in the same `documents` table (`kind = repository`) and its chunks carry the file path, language, line range and symbol, so retrieval, citations, guardrails, traces and the interface are shared with documents.
-- Code is organised by feature: `apps/api/src/{auth,documents,repositories,rag,chat,ai,http,observability,eval}`, `apps/web/src/{features,components,pages}`.
+- **Adding a meeting** (`POST /meetings` returns `202`): parse the transcript strictly (a bad file is refused with the number of the first line that is not understood), cut it into passages of whole turns with the time range and speakers of each, ask a small model for structured notes whose every item must quote the transcript, embed the passages and the notes in the same paced batches and write everything in one transaction.
+- **Adding a recording** (`POST /meetings/audio` returns `202`): the file is checked against its name (the first bytes have to be that kind of file), queued, and a model turns it into turns with a speaker label and a start time; from there it is the same path as a text transcript. The audio is held in memory only until the model has answered and is never stored.
+- A meeting is a row of the same `documents` table (`kind = transcript`); its chunks carry `start_ms`, `end_ms` and `speakers`, so everything above (scoping, retrieval, citations, traces) is shared. Questions that name a speaker or a time ("what did Marcus say…", "in the first ten minutes") narrow the search in SQL before ranking.
+- Code is organised by feature: `apps/api/src/{auth,documents,repositories,meetings,rag,chat,ai,http,observability,eval}`, `apps/web/src/{features,components,pages}`.
 
 ## RAG and LLM decisions
 
@@ -71,6 +74,22 @@ Each choice is in `docs/DECISIONS.md`; the ones that shape behaviour:
 
 ![Importing a repository](docs/screenshots/11-add-repository.png)
 
+## Asking about meetings
+
+Each choice is in `docs/DECISIONS.md`; the ones that shape behaviour:
+
+- **A strict parser.** Timestamps in brackets, in parentheses or before the name, on the same line as the text or as a header line above it, and WebVTT. The format is the one most lines match; a file where too little is understood is refused with the first line that is not, because a guessed speaker is a wrong attribution. Times are shown as they are written in the file.
+- **Passages are made of whole turns.** About 900 characters, a pause of more than two minutes starts a new one, the last turn is repeated as overlap. The text that is embedded is `[hh:mm:ss] Speaker: words` under the meeting's title, so names and times are searchable by meaning and by keyword.
+- **Notes written once, checked, and searchable.** "What were all the decisions?" is not answered by six passages. When a meeting is indexed a small model writes a summary, decisions, action items (with owner and deadline) and open questions. Every decision and action item has to quote the transcript, and an item whose quote is not word for word in one turn is dropped; the time of an item is the time of that turn, and an owner who is never named in the meeting is left empty rather than guessed. The notes are shown on the meeting's card (copy as Markdown) and are indexed as one more passage cited as "Meeting notes". If the model fails the meeting is still ready and the card offers to generate the notes again.
+- **Speaker and time filters from the question, by rules.** Names of the meeting's participants and expressions like "at 25:00", "between 10:00 and 20:00", "first ten minutes", "last five minutes" are applied to both searches in SQL. The filter is soft: documents and code are never filtered, and if nothing is found the search is repeated without it and "Why this answer?" says so.
+- **Attribution rules in the prompt.** Name the speaker as in the line, never give one person's words to another, report a suggestion as a suggestion and not as a decision, give the latest decision if it changed, name an owner or a deadline only if it was said, quote times as written. A speaker's words are data: an instruction spoken in a meeting is not followed.
+- **Citations show where.** `[n]` stays the number, the interface shows `Title · 00:04:36 · Priya, Marcus +3` (or `Title · notes`). Clicking opens the transcript with a colour for each speaker and the cited range highlighted.
+- **Suggested questions come from the notes and the participants**, composed in the browser from templates, so they cost no quota.
+- **Voice input.** A recording (mp3, wav, m4a or webm, up to 15 MB) is uploaded or recorded in the browser and transcribed by the provider's model behind one interface: Gemini is asked for turns as structured output (speaker, time, words), OpenAI's diarizing transcription model returns speaker segments. Speakers are labelled `Speaker 1`, `Speaker 2`, never with names, because a guessed name is the attribution error the rest of the system avoids. A time that goes backwards is raised to the previous one, neighbouring pieces of one speaker are joined into a turn, a recording with no speech or too long for the model's answer is refused with a plain message, and the audio is not kept, so there is no playback.
+- **Limits:** 1 MB, 150,000 characters, 20,000 turns and 50 speakers a file (15 MB for a recording, and at most three recordings waiting to be transcribed, since each is held in memory); names and titles are cleaned and escaped like everything else that comes from a file.
+
+![A meeting answer with its sources](docs/screenshots/16-meeting-answer.png)
+
 ## Quality, guardrails, observability
 
 **Evaluation.** `samples/` holds five public documents (sources, licenses and hashes in `samples/SOURCES.md`). `scripts/eval/golden.json` has 67 questions (57 answerable, 5 of them follow-ups; 10 unanswerable), each with a verbatim quote that a test finds in the document. Retrieval, top 6, real embeddings:
@@ -93,6 +112,25 @@ What I take from it: on this corpus **hybrid is not better than vector-only** (R
 
 For natural-language questions about code the vector search is the stronger half and fusing with keyword search did not beat it at the top of the list (a hint on 38 questions, not a verdict). The relevance cut-off does not separate the groups for code: answerable questions score 0.63 to 0.78 and the unanswerable ones, which are about the same framework, 0.66 to 0.69. Every value up to 0.60 answers all answerable questions and refuses none of the unanswerable ones, 0.65 already refuses 8% of the answerable ones, and 0.70 refuses half of them; so the cut-off catches questions about nothing in the repository, and the near misses are left to the model's refusal rule. The script recommends the strictest value that still answers 95% of the answerable questions (0.60 here, `CODE_RELEVANCE_THRESHOLD`), and the number has to be measured again for any other embedding model. Not measured: faithfulness of code answers, languages other than JavaScript.
 
+**Meeting evaluation.** `samples/meetings` holds three invented meetings of 9 to 13 minutes (a roadmap meeting, an incident review and a hiring sync, in three file layouts) with the traps that matter: a decision that is reversed, a task nobody owns, a discount that was only proposed, an estimate that is corrected, two similar names. `scripts/eval/golden-meetings.json` has 52 questions (46 answerable of kinds fact, decision, action, speaker, time and overview; 6 unanswerable) and an answer key for the notes. `npm run eval:meetings` reports hit@k and MRR for the app's search, the same without the speaker and time filters, vector only and keyword only, whether the filters recognised what they should, a sweep of the relevance threshold, and how the notes compare with the key (no judge model: keywords from the key).
+
+Retrieval, top 6, Gemini embeddings (`gemini-embedding-001`, 768 dimensions), 46 answerable questions:
+
+| Search                             | hit@1 | hit@3 | hit@6 | MRR   |
+| ---------------------------------- | ----- | ----- | ----- | ----- |
+| hybrid with filters (the app)      | 78%   | 100%  | 100%  | 0.877 |
+| hybrid without speaker/time filter | 78%   | 98%   | 98%   | 0.866 |
+| vector only                        | 65%   | 96%   | 98%   | 0.791 |
+| keyword only                       | 48%   | 93%   | 98%   | 0.708 |
+
+On three short meetings almost any search finds the right passage in the top six, so the table separates the variants only at the first place. The filters did what they are for: the speaker or the time in all 14 questions that name one was recognised, no other question got a filter, and on the 6 questions about a time the right moment was in the first three for 100% with the filter and 83% without it (hit@1 stays at 50% in both; with six questions that is one question each). Per kind, questions about facts, decisions and overviews are answered at the first place every time; the weaker ones are actions (67% at the first place) and speakers (50%), where several passages of the same meeting mention the same person. The 6 unanswerable questions are about topics near the meetings (the board, a salary, layoffs).
+
+The relevance cut-off does not separate the groups well for meetings either: answerable questions score 0.614 to 0.791 and unanswerable ones 0.595 to 0.683. At the document value of 0.65 only 85% of the answerable questions would be answered and a third of the unanswerable ones refused; 0.60 answers all of them and refuses 17% of the unanswerable ones. The script recommends 0.60 for Gemini (`MEETING_RELEVANCE_THRESHOLD`, not set by default, so 0.65 applies until it is). As for code, the cut-off catches questions about nothing in the meetings and the near misses are left to the model's refusal rule.
+
+Notes, compared with the answer key (run twice, the same result both times, `gemini-3.5-flash-lite`, thinking level `low`): all 9 decisions found and supported, none of the reversed decisions reported as final, none of the proposals reported as decisions; 11 of 13 action items found, every one with the right owner and deadline (the two missed are an item without an owner about the public roadmap page and an internal one); all 3 open questions. Three meetings and one model: a first reading and not a rate.
+
+**Not measured:** transcription accuracy beyond one 32-second recording made with two synthetic voices (below), anything on OpenAI (its similarities sit on another scale, so the threshold has to be measured again), the faithfulness of meeting answers (the faithfulness evaluation has no meeting questions), and a corpus bigger than three invented meetings. Voice input, observed once: that recording (four turns, macOS `say`) was transcribed by Gemini 3.5 Flash-Lite in 2.4 seconds with the two speakers kept apart and every start time within a second of the true one, and one word misheard ("offline" came out as "a flined"). That says the plumbing works; it says nothing about real meetings. The tests run the whole evaluation with a fake word-based embedder to prove the measurements work; those numbers say nothing about a real model and are not quoted here.
+
 The faithfulness check (the real chat code answers, a second model grades each claim against its sources) is written and tested, but I haven't published full-run numbers: it needs the daily free embedding quota, which I used up while building the scripts.
 
 **Guardrails.**
@@ -102,6 +140,7 @@ The faithfulness check (the real chat code answers, a second model grades each c
 - Repositories are untrusted too: the comments, README and strings of an imported repository reach the model as quoted data, the attributes of a source block (path, symbol) are escaped, and a suggested question is only built from a plain identifier, because a click sends it to the model.
 - Limits: 2,000-character questions, 10 MB / 500-page files, 20 documents (repositories included) and 100 chats per user, 10 questions a minute and 150 a day (keyed by user, since the client IP is unreliable behind Render's proxies).
 - Gemini quotas: per-minute and daily 429s are told apart, the wait is shown, and the app stops calling the model for that time. Indexing is paced by tokens per minute (a large text sent in one request can never fit a 30,000-token minute).
+- A transcript is untrusted too, and so is what a model heard in a recording: the prompt says that words spoken in a meeting are data, speaker names and titles are cleaned, capped and escaped, and a suggested question is composed from a short list of templates.
 - One JSON error shape with a request id; no internals leaked.
 
 **Observability.** JSON logs with a request id from nginx through the API; a `rag_traces` row per question (query, retrieved passages with scores, timings, tokens, outcome, citations kept/removed); the "Why this answer?" panel shows the user the same data. Not built: metrics, dashboards, alerting, an LLM tracing UI.
@@ -123,6 +162,7 @@ The faithfulness check (the real chat code answers, a second model grades each c
 - **Models:** a paid tier with real quotas and a data-processing agreement (free-tier Gemini may use prompts to improve Google's products); Vertex AI or Bedrock; version embeddings per chunk so the model can change; cache query embeddings.
 - **Shared state:** Redis for rate limits and the provider cooldown, which are in memory today.
 - **Security:** WAF, Secrets Manager, email verification and password reset, trace retention and delete-my-data.
+- **Meetings are private conversations.** Today they are isolated per user in SQL and stored as plain text in Postgres, together with the questions asked about them in `rag_traces`, and sent to the model provider. A real deployment needs encryption at rest with per-tenant keys, a retention period and deletion on request that also covers traces and backups, a decision on personal data in transcripts (names, health, salaries; redaction before indexing, a regional provider, a provider that does not train on prompts), and consent of the people who were recorded. A recording is sent to the model provider to be transcribed and is not stored by the app; what the provider keeps is its own policy.
 - **Observability:** OpenTelemetry to CloudWatch/X-Ray, dashboards on latency, refusal rate, quota errors and token cost per tenant, the evaluation run nightly in CI.
 - Cloudflare would be a bigger rewrite (Workers instead of Express, Vectorize or Postgres via Hyperdrive, R2, Queues); I'd choose it only if I started there.
 
@@ -130,7 +170,7 @@ The faithfulness check (the real chat code answers, a second model grades each c
 
 **Followed:** strict TypeScript, ESLint and Prettier in CI, zod validation of every external input (HTTP, env, model output), feature-oriented modules, Conventional Commits in small steps with checks green, integration tests against a real Postgres with mocked models, hand-made mutation checks (break the code, confirm the right test fails), CI with a pgvector service and Docker builds, multi-stage images, secrets only in env vars, `npm audit` clean, basic accessibility (focus handling, labels, keyboard), decisions logged as I went.
 
-**Skipped on purpose:** browser end-to-end tests and load tests; metrics and tracing; CSRF tokens (relying on `SameSite=Lax` and a JSON-only API); email verification and password reset; durable queue, OCR and original-file storage; persistent rate limits; pagination and trace retention; non-English documents; a coverage gate; a demo video.
+**Skipped on purpose:** browser end-to-end tests and load tests; metrics and tracing; CSRF tokens (relying on `SameSite=Lax` and a JSON-only API); email verification and password reset; durable queue, OCR and original-file storage (a transcript is rebuilt from its passages); playback of a recording and storing it (the audio is dropped once transcribed, so a transcript time cannot be played); speaker names are taken as the file gives them, with no merging of two spellings of a person; persistent rate limits; pagination and trace retention; non-English documents; a coverage gate; a demo video.
 
 ## How I used AI tools
 
@@ -150,13 +190,14 @@ Where it went wrong: while building the evaluation scripts it ran real evaluatio
 4. Better refusals for questions that sound like the corpus but aren't in it.
 5. Real observability: OpenTelemetry, a dashboard over `rag_traces`, LLM tracing.
 6. Choose which documents or repositories a question is about; OCR, tables and other languages.
-7. Code: a real parser (tree-sitter) for chunk boundaries and a call graph, a second reference repository in another language, retrieval tuned from the code evaluation (weight of the keyword list, a reranker), private repositories with OAuth, and re-indexing a repository when its branch moves.
+7. Meetings: run `eval:meetings` on both providers and set the threshold from it, add meeting questions to the faithfulness evaluation, try other window sizes, a jump from a time in the notes to the transcript, a real corpus (for example AMI) next to the invented one, and for voice input: measure the transcription on real recordings (overlapping speech, noise, accents, an hour of audio), split long recordings at silences and reconcile the speaker labels across the parts, let a user name the speakers afterwards, and keep the audio in object storage for playback.
+8. Code: a real parser (tree-sitter) for chunk boundaries and a call graph, a second reference repository in another language, retrieval tuned from the code evaluation (weight of the keyword list, a reranker), private repositories with OAuth, and re-indexing a repository when its branch moves.
 
 Known limits of the demo: free services sleep after 15 minutes (first request can take a minute or two), the free Postgres expires after 30 days, free Gemini quotas include a daily cap on embeddings, and greetings are refused like any off-topic message.
 
 ## Screenshots
 
-Taken from the Docker Compose stack. The documents are the real ones from `samples/` indexed by the real pipeline, but the conversations and suggested questions in the first seven were prepared by hand (the daily Gemini quota was used up), so those answers are not live model output. The last four are live: a real import of Koa (the 11 files the code evaluation uses), real Gemini embeddings and a real Gemini answer to the question shown.
+Taken from the Docker Compose stack. The documents are the real ones from `samples/` indexed by the real pipeline, but the conversations and suggested questions in the first seven were prepared by hand (the daily Gemini quota was used up), so those answers are not live model output. The ones for code and meetings are live: a real import of Koa (the 11 files the code evaluation uses), and the three sample meetings indexed by the real pipeline with their notes written by Gemini, with a real Gemini answer to the question shown.
 
 |                                                             |                                                                   |
 | ----------------------------------------------------------- | ----------------------------------------------------------------- |
@@ -168,5 +209,11 @@ Taken from the Docker Compose stack. The documents are the real ones from `sampl
 | Dark theme                                                  | Phone width                                                       |
 | ![Repositories](docs/screenshots/10-repository-library.png) | ![A code answer](docs/screenshots/12-code-answer.png)             |
 | A repository in the library with its suggested questions    | A code answer with `path:lines` citations                         |
-| ![Code viewer](docs/screenshots/13-code-viewer.png)         |                                                                   |
-| A cited block with line numbers and highlighted syntax      |                                                                   |
+| ![Code viewer](docs/screenshots/13-code-viewer.png)         | ![Meetings](docs/screenshots/14-meeting-library.png)              |
+| A cited block with line numbers and highlighted syntax      | Meeting cards: speakers, passages, notes, suggested questions     |
+| ![Notes](docs/screenshots/15-meeting-notes.png)             | ![Meeting answer](docs/screenshots/16-meeting-answer.png)         |
+| Notes: summary, decisions, action items with owners         | An answer with speaker and time citations                         |
+| ![Transcript](docs/screenshots/17-transcript-viewer.png)    | ![Filter](docs/screenshots/18-meeting-why-this-answer.png)        |
+| The transcript, speakers in colour, cited range highlighted | "Why this answer?": the speaker filter that was applied           |
+| ![Recording](docs/screenshots/19-meeting-recording.png)     |                                                                   |
+| Adding a meeting from a recording or the microphone         |                                                                   |

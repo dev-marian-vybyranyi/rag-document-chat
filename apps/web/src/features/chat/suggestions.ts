@@ -1,11 +1,12 @@
 import type { DocumentItem } from '../documents/api';
+import { suggestionsOf } from '../documents/meeting-questions';
 
 export const MAX_SUGGESTIONS = 4;
 
 export function pickSuggestions(documents: DocumentItem[]): string[] {
   const lists = documents
     .filter((doc) => doc.status === 'ready')
-    .map((doc) => doc.suggestions)
+    .map(suggestionsOf)
     .filter((list) => list.length > 0);
 
   const picked: string[] = [];

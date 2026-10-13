@@ -2,12 +2,31 @@ import { api } from '../../lib/api';
 
 export type DocumentStatus = 'processing' | 'ready' | 'failed';
 
-export type DocumentKind = 'document' | 'repository';
+export type DocumentKind = 'document' | 'repository' | 'transcript';
 
 export interface IngestionProgress {
-  phase: 'downloading' | 'reading' | 'embedding';
+  phase: 'downloading' | 'reading' | 'analyzing' | 'transcribing' | 'embedding';
   done: number;
   total: number;
+}
+
+export interface MeetingNotes {
+  summary: string;
+  topics: string[];
+  decisions: Array<{ text: string; startMs: number; evidence: string }>;
+  actionItems: Array<{
+    task: string;
+    owner: string | null;
+    due: string | null;
+    startMs: number;
+    evidence: string;
+  }>;
+  openQuestions: string[];
+}
+
+export interface MeetingDetails {
+  title?: string;
+  heldOn?: string;
 }
 
 export interface DocumentItem {
@@ -24,6 +43,10 @@ export interface DocumentItem {
   repoUrl: string | null;
   repoRef: string | null;
   commitSha: string | null;
+  meetingHeldOn: string | null;
+  participants: string[] | null;
+  durationMs: number | null;
+  notes: MeetingNotes | null;
   progress: IngestionProgress | null;
   suggestions: string[];
   createdAt: string;
@@ -37,10 +60,17 @@ export interface CodeLocation {
   symbol: string | null;
 }
 
+export interface MeetingLocation {
+  startMs: number | null;
+  endMs: number | null;
+  speakers: string[];
+}
+
 export interface Passage {
   ordinal: number;
   page: number | null;
   code?: CodeLocation;
+  meeting?: MeetingLocation;
   content: string;
 }
 
@@ -84,6 +114,32 @@ export const documentsApi = {
       signal,
     }).then((r) => r.document);
   },
+  addMeeting: (file: File, details: MeetingDetails = {}, signal?: AbortSignal) => {
+    const form = new FormData();
+    if (details.title) form.append('title', details.title);
+    if (details.heldOn) form.append('heldOn', details.heldOn);
+    form.append('file', file);
+    return api<{ document: DocumentItem }>('/meetings', {
+      method: 'POST',
+      body: form,
+      signal,
+    }).then((r) => r.document);
+  },
+  addRecording: (file: File, details: MeetingDetails = {}, signal?: AbortSignal) => {
+    const form = new FormData();
+    if (details.title) form.append('title', details.title);
+    if (details.heldOn) form.append('heldOn', details.heldOn);
+    form.append('file', file);
+    return api<{ document: DocumentItem }>('/meetings/audio', {
+      method: 'POST',
+      body: form,
+      signal,
+    }).then((r) => r.document);
+  },
+  regenerateNotes: (id: string, signal?: AbortSignal) =>
+    api<{ document: DocumentItem }>(`/meetings/${id}/notes`, { method: 'POST', signal }).then(
+      (r) => r.document,
+    ),
   passages: (documentId: string, ordinal: number, radius: number, signal?: AbortSignal) =>
     api<PassagesResponse>(`/documents/${documentId}/passages?ordinal=${ordinal}&radius=${radius}`, {
       signal,

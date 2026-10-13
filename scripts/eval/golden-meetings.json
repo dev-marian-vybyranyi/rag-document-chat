@@ -1,0 +1,1121 @@
+{
+  "version": 1,
+  "description": "Golden questions for three invented meetings in samples/meetings (see samples/SOURCES.md). 'expected' lists turns that answer the question: 'meeting' is the file, 'speaker' and 'atMs' (milliseconds as written in the file) locate the turn, and every 'quote' is verbatim from that turn; { notes: true } means the notes of the meeting also answer it. 'scope' restricts the chat to those files, 'filters' names what the question asks for (a speaker, a stretch of time). 'notes' is what a good set of notes holds for each meeting.",
+  "meetings": [
+    {
+      "file": "product-planning.txt",
+      "title": "Product planning",
+      "heldOn": "2026-09-14"
+    },
+    {
+      "file": "incident-review.txt",
+      "title": "Incident review",
+      "heldOn": "2026-09-24"
+    },
+    {
+      "file": "hiring-sync.vtt",
+      "title": "Hiring sync",
+      "heldOn": "2026-10-05"
+    }
+  ],
+  "questions": [
+    {
+      "id": "planning-final-q4",
+      "type": "answerable",
+      "kind": "decision",
+      "question": "What did the team finally decide to ship in Q4?",
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Priya",
+          "atMs": 390000,
+          "quote": "we ship dark mode in Q4 and offline sync moves to Q1"
+        }
+      ],
+      "answer": "Dark mode ships in Q4 and offline sync moves to Q1. The earlier plan to make offline sync the Q4 headline feature was dropped."
+    },
+    {
+      "id": "planning-why-sync-moved",
+      "type": "answerable",
+      "kind": "fact",
+      "question": "Why was offline sync moved to Q1?",
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Marcus",
+          "atMs": 245000,
+          "quote": "six weeks of work for two engineers, not the three weeks we assumed"
+        },
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Priya",
+          "atMs": 344000,
+          "quote": "shipping it in Q4 means starting right now with no slack"
+        }
+      ],
+      "answer": "Marcus found it is six weeks of work for two engineers, not three weeks, so shipping it in Q4 would leave no slack."
+    },
+    {
+      "id": "planning-onboarding-mockups",
+      "type": "answerable",
+      "kind": "action",
+      "question": "Who will have the onboarding mockups ready, and by when?",
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Lena",
+          "atMs": 450000,
+          "quote": "I'll have the onboarding mockups ready by the 25th"
+        }
+      ],
+      "answer": "Lena, by September 25th."
+    },
+    {
+      "id": "planning-sync-estimate",
+      "type": "answerable",
+      "kind": "action",
+      "question": "Who is writing the offline sync estimate and when is it due?",
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Marcus",
+          "atMs": 494000,
+          "quote": "I'll write the offline sync estimate and send it to everyone by Friday"
+        }
+      ],
+      "answer": "Marcus, by Friday."
+    },
+    {
+      "id": "planning-customer-quotes",
+      "type": "answerable",
+      "kind": "action",
+      "question": "What is Tomás going to do about the customers who asked for offline sync?",
+      "filters": {
+        "speakers": ["Tomás"]
+      },
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Tomás",
+          "atMs": 520000,
+          "quote": "I'll collect quotes from the customers who asked for offline sync"
+        }
+      ],
+      "answer": "He will collect their quotes for the Q1 planning, with no deadline."
+    },
+    {
+      "id": "planning-roadmap-page-owner",
+      "type": "answerable",
+      "kind": "action",
+      "question": "Who is going to update the public roadmap page?",
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Priya",
+          "atMs": 550000,
+          "quote": "Somebody needs to update that"
+        },
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Priya",
+          "atMs": 587000,
+          "quote": "we'll figure out who does it"
+        }
+      ],
+      "answer": "Nobody was named: Marco and Lena have no access, and Priya said they would figure out who does it."
+    },
+    {
+      "id": "planning-marco-testing",
+      "type": "answerable",
+      "kind": "speaker",
+      "question": "What does Marco say about testing offline sync?",
+      "scope": ["product-planning.txt"],
+      "filters": {
+        "speakers": ["Marco"]
+      },
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Marco",
+          "atMs": 123000,
+          "quote": "Offline sync is the scary one, conflict resolution has many edge cases"
+        }
+      ],
+      "answer": "Marco says offline sync is the scary one to test because conflict resolution has many edge cases."
+    },
+    {
+      "id": "planning-marcus-estimate",
+      "type": "answerable",
+      "kind": "speaker",
+      "question": "What did Marcus say about the effort for offline sync?",
+      "scope": ["product-planning.txt"],
+      "filters": {
+        "speakers": ["Marcus"]
+      },
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Marcus",
+          "atMs": 245000,
+          "quote": "it is six weeks of work for two engineers"
+        }
+      ],
+      "answer": "Marcus said it is six weeks of work for two engineers, not the three weeks assumed."
+    },
+    {
+      "id": "planning-tomas-customers",
+      "type": "answerable",
+      "kind": "speaker",
+      "question": "What does Tomás say customers are asking for?",
+      "scope": ["product-planning.txt"],
+      "filters": {
+        "speakers": ["Tomás"]
+      },
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Tomás",
+          "atMs": 75000,
+          "quote": "customers keep asking for offline sync"
+        }
+      ],
+      "answer": "Offline sync; three of his top five accounts mentioned it this month."
+    },
+    {
+      "id": "planning-annual-discount",
+      "type": "answerable",
+      "kind": "decision",
+      "question": "Was a discount for annual plans approved?",
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Priya",
+          "atMs": 665000,
+          "quote": "Let's revisit it next month"
+        },
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Tomás",
+          "atMs": 640000,
+          "quote": "I would suggest a discount for annual plans"
+        }
+      ],
+      "answer": "No. Tomás suggested about fifteen percent, but Priya did not want to decide pricing without finance and postponed it to next month."
+    },
+    {
+      "id": "planning-enterprise-pricing",
+      "type": "answerable",
+      "kind": "fact",
+      "question": "What is still open about the enterprise tier?",
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Priya",
+          "atMs": 705000,
+          "quote": "Enterprise pricing is an open question for now"
+        },
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Marcus",
+          "atMs": 685000,
+          "quote": "what are we going to charge for the enterprise tier"
+        }
+      ],
+      "answer": "What to charge for it: nobody has an answer yet."
+    },
+    {
+      "id": "planning-first-two-minutes",
+      "type": "answerable",
+      "kind": "time",
+      "question": "What was discussed in the first two minutes?",
+      "scope": ["product-planning.txt"],
+      "filters": {
+        "time": "first 2 minutes"
+      },
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Priya",
+          "atMs": 8000,
+          "quote": "we need to settle the Q4 roadmap"
+        },
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Lena",
+          "atMs": 52000,
+          "quote": "dark mode is mostly done"
+        }
+      ],
+      "answer": "The Q4 roadmap candidates (dark mode, offline sync, onboarding) and that dark mode design is mostly done."
+    },
+    {
+      "id": "planning-minute-nine",
+      "type": "answerable",
+      "kind": "time",
+      "question": "What was said between 00:09:00 and 00:10:00?",
+      "scope": ["product-planning.txt"],
+      "filters": {
+        "time": "00:09:00–00:10:00"
+      },
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Priya",
+          "atMs": 550000,
+          "quote": "the public roadmap page still says offline sync is coming in Q4"
+        },
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Marco",
+          "atMs": 565000,
+          "quote": "I don't have access to the website"
+        }
+      ],
+      "answer": "Priya noted the public roadmap page still says offline sync is coming in Q4 and nobody had access to update it."
+    },
+    {
+      "id": "planning-last-two-minutes",
+      "type": "answerable",
+      "kind": "time",
+      "question": "What happened in the last two minutes of the product planning meeting?",
+      "scope": ["product-planning.txt"],
+      "filters": {
+        "time": "last 2 minutes"
+      },
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Marco",
+          "atMs": 750000,
+          "quote": "I'll need the dark mode build two weeks before the release"
+        },
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Lena",
+          "atMs": 725000,
+          "quote": "will the dark mode launch need a new logo variant"
+        }
+      ],
+      "answer": "Lena asked about a logo variant, and Marco said he needs the dark mode build two weeks before the release."
+    },
+    {
+      "id": "planning-tech-debt",
+      "type": "answerable",
+      "kind": "decision",
+      "question": "Is a tech debt week scheduled?",
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Priya",
+          "atMs": 620000,
+          "quote": "let's confirm it after the dark mode release"
+        }
+      ],
+      "answer": "Not yet. Marcus wants one in November, and Priya said to confirm after the dark mode release."
+    },
+    {
+      "id": "planning-build-time",
+      "type": "answerable",
+      "kind": "fact",
+      "question": "How long does the build pipeline take?",
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Marcus",
+          "atMs": 595000,
+          "quote": "The build pipeline takes twenty-five minutes"
+        }
+      ],
+      "answer": "Twenty-five minutes."
+    },
+    {
+      "id": "incident-cause",
+      "type": "answerable",
+      "kind": "fact",
+      "question": "What caused the checkout outage?",
+      "expected": [
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Erik",
+          "atMs": 48000,
+          "quote": "an expired certificate on the gateway proxy"
+        }
+      ],
+      "answer": "An expired certificate on the gateway proxy; it expired at 21:40."
+    },
+    {
+      "id": "incident-duration",
+      "type": "answerable",
+      "kind": "fact",
+      "question": "How long was checkout down?",
+      "expected": [
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Dana",
+          "atMs": 112000,
+          "quote": "the outage lasted fifty-two minutes"
+        }
+      ],
+      "answer": "Fifty-two minutes. Dana's first estimate of forty minutes was corrected."
+    },
+    {
+      "id": "incident-detection",
+      "type": "answerable",
+      "kind": "fact",
+      "question": "How was the outage detected, and how long after it started?",
+      "expected": [
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Fatima",
+          "atMs": 150000,
+          "quote": "Customers told us"
+        },
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Dana",
+          "atMs": 175000,
+          "quote": "The first alert fired at 22:00, eighteen minutes after the start"
+        }
+      ],
+      "answer": "Customers reported it first; the first alert fired at 22:00, eighteen minutes after the start."
+    },
+    {
+      "id": "incident-rotation-owner",
+      "type": "answerable",
+      "kind": "action",
+      "question": "Who writes the certificate rotation script and by when?",
+      "expected": [
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Erik",
+          "atMs": 330000,
+          "quote": "I can have the script done by October 3rd"
+        }
+      ],
+      "answer": "Erik, by October 3rd."
+    },
+    {
+      "id": "incident-alert-owner",
+      "type": "answerable",
+      "kind": "action",
+      "question": "Who sets up the alert for expiring certificates?",
+      "expected": [
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Dana",
+          "atMs": 344000,
+          "quote": "The alert I can do this week, by Friday"
+        },
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Gus",
+          "atMs": 312000,
+          "quote": "Dana sets up the expiry alert"
+        }
+      ],
+      "answer": "Dana, by Friday. The alert warns fourteen days before a certificate expires."
+    },
+    {
+      "id": "incident-switch-provider",
+      "type": "answerable",
+      "kind": "decision",
+      "question": "Did the team decide to switch payment providers?",
+      "expected": [
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Gus",
+          "atMs": 415000,
+          "quote": "We are not switching providers for now"
+        }
+      ],
+      "answer": "No. Gus raised it, but the team decided not to switch for now, because the certificate was theirs."
+    },
+    {
+      "id": "incident-double-charges",
+      "type": "answerable",
+      "kind": "fact",
+      "question": "How many orders were charged twice?",
+      "expected": [
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Fatima",
+          "atMs": 440000,
+          "quote": "Forty-one orders were charged twice"
+        }
+      ],
+      "answer": "Forty-one orders, which are refunded automatically."
+    },
+    {
+      "id": "incident-customer-email",
+      "type": "answerable",
+      "kind": "action",
+      "question": "Who drafts the customer email?",
+      "expected": [
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Fatima",
+          "atMs": 485000,
+          "quote": "I'll draft the email today"
+        }
+      ],
+      "answer": "Fatima, today."
+    },
+    {
+      "id": "incident-postmortem",
+      "type": "answerable",
+      "kind": "action",
+      "question": "Who writes the post-mortem and when?",
+      "expected": [
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Gus",
+          "atMs": 510000,
+          "quote": "I'll write the post-mortem document and share it by Friday"
+        }
+      ],
+      "answer": "Gus, by Friday."
+    },
+    {
+      "id": "incident-audit",
+      "type": "answerable",
+      "kind": "action",
+      "question": "Who will check the internal certificates?",
+      "expected": [
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Dana",
+          "atMs": 612000,
+          "quote": "I'll take a look, but I can't promise a date"
+        },
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Gus",
+          "atMs": 605000,
+          "quote": "Dana, can you check"
+        }
+      ],
+      "answer": "Dana, with no date promised."
+    },
+    {
+      "id": "incident-slow-fix",
+      "type": "answerable",
+      "kind": "fact",
+      "question": "Why did the fix take so long?",
+      "expected": [
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Erik",
+          "atMs": 210000,
+          "quote": "we lost twenty-five minutes looking for the person who held the renewal credentials"
+        }
+      ],
+      "answer": "They lost twenty-five minutes looking for the person who held the renewal credentials."
+    },
+    {
+      "id": "incident-dana-alerts",
+      "type": "answerable",
+      "kind": "speaker",
+      "question": "What did Dana say about alerts?",
+      "scope": ["incident-review.txt"],
+      "filters": {
+        "speakers": ["Dana"]
+      },
+      "expected": [
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Dana",
+          "atMs": 175000,
+          "quote": "The first alert fired at 22:00"
+        },
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Dana",
+          "atMs": 290000,
+          "quote": "We should get warned fourteen days before any certificate expires"
+        }
+      ],
+      "answer": "The first alert came at 22:00, eighteen minutes in, because monitoring only checked the health endpoint; she wants a warning fourteen days before any certificate expires."
+    },
+    {
+      "id": "incident-first-minute",
+      "type": "answerable",
+      "kind": "time",
+      "question": "What happened in the first minute of the incident review?",
+      "scope": ["incident-review.txt"],
+      "filters": {
+        "time": "first 1 minute"
+      },
+      "expected": [
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Dana",
+          "atMs": 20000,
+          "quote": "the payment gateway started returning TLS errors"
+        },
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Gus",
+          "atMs": 6000,
+          "quote": "Dana, can you walk us through the timeline"
+        }
+      ],
+      "answer": "Gus opened the review and Dana described how the gateway started returning TLS errors at 21:42."
+    },
+    {
+      "id": "hiring-offer",
+      "type": "answerable",
+      "kind": "decision",
+      "question": "Who did the team decide to make an offer to?",
+      "expected": [
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Gus",
+          "atMs": 195000,
+          "quote": "we extend an offer to Noor, at band five"
+        }
+      ],
+      "answer": "Noor, at band five."
+    },
+    {
+      "id": "hiring-oleg",
+      "type": "answerable",
+      "kind": "decision",
+      "question": "Why did the team decide against Oleg?",
+      "expected": [
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Priya",
+          "atMs": 115000,
+          "quote": "He interrupted a lot and dismissed two of my questions"
+        },
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Gus",
+          "atMs": 168000,
+          "quote": "we do not move forward with Oleg"
+        }
+      ],
+      "answer": "His culture interview went badly (he interrupted and dismissed questions, which the panel feedback confirmed) and his system design answers were generic."
+    },
+    {
+      "id": "hiring-priya-oleg",
+      "type": "answerable",
+      "kind": "speaker",
+      "question": "What did Priya say about Oleg?",
+      "filters": {
+        "speakers": ["Priya"]
+      },
+      "expected": [
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Priya",
+          "atMs": 115000,
+          "quote": "I would not want him on this team"
+        }
+      ],
+      "answer": "She did his culture interview, said he interrupted a lot and dismissed two of her questions, and would not want him on the team."
+    },
+    {
+      "id": "hiring-headcount",
+      "type": "answerable",
+      "kind": "action",
+      "question": "What is Gus's action item in the hiring sync?",
+      "scope": ["hiring-sync.vtt"],
+      "filters": {
+        "speakers": ["Gus"]
+      },
+      "expected": [
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Gus",
+          "atMs": 235000,
+          "quote": "I'll get the headcount approval to you by Monday"
+        }
+      ],
+      "answer": "Get the extra backend headcount approved and send it to Hana by Monday."
+    },
+    {
+      "id": "hiring-offer-letter",
+      "type": "answerable",
+      "kind": "action",
+      "question": "When will Noor get the offer letter?",
+      "expected": [
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Hana",
+          "atMs": 248000,
+          "quote": "I'll send Noor the offer letter by Wednesday"
+        }
+      ],
+      "answer": "Hana will send it by Wednesday, once the headcount is approved."
+    },
+    {
+      "id": "hiring-designer",
+      "type": "answerable",
+      "kind": "decision",
+      "question": "What was decided about the junior designer role?",
+      "expected": [
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Gus",
+          "atMs": 390000,
+          "quote": "let's pause the junior designer hiring until January"
+        }
+      ],
+      "answer": "Hiring is paused until January."
+    },
+    {
+      "id": "hiring-referral",
+      "type": "answerable",
+      "kind": "decision",
+      "question": "Was the referral bonus raised?",
+      "expected": [
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Gus",
+          "atMs": 450000,
+          "quote": "that needs finance to look at it. I wouldn't decide it today"
+        }
+      ],
+      "answer": "No. Hana suggested raising it from one to two thousand euros, but it needs finance and was not decided."
+    },
+    {
+      "id": "hiring-relocation",
+      "type": "answerable",
+      "kind": "fact",
+      "question": "What is still open about relocation?",
+      "expected": [
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Hana",
+          "atMs": 505000,
+          "quote": "Nobody has defined a relocation budget yet"
+        }
+      ],
+      "answer": "There is no relocation budget defined yet."
+    },
+    {
+      "id": "hiring-notice-period",
+      "type": "answerable",
+      "kind": "fact",
+      "question": "What concern was raised about Noor?",
+      "expected": [
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Marcus",
+          "atMs": 62000,
+          "quote": "The only concern is her notice period, which is three months"
+        }
+      ],
+      "answer": "Her notice period of three months, which Gus found acceptable for a senior hire."
+    },
+    {
+      "id": "hiring-feedback",
+      "type": "answerable",
+      "kind": "action",
+      "question": "Who writes the feedback summary for Oleg and when?",
+      "expected": [
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Marcus",
+          "atMs": 310000,
+          "quote": "I'll write the feedback summary for Oleg's rejection"
+        },
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Marcus",
+          "atMs": 336000,
+          "quote": "By tomorrow end of day"
+        }
+      ],
+      "answer": "Marcus, by tomorrow end of day."
+    },
+    {
+      "id": "hiring-after-six",
+      "type": "answerable",
+      "kind": "time",
+      "question": "What was said in the hiring sync after 00:06:00?",
+      "scope": ["hiring-sync.vtt"],
+      "filters": {
+        "time": "after 00:06:00"
+      },
+      "expected": [
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Gus",
+          "atMs": 390000,
+          "quote": "let's pause the junior designer hiring until January"
+        },
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Hana",
+          "atMs": 425000,
+          "quote": "raising it from one thousand to two thousand euros"
+        }
+      ],
+      "answer": "The junior designer hiring was paused until January, Hana suggested a higher referral bonus (not decided), and the relocation budget stayed open."
+    },
+    {
+      "id": "hiring-around-offer",
+      "type": "answerable",
+      "kind": "time",
+      "question": "What happened around 00:03:15 in the hiring sync?",
+      "scope": ["hiring-sync.vtt"],
+      "filters": {
+        "time": "around 00:03:15"
+      },
+      "expected": [
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Gus",
+          "atMs": 195000,
+          "quote": "we extend an offer to Noor, at band five"
+        }
+      ],
+      "answer": "Gus decided to extend an offer to Noor at band five, right after deciding against Oleg."
+    },
+    {
+      "id": "friday-actions",
+      "type": "answerable",
+      "kind": "overview",
+      "question": "Which action items are due on Friday?",
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Marcus",
+          "atMs": 494000,
+          "quote": "I'll write the offline sync estimate and send it to everyone by Friday"
+        },
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Dana",
+          "atMs": 344000,
+          "quote": "The alert I can do this week, by Friday"
+        },
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Gus",
+          "atMs": 510000,
+          "quote": "I'll write the post-mortem document and share it by Friday"
+        },
+        {
+          "meeting": "product-planning.txt",
+          "notes": true
+        },
+        {
+          "meeting": "incident-review.txt",
+          "notes": true
+        }
+      ],
+      "answer": "Marcus's offline sync estimate (planning), Dana's expiry alert and Gus's post-mortem (incident review)."
+    },
+    {
+      "id": "priya-roadmap",
+      "type": "answerable",
+      "kind": "speaker",
+      "question": "What did Priya say about the roadmap?",
+      "filters": {
+        "speakers": ["Priya"]
+      },
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Priya",
+          "atMs": 8000,
+          "quote": "we need to settle the Q4 roadmap"
+        },
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Priya",
+          "atMs": 370000,
+          "quote": "with the roadmap shifting I don't need a junior designer before the new year"
+        }
+      ],
+      "answer": "In planning she set out to settle the Q4 roadmap and decided dark mode ships in Q4 and offline sync moves to Q1; in the hiring sync she said the shifting roadmap means no junior designer is needed before the new year."
+    },
+    {
+      "id": "incident-actions-overview",
+      "type": "answerable",
+      "kind": "overview",
+      "question": "What action items came out of the incident review?",
+      "expected": [
+        {
+          "meeting": "incident-review.txt",
+          "notes": true
+        },
+        {
+          "meeting": "incident-review.txt",
+          "speaker": "Erik",
+          "atMs": 330000,
+          "quote": "I can have the script done by October 3rd"
+        }
+      ],
+      "answer": "Erik: rotation script by October 3rd and the runbook; Dana: expiry alert by Friday and the internal certificate check; Fatima: customer email today; Gus: post-mortem by Friday."
+    },
+    {
+      "id": "planning-decisions-overview",
+      "type": "answerable",
+      "kind": "overview",
+      "question": "What decisions were made in the product planning meeting?",
+      "scope": ["product-planning.txt"],
+      "expected": [
+        {
+          "meeting": "product-planning.txt",
+          "notes": true
+        },
+        {
+          "meeting": "product-planning.txt",
+          "speaker": "Priya",
+          "atMs": 390000,
+          "quote": "we ship dark mode in Q4 and offline sync moves to Q1"
+        }
+      ],
+      "answer": "Dark mode in Q4 and offline sync in Q1; onboarding mockups in Q4 with implementation after dark mode."
+    },
+    {
+      "id": "hiring-open-overview",
+      "type": "answerable",
+      "kind": "overview",
+      "question": "What questions were left open in the hiring sync?",
+      "scope": ["hiring-sync.vtt"],
+      "expected": [
+        {
+          "meeting": "hiring-sync.vtt",
+          "notes": true
+        },
+        {
+          "meeting": "hiring-sync.vtt",
+          "speaker": "Hana",
+          "atMs": 505000,
+          "quote": "Nobody has defined a relocation budget yet"
+        }
+      ],
+      "answer": "The relocation budget for senior hires; the referral bonus increase was also left for finance."
+    },
+    {
+      "id": "unanswerable-campaign-budget",
+      "type": "unanswerable",
+      "question": "What is the budget for the Q4 marketing campaign?",
+      "note": "No meeting mentions a marketing campaign or its budget.",
+      "absentTerms": ["campaign"]
+    },
+    {
+      "id": "unanswerable-board",
+      "type": "unanswerable",
+      "question": "What was decided at the board meeting?",
+      "note": "No board meeting is among the transcripts.",
+      "absentTerms": ["board"]
+    },
+    {
+      "id": "unanswerable-salary",
+      "type": "unanswerable",
+      "question": "What salary was offered to Noor?",
+      "note": "The offer is at band five, but no salary is ever mentioned.",
+      "absentTerms": ["salary"],
+      "hard": true
+    },
+    {
+      "id": "unanswerable-provider-name",
+      "type": "unanswerable",
+      "question": "Which payment provider does the company use?",
+      "note": "The provider is never named, only called the payment provider.",
+      "absentTerms": ["Stripe", "Adyen", "Braintree"],
+      "hard": true
+    },
+    {
+      "id": "unanswerable-layoffs",
+      "type": "unanswerable",
+      "question": "Which engineers were laid off after the outage?",
+      "note": "Nobody was laid off.",
+      "absentTerms": ["laid off", "layoffs"]
+    },
+    {
+      "id": "unanswerable-tomas-certificates",
+      "type": "unanswerable",
+      "question": "What did Tomás say about the certificate expiry?",
+      "note": "Tomás only speaks in the planning meeting, which never mentions certificates.",
+      "absentTerms": ["Tomás certificate"],
+      "hard": true
+    }
+  ],
+  "notes": [
+    {
+      "meeting": "product-planning.txt",
+      "decisions": [
+        {
+          "keywords": ["dark mode", "q4"],
+          "quote": "we ship dark mode in Q4 and offline sync moves to Q1"
+        },
+        {
+          "keywords": ["offline sync", "q1"],
+          "quote": "we ship dark mode in Q4 and offline sync moves to Q1"
+        }
+      ],
+      "staleDecisions": [
+        {
+          "keywords": ["offline sync", "headline"],
+          "quote": "offline sync is our Q4 headline feature"
+        }
+      ],
+      "notDecisions": [
+        {
+          "keywords": ["discount", "annual"],
+          "quote": "I would suggest a discount for annual plans"
+        },
+        {
+          "keywords": ["tech debt"],
+          "quote": "let's confirm it after the dark mode release"
+        }
+      ],
+      "actionItems": [
+        {
+          "owner": "Lena",
+          "keywords": ["onboarding", "mockups"],
+          "due": "25",
+          "quote": "I'll have the onboarding mockups ready by the 25th"
+        },
+        {
+          "owner": "Marcus",
+          "keywords": ["estimate"],
+          "due": "Friday",
+          "quote": "I'll write the offline sync estimate and send it to everyone by Friday"
+        },
+        {
+          "owner": "Tomás",
+          "keywords": ["quotes"],
+          "due": null,
+          "quote": "I'll collect quotes from the customers who asked for offline sync"
+        },
+        {
+          "owner": null,
+          "keywords": ["roadmap", "page"],
+          "due": null,
+          "quote": "Somebody needs to update that"
+        }
+      ],
+      "openQuestions": [
+        {
+          "keywords": ["enterprise"],
+          "quote": "Enterprise pricing is an open question for now"
+        }
+      ]
+    },
+    {
+      "meeting": "incident-review.txt",
+      "decisions": [
+        {
+          "keywords": ["rotat"],
+          "quote": "Agreed on both. Erik writes the rotation script"
+        },
+        {
+          "keywords": ["alert"],
+          "quote": "Dana sets up the expiry alert"
+        },
+        {
+          "keywords": ["not", "provider"],
+          "quote": "We are not switching providers for now"
+        },
+        {
+          "keywords": ["refund"],
+          "quote": "We refund all forty-one automatically"
+        }
+      ],
+      "staleDecisions": [],
+      "notDecisions": [],
+      "actionItems": [
+        {
+          "owner": "Erik",
+          "keywords": ["rotat"],
+          "due": "October 3",
+          "quote": "I can have the script done by October 3rd"
+        },
+        {
+          "owner": "Dana",
+          "keywords": ["alert"],
+          "due": "Friday",
+          "quote": "The alert I can do this week, by Friday"
+        },
+        {
+          "owner": "Fatima",
+          "keywords": ["email"],
+          "due": "today",
+          "quote": "I'll draft the email today"
+        },
+        {
+          "owner": "Gus",
+          "keywords": ["mortem"],
+          "due": "Friday",
+          "quote": "I'll write the post-mortem document and share it by Friday"
+        },
+        {
+          "owner": "Erik",
+          "keywords": ["runbook"],
+          "due": null,
+          "quote": "I'll add the runbook to the rotation script ticket"
+        },
+        {
+          "owner": "Dana",
+          "keywords": ["internal"],
+          "due": null,
+          "quote": "I'll take a look, but I can't promise a date"
+        }
+      ],
+      "openQuestions": [
+        {
+          "keywords": ["internal", "certificate"],
+          "quote": "do we have certificates on internal services that might expire soon"
+        }
+      ]
+    },
+    {
+      "meeting": "hiring-sync.vtt",
+      "decisions": [
+        {
+          "keywords": ["noor", "offer"],
+          "quote": "we extend an offer to Noor, at band five"
+        },
+        {
+          "keywords": ["oleg"],
+          "quote": "we do not move forward with Oleg"
+        },
+        {
+          "keywords": ["junior designer", "january"],
+          "quote": "let's pause the junior designer hiring until January"
+        }
+      ],
+      "staleDecisions": [],
+      "notDecisions": [
+        {
+          "keywords": ["referral"],
+          "quote": "I wouldn't decide it today"
+        }
+      ],
+      "actionItems": [
+        {
+          "owner": "Gus",
+          "keywords": ["headcount"],
+          "due": "Monday",
+          "quote": "I'll get the headcount approval to you by Monday"
+        },
+        {
+          "owner": "Hana",
+          "keywords": ["offer letter"],
+          "due": "Wednesday",
+          "quote": "I'll send Noor the offer letter by Wednesday"
+        },
+        {
+          "owner": "Marcus",
+          "keywords": ["feedback"],
+          "due": "tomorrow",
+          "quote": "I'll write the feedback summary for Oleg's rejection"
+        }
+      ],
+      "openQuestions": [
+        {
+          "keywords": ["relocation"],
+          "quote": "Nobody has defined a relocation budget yet"
+        }
+      ]
+    }
+  ]
+}

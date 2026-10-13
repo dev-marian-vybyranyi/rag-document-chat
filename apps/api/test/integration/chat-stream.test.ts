@@ -674,7 +674,7 @@ describe('POST /chats/:id/messages', () => {
       const { app } = setup({
         model,
         embedder: asksOnlyAbout(LOGIN),
-        relevanceThreshold: { document: 0.99, code: 0.5 },
+        relevanceThreshold: { document: 0.99, code: 0.5, meeting: 0.99 },
       });
       const { agent, userId } = await signedIn(app, 'ann@example.com');
       await addRepository(userId);
@@ -694,7 +694,7 @@ describe('POST /chats/:id/messages', () => {
       const { app } = setup({
         model,
         embedder: asksOnlyAbout(LOGIN),
-        relevanceThreshold: { document: -1, code: 1.01 },
+        relevanceThreshold: { document: -1, code: 1.01, meeting: -1 },
       });
       const { agent, userId } = await signedIn(app, 'ann@example.com');
       await addRepository(userId);

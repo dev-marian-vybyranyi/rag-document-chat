@@ -1,0 +1,2727 @@
+{
+  "date": "2026-10-13T06:27:31.762Z",
+  "provider": "google",
+  "embeddingModel": "gemini-embedding-001",
+  "notesModel": "gemini-3.5-flash-lite",
+  "meetingRelevanceThreshold": 0.65,
+  "suggestedThreshold": {
+    "threshold": 0.6,
+    "answered": 1,
+    "refused": 0.16666666666666666
+  },
+  "cutoff": 6,
+  "ks": [
+    1,
+    3,
+    6
+  ],
+  "summary": {
+    "all": {
+      "hybrid": {
+        "questions": 46,
+        "hitAt": {
+          "1": 0.782608695652174,
+          "3": 1,
+          "6": 1
+        },
+        "mrr": 0.8768115942028986
+      },
+      "unfiltered": {
+        "questions": 46,
+        "hitAt": {
+          "1": 0.782608695652174,
+          "3": 0.9782608695652174,
+          "6": 0.9782608695652174
+        },
+        "mrr": 0.8659420289855073
+      },
+      "vector": {
+        "questions": 46,
+        "hitAt": {
+          "1": 0.6521739130434783,
+          "3": 0.9565217391304348,
+          "6": 0.9782608695652174
+        },
+        "mrr": 0.7905797101449277
+      },
+      "keyword": {
+        "questions": 46,
+        "hitAt": {
+          "1": 0.4782608695652174,
+          "3": 0.9347826086956522,
+          "6": 0.9782608695652174
+        },
+        "mrr": 0.7079710144927536
+      }
+    },
+    "byKind": {
+      "fact": {
+        "hybrid": {
+          "questions": 10,
+          "hitAt": {
+            "1": 1,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 1
+        },
+        "unfiltered": {
+          "questions": 10,
+          "hitAt": {
+            "1": 1,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 1
+        },
+        "vector": {
+          "questions": 10,
+          "hitAt": {
+            "1": 0.9,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 0.95
+        },
+        "keyword": {
+          "questions": 10,
+          "hitAt": {
+            "1": 0.6,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 0.7833333333333333
+        }
+      },
+      "decision": {
+        "hybrid": {
+          "questions": 8,
+          "hitAt": {
+            "1": 1,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 1
+        },
+        "unfiltered": {
+          "questions": 8,
+          "hitAt": {
+            "1": 1,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 1
+        },
+        "vector": {
+          "questions": 8,
+          "hitAt": {
+            "1": 1,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 1
+        },
+        "keyword": {
+          "questions": 8,
+          "hitAt": {
+            "1": 0.25,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 0.625
+        }
+      },
+      "action": {
+        "hybrid": {
+          "questions": 12,
+          "hitAt": {
+            "1": 0.6666666666666666,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 0.7916666666666669
+        },
+        "unfiltered": {
+          "questions": 12,
+          "hitAt": {
+            "1": 0.6666666666666666,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 0.7916666666666669
+        },
+        "vector": {
+          "questions": 12,
+          "hitAt": {
+            "1": 0.6666666666666666,
+            "3": 0.9166666666666666,
+            "6": 0.9166666666666666
+          },
+          "mrr": 0.7777777777777778
+        },
+        "keyword": {
+          "questions": 12,
+          "hitAt": {
+            "1": 0.25,
+            "3": 0.9166666666666666,
+            "6": 1
+          },
+          "mrr": 0.5861111111111111
+        }
+      },
+      "speaker": {
+        "hybrid": {
+          "questions": 6,
+          "hitAt": {
+            "1": 0.5,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 0.7222222222222222
+        },
+        "unfiltered": {
+          "questions": 6,
+          "hitAt": {
+            "1": 0.5,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 0.7222222222222222
+        },
+        "vector": {
+          "questions": 6,
+          "hitAt": {
+            "1": 0.3333333333333333,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 0.611111111111111
+        },
+        "keyword": {
+          "questions": 6,
+          "hitAt": {
+            "1": 0.6666666666666666,
+            "3": 0.8333333333333334,
+            "6": 1
+          },
+          "mrr": 0.7833333333333333
+        }
+      },
+      "time": {
+        "hybrid": {
+          "questions": 6,
+          "hitAt": {
+            "1": 0.5,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 0.75
+        },
+        "unfiltered": {
+          "questions": 6,
+          "hitAt": {
+            "1": 0.5,
+            "3": 0.8333333333333334,
+            "6": 0.8333333333333334
+          },
+          "mrr": 0.6666666666666666
+        },
+        "vector": {
+          "questions": 6,
+          "hitAt": {
+            "1": 0.16666666666666666,
+            "3": 0.8333333333333334,
+            "6": 1
+          },
+          "mrr": 0.4777777777777778
+        },
+        "keyword": {
+          "questions": 6,
+          "hitAt": {
+            "1": 0.5,
+            "3": 0.8333333333333334,
+            "6": 0.8333333333333334
+          },
+          "mrr": 0.6666666666666666
+        }
+      },
+      "overview": {
+        "hybrid": {
+          "questions": 4,
+          "hitAt": {
+            "1": 1,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 1
+        },
+        "unfiltered": {
+          "questions": 4,
+          "hitAt": {
+            "1": 1,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 1
+        },
+        "vector": {
+          "questions": 4,
+          "hitAt": {
+            "1": 0.5,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 0.75
+        },
+        "keyword": {
+          "questions": 4,
+          "hitAt": {
+            "1": 1,
+            "3": 1,
+            "6": 1
+          },
+          "mrr": 1
+        }
+      }
+    }
+  },
+  "filters": {
+    "named": 14,
+    "recognised": 14,
+    "unexpected": 0,
+    "relaxed": 0
+  },
+  "rows": [
+    {
+      "id": "planning-final-q4",
+      "kind": "decision",
+      "question": "What did the team finally decide to ship in Q4?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 123000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 8000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7501510539991852,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "planning-why-sync-moved",
+      "kind": "fact",
+      "question": "Why was offline sync moved to Q1?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 123000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 8000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.738001557448961,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "planning-onboarding-mockups",
+      "kind": "action",
+      "question": "Who will have the onboarding mockups ready, and by when?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 123000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 8000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.743921449944139,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "planning-sync-estimate",
+      "kind": "action",
+      "question": "Who is writing the offline sync estimate and when is it due?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 123000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 8000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 265000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7155170940563538,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "planning-customer-quotes",
+      "kind": "action",
+      "question": "What is Tomás going to do about the customers who asked for offline sync?",
+      "ranks": {
+        "hybrid": 3,
+        "unfiltered": 3,
+        "vector": 3,
+        "keyword": 3
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 123000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 8000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7292892519088764,
+      "filters": {
+        "expected": {
+          "speakers": [
+            "Tomás"
+          ],
+          "time": null
+        },
+        "actual": {
+          "speakers": [
+            "Tomás"
+          ],
+          "time": null,
+          "relaxed": false
+        },
+        "agrees": true
+      }
+    },
+    {
+      "id": "planning-roadmap-page-owner",
+      "kind": "action",
+      "question": "Who is going to update the public roadmap page?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 8000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 685000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 265000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6900347725895077,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "planning-marco-testing",
+      "kind": "speaker",
+      "question": "What does Marco say about testing offline sync?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 123000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 8000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7123878041209202,
+      "filters": {
+        "expected": {
+          "speakers": [
+            "Marco"
+          ],
+          "time": null
+        },
+        "actual": {
+          "speakers": [
+            "Marco"
+          ],
+          "time": null,
+          "relaxed": false
+        },
+        "agrees": true
+      }
+    },
+    {
+      "id": "planning-marcus-estimate",
+      "kind": "speaker",
+      "question": "What did Marcus say about the effort for offline sync?",
+      "ranks": {
+        "hybrid": 3,
+        "unfiltered": 3,
+        "vector": 2,
+        "keyword": 5
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 123000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 8000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7230527742131372,
+      "filters": {
+        "expected": {
+          "speakers": [
+            "Marcus"
+          ],
+          "time": null
+        },
+        "actual": {
+          "speakers": [
+            "Marcus"
+          ],
+          "time": null,
+          "relaxed": false
+        },
+        "agrees": true
+      }
+    },
+    {
+      "id": "planning-tomas-customers",
+      "kind": "speaker",
+      "question": "What does Tomás say customers are asking for?",
+      "ranks": {
+        "hybrid": 2,
+        "unfiltered": 2,
+        "vector": 3,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 8000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 123000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6469522034341135,
+      "filters": {
+        "expected": {
+          "speakers": [
+            "Tomás"
+          ],
+          "time": null
+        },
+        "actual": {
+          "speakers": [
+            "Tomás"
+          ],
+          "time": null,
+          "relaxed": false
+        },
+        "agrees": true
+      }
+    },
+    {
+      "id": "planning-annual-discount",
+      "kind": "decision",
+      "question": "Was a discount for annual plans approved?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 685000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 123000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 115000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7215112832580467,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "planning-enterprise-pricing",
+      "kind": "fact",
+      "question": "What is still open about the enterprise tier?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 685000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 565000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 404000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7499844626256661,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "planning-first-two-minutes",
+      "kind": "time",
+      "question": "What was discussed in the first two minutes?",
+      "ranks": {
+        "hybrid": 2,
+        "unfiltered": null,
+        "vector": 5,
+        "keyword": null
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 123000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 8000,
+          "relevant": true
+        }
+      ],
+      "bestScore": 0.6760687464940461,
+      "filters": {
+        "expected": {
+          "speakers": [],
+          "time": "first 2 minutes"
+        },
+        "actual": {
+          "speakers": [],
+          "time": "first 2 minutes",
+          "relaxed": false
+        },
+        "agrees": true
+      }
+    },
+    {
+      "id": "planning-minute-nine",
+      "kind": "time",
+      "question": "What was said between 00:09:00 and 00:10:00?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 2,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": true
+        }
+      ],
+      "bestScore": 0.6803232647503809,
+      "filters": {
+        "expected": {
+          "speakers": [],
+          "time": "00:09:00–00:10:00"
+        },
+        "actual": {
+          "speakers": [],
+          "time": "00:09:00–00:10:00",
+          "relaxed": false
+        },
+        "agrees": true
+      }
+    },
+    {
+      "id": "planning-last-two-minutes",
+      "kind": "time",
+      "question": "What happened in the last two minutes of the product planning meeting?",
+      "ranks": {
+        "hybrid": 2,
+        "unfiltered": 2,
+        "vector": 3,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 685000,
+          "relevant": true
+        }
+      ],
+      "bestScore": 0.7589023068487191,
+      "filters": {
+        "expected": {
+          "speakers": [],
+          "time": "last 2 minutes"
+        },
+        "actual": {
+          "speakers": [],
+          "time": "last 2 minutes",
+          "relaxed": false
+        },
+        "agrees": true
+      }
+    },
+    {
+      "id": "planning-tech-debt",
+      "kind": "decision",
+      "question": "Is a tech debt week scheduled?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 685000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 123000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 265000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7048292493089402,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "planning-build-time",
+      "kind": "fact",
+      "question": "How long does the build pipeline take?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 685000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 6000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 565000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 4000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6135051813255337,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "incident-cause",
+      "kind": "fact",
+      "question": "What caused the checkout outage?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "incident-review.txt",
+          "startMs": 6000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 415000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 265000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 140000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6976592856011994,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "incident-duration",
+      "kind": "fact",
+      "question": "How long was checkout down?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "incident-review.txt",
+          "startMs": 6000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 4000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 415000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 140000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 265000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6883397867083935,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "incident-detection",
+      "kind": "fact",
+      "question": "How was the outage detected, and how long after it started?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "incident-review.txt",
+          "startMs": 6000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 140000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 415000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 265000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 4000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6898421814818398,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "incident-rotation-owner",
+      "kind": "action",
+      "question": "Who writes the certificate rotation script and by when?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 2,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "incident-review.txt",
+          "startMs": 265000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 140000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 565000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 415000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 6000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.706591204338944,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "incident-alert-owner",
+      "kind": "action",
+      "question": "Who sets up the alert for expiring certificates?",
+      "ranks": {
+        "hybrid": 2,
+        "unfiltered": 2,
+        "vector": 2,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "incident-review.txt",
+          "startMs": 140000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 265000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 565000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 6000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 415000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6702608025906116,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "incident-switch-provider",
+      "kind": "decision",
+      "question": "Did the team decide to switch payment providers?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "incident-review.txt",
+          "startMs": 265000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 415000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6535153190208992,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "incident-double-charges",
+      "kind": "fact",
+      "question": "How many orders were charged twice?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "incident-review.txt",
+          "startMs": 415000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 685000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 123000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 8000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6542066190046404,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "incident-customer-email",
+      "kind": "action",
+      "question": "Who drafts the customer email?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "incident-review.txt",
+          "startMs": 415000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 6000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 140000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6450548700766113,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "incident-postmortem",
+      "kind": "action",
+      "question": "Who writes the post-mortem and when?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "incident-review.txt",
+          "startMs": 415000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 265000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 265000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6637433000189105,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "incident-audit",
+      "kind": "action",
+      "question": "Who will check the internal certificates?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "incident-review.txt",
+          "startMs": 565000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 265000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 140000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 6000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 415000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.658399112835866,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "incident-slow-fix",
+      "kind": "fact",
+      "question": "Why did the fix take so long?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "incident-review.txt",
+          "startMs": 140000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 6000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 265000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 565000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6654814042821474,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "incident-dana-alerts",
+      "kind": "speaker",
+      "question": "What did Dana say about alerts?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 2,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "incident-review.txt",
+          "startMs": 265000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 565000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 140000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 6000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6470074414639698,
+      "filters": {
+        "expected": {
+          "speakers": [
+            "Dana"
+          ],
+          "time": null
+        },
+        "actual": {
+          "speakers": [
+            "Dana"
+          ],
+          "time": null,
+          "relaxed": false
+        },
+        "agrees": true
+      }
+    },
+    {
+      "id": "incident-first-minute",
+      "kind": "time",
+      "question": "What happened in the first minute of the incident review?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "incident-review.txt",
+          "startMs": 6000,
+          "relevant": true
+        }
+      ],
+      "bestScore": 0.7453032722407169,
+      "filters": {
+        "expected": {
+          "speakers": [],
+          "time": "first 1 minute"
+        },
+        "actual": {
+          "speakers": [],
+          "time": "first 1 minute",
+          "relaxed": false
+        },
+        "agrees": true
+      }
+    },
+    {
+      "id": "hiring-offer",
+      "kind": "decision",
+      "question": "Who did the team decide to make an offer to?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 115000,
+          "relevant": true
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 265000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 4000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 404000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7254007551097068,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "hiring-oleg",
+      "kind": "decision",
+      "question": "Why did the team decide against Oleg?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 115000,
+          "relevant": true
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 4000,
+          "relevant": true
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 265000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7143914788924771,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "hiring-priya-oleg",
+      "kind": "speaker",
+      "question": "What did Priya say about Oleg?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 115000,
+          "relevant": true
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 4000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 265000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.64968799229297,
+      "filters": {
+        "expected": {
+          "speakers": [
+            "Priya"
+          ],
+          "time": null
+        },
+        "actual": {
+          "speakers": [
+            "Priya"
+          ],
+          "time": null,
+          "relaxed": false
+        },
+        "agrees": true
+      }
+    },
+    {
+      "id": "hiring-headcount",
+      "kind": "action",
+      "question": "What is Gus's action item in the hiring sync?",
+      "ranks": {
+        "hybrid": 3,
+        "unfiltered": 3,
+        "vector": 1,
+        "keyword": 5
+      },
+      "hybridTop": [
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 265000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 115000,
+          "relevant": true
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 4000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 404000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.772782214560276,
+      "filters": {
+        "expected": {
+          "speakers": [
+            "Gus"
+          ],
+          "time": null
+        },
+        "actual": {
+          "speakers": [
+            "Gus"
+          ],
+          "time": null,
+          "relaxed": false
+        },
+        "agrees": true
+      }
+    },
+    {
+      "id": "hiring-offer-letter",
+      "kind": "action",
+      "question": "When will Noor get the offer letter?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 115000,
+          "relevant": true
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 4000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 265000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 404000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 8000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7202584654979192,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "hiring-designer",
+      "kind": "decision",
+      "question": "What was decided about the junior designer role?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 265000,
+          "relevant": true
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 4000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 404000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 123000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7460741342722306,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "hiring-referral",
+      "kind": "decision",
+      "question": "Was the referral bonus raised?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 404000,
+          "relevant": true
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 115000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 265000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 685000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6850121311360142,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "hiring-relocation",
+      "kind": "fact",
+      "question": "What is still open about relocation?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 3
+      },
+      "hybridTop": [
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 404000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 565000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 685000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6823521961654692,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "hiring-notice-period",
+      "kind": "fact",
+      "question": "What concern was raised about Noor?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 2,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 4000,
+          "relevant": true
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 115000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 265000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 404000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6272165884987411,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "hiring-feedback",
+      "kind": "action",
+      "question": "Who writes the feedback summary for Oleg and when?",
+      "ranks": {
+        "hybrid": 3,
+        "unfiltered": 3,
+        "vector": null,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 115000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 265000,
+          "relevant": true
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 4000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6562048434385778,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "hiring-after-six",
+      "kind": "time",
+      "question": "What was said in the hiring sync after 00:06:00?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 2,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 265000,
+          "relevant": true
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 404000,
+          "relevant": true
+        }
+      ],
+      "bestScore": 0.7844827937842181,
+      "filters": {
+        "expected": {
+          "speakers": [],
+          "time": "after 00:06:00"
+        },
+        "actual": {
+          "speakers": [],
+          "time": "after 00:06:00",
+          "relaxed": false
+        },
+        "agrees": true
+      }
+    },
+    {
+      "id": "hiring-around-offer",
+      "kind": "time",
+      "question": "What happened around 00:03:15 in the hiring sync?",
+      "ranks": {
+        "hybrid": 2,
+        "unfiltered": 2,
+        "vector": 3,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 4000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 115000,
+          "relevant": true
+        }
+      ],
+      "bestScore": 0.7511570934789736,
+      "filters": {
+        "expected": {
+          "speakers": [],
+          "time": "around 00:03:15"
+        },
+        "actual": {
+          "speakers": [],
+          "time": "around 00:03:15",
+          "relaxed": false
+        },
+        "agrees": true
+      }
+    },
+    {
+      "id": "friday-actions",
+      "kind": "overview",
+      "question": "Which action items are due on Friday?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "incident-review.txt",
+          "startMs": null,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 415000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 265000,
+          "relevant": true
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": null,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.6492613892583943,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "priya-roadmap",
+      "kind": "speaker",
+      "question": "What did Priya say about the roadmap?",
+      "ranks": {
+        "hybrid": 2,
+        "unfiltered": 2,
+        "vector": 3,
+        "keyword": 2
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 8000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 685000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7132496898984964,
+      "filters": {
+        "expected": {
+          "speakers": [
+            "Priya"
+          ],
+          "time": null
+        },
+        "actual": {
+          "speakers": [
+            "Priya"
+          ],
+          "time": null,
+          "relaxed": false
+        },
+        "agrees": true
+      }
+    },
+    {
+      "id": "incident-actions-overview",
+      "kind": "overview",
+      "question": "What action items came out of the incident review?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 2,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "incident-review.txt",
+          "startMs": null,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 415000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 6000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 265000,
+          "relevant": true
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 140000,
+          "relevant": false
+        },
+        {
+          "file": "incident-review.txt",
+          "startMs": 565000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7638818472052976,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "planning-decisions-overview",
+      "kind": "overview",
+      "question": "What decisions were made in the product planning meeting?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 1,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "product-planning.txt",
+          "startMs": null,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 276000,
+          "relevant": true
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 418000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 123000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 8000,
+          "relevant": false
+        },
+        {
+          "file": "product-planning.txt",
+          "startMs": 565000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.7908643256328965,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    },
+    {
+      "id": "hiring-open-overview",
+      "kind": "overview",
+      "question": "What questions were left open in the hiring sync?",
+      "ranks": {
+        "hybrid": 1,
+        "unfiltered": 1,
+        "vector": 2,
+        "keyword": 1
+      },
+      "hybridTop": [
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": null,
+          "relevant": true
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 404000,
+          "relevant": true
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 265000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 4000,
+          "relevant": false
+        },
+        {
+          "file": "hiring-sync.vtt",
+          "startMs": 115000,
+          "relevant": false
+        }
+      ],
+      "bestScore": 0.768070533488945,
+      "filters": {
+        "expected": null,
+        "actual": null,
+        "agrees": true
+      }
+    }
+  ],
+  "unanswerable": [
+    {
+      "id": "unanswerable-campaign-budget",
+      "question": "What is the budget for the Q4 marketing campaign?",
+      "hard": false,
+      "bestScore": 0.6616187938706484
+    },
+    {
+      "id": "unanswerable-board",
+      "question": "What was decided at the board meeting?",
+      "hard": false,
+      "bestScore": 0.6827013388503174
+    },
+    {
+      "id": "unanswerable-salary",
+      "question": "What salary was offered to Noor?",
+      "hard": true,
+      "bestScore": 0.6818700505555274
+    },
+    {
+      "id": "unanswerable-provider-name",
+      "question": "Which payment provider does the company use?",
+      "hard": true,
+      "bestScore": 0.5950267776354616
+    },
+    {
+      "id": "unanswerable-layoffs",
+      "question": "Which engineers were laid off after the outage?",
+      "hard": false,
+      "bestScore": 0.6652388610438195
+    },
+    {
+      "id": "unanswerable-tomas-certificates",
+      "question": "What did Tomás say about the certificate expiry?",
+      "hard": true,
+      "bestScore": 0.6439319589046203
+    }
+  ],
+  "thresholds": [
+    {
+      "threshold": 0.2,
+      "answered": 1,
+      "refused": 0
+    },
+    {
+      "threshold": 0.25,
+      "answered": 1,
+      "refused": 0
+    },
+    {
+      "threshold": 0.3,
+      "answered": 1,
+      "refused": 0
+    },
+    {
+      "threshold": 0.35,
+      "answered": 1,
+      "refused": 0
+    },
+    {
+      "threshold": 0.4,
+      "answered": 1,
+      "refused": 0
+    },
+    {
+      "threshold": 0.45,
+      "answered": 1,
+      "refused": 0
+    },
+    {
+      "threshold": 0.5,
+      "answered": 1,
+      "refused": 0
+    },
+    {
+      "threshold": 0.55,
+      "answered": 1,
+      "refused": 0
+    },
+    {
+      "threshold": 0.6,
+      "answered": 1,
+      "refused": 0.16666666666666666
+    },
+    {
+      "threshold": 0.65,
+      "answered": 0.8478260869565217,
+      "refused": 0.3333333333333333
+    },
+    {
+      "threshold": 0.7,
+      "answered": 0.5217391304347826,
+      "refused": 1
+    }
+  ],
+  "notes": {
+    "summary": {
+      "meetings": 3,
+      "withNotes": 3,
+      "decisionRecall": 1,
+      "decisionPrecision": 1,
+      "staleReported": 0,
+      "proposalsReported": 0,
+      "actionRecall": 0.8461538461538461,
+      "ownerAccuracy": 1,
+      "dueAccuracy": 1,
+      "questionRecall": 1
+    },
+    "meetings": [
+      {
+        "meeting": "product-planning.txt",
+        "hasNotes": true,
+        "decisions": {
+          "expected": 2,
+          "found": 2,
+          "reported": 1,
+          "supported": 1,
+          "stale": 0,
+          "proposals": 0
+        },
+        "actionItems": {
+          "expected": 4,
+          "found": 3,
+          "reported": 3,
+          "ownerCorrect": 3,
+          "dueCorrect": 3
+        },
+        "openQuestions": {
+          "expected": 1,
+          "found": 1
+        },
+        "missed": [
+          "action item: roadmap + page"
+        ]
+      },
+      {
+        "meeting": "incident-review.txt",
+        "hasNotes": true,
+        "decisions": {
+          "expected": 4,
+          "found": 4,
+          "reported": 3,
+          "supported": 3,
+          "stale": 0,
+          "proposals": 0
+        },
+        "actionItems": {
+          "expected": 6,
+          "found": 5,
+          "reported": 5,
+          "ownerCorrect": 5,
+          "dueCorrect": 5
+        },
+        "openQuestions": {
+          "expected": 1,
+          "found": 1
+        },
+        "missed": [
+          "action item: internal"
+        ]
+      },
+      {
+        "meeting": "hiring-sync.vtt",
+        "hasNotes": true,
+        "decisions": {
+          "expected": 3,
+          "found": 3,
+          "reported": 3,
+          "supported": 3,
+          "stale": 0,
+          "proposals": 0
+        },
+        "actionItems": {
+          "expected": 3,
+          "found": 3,
+          "reported": 4,
+          "ownerCorrect": 3,
+          "dueCorrect": 3
+        },
+        "openQuestions": {
+          "expected": 1,
+          "found": 1
+        },
+        "missed": []
+      }
+    ]
+  }
+}

@@ -35,6 +35,10 @@ function source(
     repoUrl: null,
     repoRef: null,
     commitSha: null,
+    meetingHeldOn: null,
+    participants: null,
+    durationMs: null,
+    notes: null,
     progress: null,
     suggestions: [`A question about ${filename}?`],
     createdAt: '2026-10-07T10:00:00Z',
@@ -163,6 +167,104 @@ describe('choosing the sources of a chat', () => {
       await user.click(await trigger());
 
       expect(await screen.findByText(/You have no sources yet/)).toBeInTheDocument();
+    });
+  });
+
+  describe('the groups', () => {
+    const retro = source('m1', 'Retro', 'transcript');
+    const standup = source('m2', 'Standup', 'transcript');
+    const mixed = [retro, shop, handbook, standup, notes];
+
+    it('keeps documents, code and meetings apart, each under its own heading', async () => {
+      setup(null, {}, mixed);
+      const user = userEvent.setup();
+
+      const list = await openPicker(user);
+
+      expect(within(list).getByText('Documents')).toBeInTheDocument();
+      expect(within(list).getByText('Code repositories')).toBeInTheDocument();
+      expect(within(list).getByText('Meetings')).toBeInTheDocument();
+      const names = (group: string) =>
+        within(within(list).getByRole('list', { name: group }))
+          .getAllByRole('checkbox')
+          .map((box) => box.closest('label')!.textContent);
+      expect(names('Documents')).toEqual(['handbook.pdf', 'notes.txt']);
+      expect(names('Code repositories')).toEqual(['acme/shop']);
+      expect(names('Meetings')).toEqual(['Retro', 'Standup']);
+    });
+
+    it('lists the groups in the same order whatever the order of the library', async () => {
+      setup(null, {}, mixed);
+      const user = userEvent.setup();
+
+      const list = await openPicker(user);
+
+      expect(
+        within(list)
+          .getAllByRole('checkbox')
+          .map((b) => b.closest('label')!.textContent),
+      ).toEqual(['handbook.pdf', 'notes.txt', 'acme/shop', 'Retro', 'Standup']);
+    });
+
+    it('has no headings when there is only one kind of source', async () => {
+      setup(null, {}, [retro, standup]);
+      const user = userEvent.setup();
+
+      const list = await openPicker(user);
+
+      expect(within(list).queryByText('Meetings')).not.toBeInTheDocument();
+      expect(within(list).getAllByRole('checkbox')).toHaveLength(2);
+    });
+
+    it('ticks and unticks a meeting like any other source', async () => {
+      const api = setup(['m1', 'd1'], { 'PATCH /api/chats/c1': respond(['d1']) }, mixed);
+      const user = userEvent.setup();
+      const list = await openPicker(user);
+
+      await user.click(within(list).getByRole('checkbox', { name: /Retro/ }));
+
+      await waitFor(() => expect(patches(api).map((c) => c.body)).toEqual([{ sourceIds: ['d1'] }]));
+    });
+
+    it('has the choice "Meetings only"', async () => {
+      const api = setup(null, { 'PATCH /api/chats/c1': respond(['m1', 'm2']) }, mixed);
+      const user = userEvent.setup();
+      await openPicker(user);
+
+      await user.click(screen.getByRole('button', { name: 'Meetings only' }));
+
+      await waitFor(() =>
+        expect(patches(api).map((c) => c.body)).toEqual([{ sourceIds: ['m1', 'm2'] }]),
+      );
+    });
+
+    it('leaves meetings out of "Documents only"', async () => {
+      const api = setup(null, { 'PATCH /api/chats/c1': respond(['d1', 'd2']) }, mixed);
+      const user = userEvent.setup();
+      await openPicker(user);
+
+      await user.click(screen.getByRole('button', { name: 'Documents only' }));
+
+      await waitFor(() =>
+        expect(patches(api).map((c) => c.body)).toEqual([{ sourceIds: ['d1', 'd2'] }]),
+      );
+    });
+
+    it('cannot choose meetings when the library has none', async () => {
+      setup(null, {}, [handbook, shop]);
+      const user = userEvent.setup();
+      await openPicker(user);
+
+      expect(screen.getByRole('button', { name: 'Meetings only' })).toBeDisabled();
+    });
+
+    it('names meetings in the hint for an empty library', async () => {
+      setup(null, {}, []);
+      const user = userEvent.setup();
+
+      await user.click(await trigger());
+
+      expect(await screen.findByText(/a code repository or a meeting first/)).toBeInTheDocument();
     });
   });
 

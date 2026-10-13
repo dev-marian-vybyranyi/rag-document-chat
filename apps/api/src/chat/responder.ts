@@ -84,6 +84,7 @@ export function closestPassages(chunks: RetrievedChunk[]): ClosestPassage[] {
               filename: chunk.filename,
               page: chunk.page,
               ...(chunk.code && { code: chunk.code }),
+              ...(chunk.meeting && { meeting: chunk.meeting }),
               score: chunk.vectorScore,
             },
           ]
@@ -122,6 +123,7 @@ export function toTracedChunks(chunks: RetrievedChunk[], sentIds: Set<string>): 
     filename: chunk.filename,
     page: chunk.page,
     ...(chunk.code && { code: chunk.code }),
+    ...(chunk.meeting && { meeting: chunk.meeting }),
     ordinal: chunk.ordinal,
     vectorScore: chunk.vectorScore,
     vectorRank: chunk.vectorRank,
@@ -276,6 +278,7 @@ export function createChatResponder(
             query: rewritten.query,
             rewritten: rewritten.rewritten,
             mode: result.mode,
+            ...(result.filters && { filters: result.filters }),
             bestScore: relevance.bestScore,
             threshold: relevance.threshold,
             timings: {

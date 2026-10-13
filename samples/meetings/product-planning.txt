@@ -1,0 +1,40 @@
+Product planning, 14 September 2026
+Attendees: Priya (product), Marcus (engineering), Marco (QA), Lena (design), Tomás (sales)
+
+[00:00:08] Priya: Okay, let's get started. Today we need to settle the Q4 roadmap. We have three candidates: dark mode, offline sync and the new onboarding flow.
+[00:00:31] Marcus: Before we pick, I want to say that offline sync is the biggest chunk of work. Last quarter's estimate was optimistic.
+[00:00:52] Lena: Design-wise, dark mode is mostly done. The palette and the component tokens were finished in August, so engineering would only have to wire them up.
+[00:01:15] Tomás: From the sales side, customers keep asking for offline sync. Three of my top five accounts mentioned it this month.
+[00:01:42] Priya: That matters. Marco, how does QA feel about each of these?
+[00:02:03] Marco: Dark mode is easy to test, we mostly need screenshot comparisons. Offline sync is the scary one, conflict resolution has many edge cases.
+[00:02:34] Priya: Okay. Let's make a first call. I propose we commit to offline sync for Q4 and push dark mode to the next quarter.
+[00:02:58] Tomás: I like that. Offline sync is what closes deals.
+[00:03:12] Lena: Fine by me, though I would like to start the onboarding mockups anyway.
+[00:03:30] Priya: Agreed then, offline sync is our Q4 headline feature.
+[00:04:05] Marcus: Hold on, I need to flag something. I looked at the sync design again while we were talking, and I think it is six weeks of work for two engineers, not the three weeks we assumed.
+[00:04:36] Priya: Six weeks? That changes things. Where does the extra time come from?
+[00:04:52] Marcus: Mostly conflict resolution and the migration of existing local data. And we only have two engineers available, because Erik is on the payments project.
+[00:05:20] Marco: Then the QA effort doubles too. I would need two more weeks of testing.
+[00:05:44] Priya: Let me think out loud. If sync takes six weeks plus testing, shipping it in Q4 means starting right now with no slack. Dark mode is a quick win.
+[00:06:15] Tomás: Can we at least tell customers that offline sync is coming?
+[00:06:30] Priya: We can say early next year. So, final decision: we ship dark mode in Q4 and offline sync moves to Q1.
+[00:06:58] Lena: That works for me. What about onboarding?
+[00:07:12] Priya: Onboarding mockups in Q4, implementation after dark mode. Lena, can you have the mockups ready by September 25th?
+[00:07:30] Lena: Yes, I'll have the onboarding mockups ready by the 25th.
+[00:07:55] Priya: Marcus, I would like a proper estimate for offline sync, broken down by task, so we can plan Q1 properly.
+[00:08:14] Marcus: I'll write the offline sync estimate and send it to everyone by Friday.
+[00:08:40] Tomás: I'll collect quotes from the customers who asked for offline sync, so we can use them in the Q1 planning. There is no deadline on that, I'll do it whenever I talk to them.
+[00:09:10] Priya: Good. Also, the public roadmap page still says offline sync is coming in Q4. Somebody needs to update that.
+[00:09:25] Marco: Not me, I don't have access to the website.
+[00:09:33] Lena: I can't either. I only have access to the design files.
+[00:09:47] Priya: Okay, we'll figure out who does it. Let's move on.
+[00:09:55] Marcus: While we are on housekeeping, I want to schedule a tech debt week in November. The build pipeline takes twenty-five minutes and it is hurting everyone.
+[00:10:20] Priya: I support that, but let's confirm it after the dark mode release.
+[00:10:40] Tomás: One more topic from sales. I would suggest a discount for annual plans, maybe fifteen percent, to boost renewals.
+[00:11:05] Priya: Interesting, but I don't want to decide pricing without finance. Let's revisit it next month.
+[00:11:25] Marcus: Related question: what are we going to charge for the enterprise tier? Nobody has an answer yet.
+[00:11:45] Priya: Right, that is still open. Enterprise pricing is an open question for now.
+[00:12:05] Lena: Quick one, will the dark mode launch need a new logo variant?
+[00:12:18] Priya: Not that I know of, Lena. Marco, anything for QA?
+[00:12:30] Marco: Only that I'll need the dark mode build two weeks before the release.
+[00:12:48] Priya: Noted. Thanks everyone, that's the plan.

@@ -1,4 +1,5 @@
-import type { CodeLocation } from '../documents/api';
+import type { CodeLocation, MeetingLocation } from '../documents/api';
+import { formatClock } from '../documents/meeting-status';
 import type { ChatSource } from './types';
 
 export const OVERVIEW_PATH = 'REPOSITORY_OVERVIEW';
@@ -10,12 +11,41 @@ export function describeLines(code: CodeLocation): string | null {
     : `${code.startLine}-${code.endLine}`;
 }
 
+const SPEAKERS_NAMED = 2;
+
+export function describeSpeakers(speakers: string[]): string {
+  const named = speakers.slice(0, SPEAKERS_NAMED).join(', ');
+  const more = speakers.length - SPEAKERS_NAMED;
+  return more > 0 ? `${named} +${more}` : named;
+}
+
+export function isMeetingNotes(meeting: MeetingLocation): boolean {
+  return meeting.startMs === null;
+}
+
+export function describeMeetingPart(meeting: MeetingLocation): string {
+  if (meeting.startMs === null) return 'Meeting notes';
+  const end =
+    meeting.endMs !== null && meeting.endMs > meeting.startMs
+      ? `–${formatClock(meeting.endMs)}`
+      : '';
+  return `Transcript ${formatClock(meeting.startMs)}${end}`;
+}
+
+function describeMeetingSource(filename: string, meeting: MeetingLocation): string {
+  if (meeting.startMs === null) return `${filename} · notes`;
+  const speakers = describeSpeakers(meeting.speakers);
+  return `${filename} · ${formatClock(meeting.startMs)}${speakers ? ` · ${speakers}` : ''}`;
+}
+
 export function describeLocation(source: {
   filename: string;
   page: number | null;
   code?: CodeLocation;
+  meeting?: MeetingLocation;
 }): string {
   const { code } = source;
+  if (!code && source.meeting) return describeMeetingSource(source.filename, source.meeting);
   if (!code) {
     return source.page === null ? source.filename : `${source.filename}, page ${source.page}`;
   }

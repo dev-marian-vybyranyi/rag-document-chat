@@ -48,6 +48,117 @@ function data(overrides: Partial<WhyData> = {}): WhyData {
   };
 }
 
+describe('WhyContent for meetings', () => {
+  const spoken = { startMs: 70_000, endMs: 120_000, speakers: ['Alice', 'Bob', 'Carol'] };
+
+  it('names a passage of a meeting by its time and speakers, in the list of what the model was given', () => {
+    render(
+      <WhyContent
+        data={data({
+          sources: [source(1, { filename: 'Release sync', page: null, meeting: spoken })],
+          answer: 'Carol does [1].',
+        })}
+      />,
+    );
+
+    const given = screen.getByText('Passages the model was given').closest('section')!;
+
+    expect(given).toHaveTextContent('[1] Release sync · 00:01:10 · Alice, Bob +1');
+    expect(given).toHaveTextContent('Cited');
+  });
+
+  it('names the closest passages of a meeting the same way', () => {
+    render(
+      <WhyContent
+        data={data({
+          sources: [],
+          retrieval: {
+            ...retrieval,
+            bestScore: 0.3,
+            outcome: 'declined',
+            closest: [{ filename: 'Release sync', page: null, meeting: spoken, score: 0.3 }],
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getAllByRole('listitem')[0]).toHaveTextContent('Release sync · 00:01:10');
+  });
+
+  it('says what the question was limited to', () => {
+    render(
+      <WhyContent
+        data={data({
+          retrieval: {
+            ...retrieval,
+            filters: { speakers: ['Carol'], time: 'first 10 minutes', relaxed: false },
+          },
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText(/Limited to what Carol said, first 10 minutes, as your question asked\./),
+    ).toBeInTheDocument();
+  });
+
+  it('says what the question was limited to when only a person, or only a time, was named', () => {
+    const { rerender } = render(
+      <WhyContent
+        data={data({
+          retrieval: {
+            ...retrieval,
+            filters: { speakers: ['Alice', 'Bob'], time: null, relaxed: false },
+          },
+        })}
+      />,
+    );
+    expect(
+      screen.getByText(/Limited to what Alice or Bob said, as your question asked\./),
+    ).toBeInTheDocument();
+
+    rerender(
+      <WhyContent
+        data={data({
+          retrieval: {
+            ...retrieval,
+            filters: { speakers: [], time: 'after 00:25:00', relaxed: false },
+          },
+        })}
+      />,
+    );
+    expect(
+      screen.getByText(/Limited to after 00:25:00, as your question asked\./),
+    ).toBeInTheDocument();
+  });
+
+  it('says plainly when the limit had to be given up', () => {
+    render(
+      <WhyContent
+        data={data({
+          retrieval: {
+            ...retrieval,
+            filters: { speakers: ['Carol'], time: 'after 02:00:00', relaxed: true },
+          },
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        /named what Carol said, after 02:00:00, but nothing matched that, so the search was widened to the whole meeting/,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Limited to/)).not.toBeInTheDocument();
+  });
+
+  it('says nothing about meetings when the question did not name anyone or any time', () => {
+    render(<WhyContent data={data()} />);
+
+    expect(screen.queryByText(/Meetings:/)).not.toBeInTheDocument();
+  });
+});
+
 describe('WhyContent', () => {
   it('says the question was searched as written when it was not rewritten', () => {
     render(<WhyContent data={data()} />);

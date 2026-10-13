@@ -1,3 +1,4 @@
+import type { MeetingLocation } from '../meetings/types.js';
 import type { CodeSource } from './code-source.js';
 import type { RetrievalCandidate } from './retrieval.js';
 
@@ -10,6 +11,7 @@ export interface RetrievedChunk {
   ordinal: number;
   page: number | null;
   code?: CodeSource;
+  meeting?: MeetingLocation;
   content: string;
   score: number;
   vectorScore: number | null;
@@ -36,6 +38,7 @@ export function fuseRankings(
         ordinal: candidate.ordinal,
         page: candidate.page,
         ...(candidate.code && { code: candidate.code }),
+        ...(candidate.meeting && { meeting: candidate.meeting }),
         content: candidate.content,
         score: 0,
         vectorScore: null,

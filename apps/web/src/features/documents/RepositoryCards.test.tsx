@@ -27,6 +27,10 @@ function repo(overrides: Partial<DocumentItem> = {}): DocumentItem {
     repoUrl: 'https://github.com/acme/shop',
     repoRef: null,
     commitSha: SHA,
+    meetingHeldOn: null,
+    participants: null,
+    durationMs: null,
+    notes: null,
     progress: null,
     suggestions: [],
     createdAt: '2026-10-07T10:00:00Z',
@@ -45,6 +49,10 @@ const note = (overrides: Partial<DocumentItem> = {}): DocumentItem =>
     fileCount: null,
     repoUrl: null,
     commitSha: null,
+    meetingHeldOn: null,
+    participants: null,
+    durationMs: null,
+    notes: null,
     ...overrides,
   });
 
@@ -176,6 +184,10 @@ describe('a repository in the library', () => {
           status: 'processing',
           progress: { phase: 'embedding', done: 100, total: 400 },
           commitSha: null,
+          meetingHeldOn: null,
+          participants: null,
+          durationMs: null,
+          notes: null,
         }),
       ]);
       const card = await cardOf('acme/shop');
@@ -192,6 +204,10 @@ describe('a repository in the library', () => {
           status: 'processing',
           progress: { phase: 'reading', done: 0, total: 0 },
           commitSha: null,
+          meetingHeldOn: null,
+          participants: null,
+          durationMs: null,
+          notes: null,
         }),
       ]);
       const card = await cardOf('acme/shop');
@@ -243,6 +259,10 @@ describe('a repository in the library', () => {
           chunkCount: 0,
           fileCount: null,
           commitSha: null,
+          meetingHeldOn: null,
+          participants: null,
+          durationMs: null,
+          notes: null,
         }),
       ]);
 

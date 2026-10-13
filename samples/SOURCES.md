@@ -48,3 +48,21 @@ Of that repository only these files are indexed, the ones a reader would ask abo
 `package.json`, `Readme.md`, `LICENSE`, `docs/error-handling.md` and `docs/guide.md`. The commit
 and the list live in `apps/api/src/eval/reference-repository.ts`.
 
+
+## Sample meetings (written for this project)
+
+The meeting evaluation (`scripts/eval/golden-meetings.json`) asks questions about three transcripts
+in `samples/meetings`. Unlike everything above they are not taken from anywhere: the meetings, the
+people and the companies are invented for this repository, so there is no licence to carry and the
+files may be kept here. They are drafted with an AI assistant and read through by the maintainer.
+
+| File | Format | Invented meeting | Held |
+|---|---|---|---|
+| `product-planning.txt` | `[hh:mm:ss] Name: text`, with a title and attendees above the first turn | Q4 roadmap: a decision made and then reversed, a task nobody owns, a discount that was only proposed | 2026-09-14 |
+| `incident-review.txt` | `Name (hh:mm:ss): text` | A checkout outage: an estimate that is corrected later, a provider switch that is rejected, owners with and without deadlines | 2026-09-24 |
+| `hiring-sync.vtt` | WebVTT with `<v Name>` voice tags | Two candidates and a paused role: a decision to make an offer, a bonus left to finance, a budget nobody has defined | 2026-10-05 |
+
+Names that look alike (Marcus and Marco) and people who speak in two meetings (Priya, Marcus, Gus)
+are there on purpose, to see whether answers keep the speakers apart. A line is quoted in the golden
+set only if it is word for word in one turn; `apps/api/test/golden-meetings.test.ts` checks every
+quote, speaker and time against the files.

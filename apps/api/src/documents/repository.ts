@@ -1,6 +1,7 @@
 import { and, asc, count, desc, eq, getTableColumns, gte, lte, sql } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import { chunks, documents } from '../db/schema.js';
+import type { MeetingLocation, MeetingNotes } from '../meetings/types.js';
 import type { CodeSource } from '../rag/code-source.js';
 
 export type DocumentRecord = typeof documents.$inferSelect;
@@ -18,6 +19,9 @@ export interface CodeLocation {
 }
 
 export interface NewChunk extends Partial<CodeLocation> {
+  startMs?: number | null;
+  endMs?: number | null;
+  speakers?: string[] | null;
   ordinal: number;
   page: number | null;
   content: string;
@@ -25,7 +29,7 @@ export interface NewChunk extends Partial<CodeLocation> {
   embedding: number[];
 }
 
-export type ProgressPhase = 'downloading' | 'reading' | 'embedding';
+export type ProgressPhase = 'downloading' | 'reading' | 'analyzing' | 'transcribing' | 'embedding';
 
 export interface Progress {
   phase: ProgressPhase;
@@ -37,6 +41,7 @@ export interface Passage {
   ordinal: number;
   page: number | null;
   code?: CodeSource;
+  meeting?: MeetingLocation;
   content: string;
 }
 
@@ -52,6 +57,9 @@ export function createDocumentRepository(db: Database) {
       repoUrl?: string;
       repoRef?: string | null;
       commitSha?: string;
+      meetingHeldOn?: string;
+      participants?: string[];
+      durationMs?: number;
       filename: string;
       mimeType: string;
       sizeBytes: number;
@@ -106,6 +114,9 @@ export function createDocumentRepository(db: Database) {
           startLine: chunks.startLine,
           endLine: chunks.endLine,
           symbol: chunks.symbol,
+          startMs: chunks.startMs,
+          endMs: chunks.endMs,
+          speakers: chunks.speakers,
         })
         .from(chunks)
         .where(
@@ -118,10 +129,60 @@ export function createDocumentRepository(db: Database) {
         )
         .orderBy(asc(chunks.ordinal));
       const passages: Passage[] = rows.map(
-        ({ path, language, startLine, endLine, symbol, ...rest }) =>
-          path === null ? rest : { ...rest, code: { path, language, startLine, endLine, symbol } },
+        ({ path, language, startLine, endLine, symbol, startMs, endMs, speakers, ...rest }) => ({
+          ...rest,
+          ...(path !== null && { code: { path, language, startLine, endLine, symbol } }),
+          ...(speakers !== null && { meeting: { startMs, endMs, speakers } }),
+        }),
       );
       return { document, passages };
+    },
+
+    async transcriptPassages(id: string, userId: string): Promise<string[]> {
+      const rows = await db
+        .select({ content: chunks.content })
+        .from(chunks)
+        .where(
+          and(
+            eq(chunks.documentId, id),
+            eq(chunks.userId, userId),
+            sql`${chunks.startMs} is not null`,
+          ),
+        )
+        .orderBy(asc(chunks.ordinal));
+      return rows.map((row) => row.content);
+    },
+
+    async replaceNotes(input: {
+      documentId: string;
+      userId: string;
+      notes: MeetingNotes;
+      chunks: Omit<NewChunk, 'ordinal'>[];
+    }): Promise<void> {
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(chunks)
+          .where(and(eq(chunks.documentId, input.documentId), sql`${chunks.startMs} is null`));
+        const [last] = await tx
+          .select({ ordinal: sql<number>`coalesce(max(${chunks.ordinal}), -1)::int` })
+          .from(chunks)
+          .where(eq(chunks.documentId, input.documentId));
+        const first = (last?.ordinal ?? -1) + 1;
+        if (input.chunks.length > 0) {
+          await tx.insert(chunks).values(
+            input.chunks.map((chunk, i) => ({
+              ...chunk,
+              ordinal: first + i,
+              documentId: input.documentId,
+              userId: input.userId,
+            })),
+          );
+        }
+        await tx
+          .update(documents)
+          .set({ notes: input.notes })
+          .where(eq(documents.id, input.documentId));
+      });
     },
 
     async deleteForUser(id: string, userId: string): Promise<boolean> {
@@ -140,6 +201,9 @@ export function createDocumentRepository(db: Database) {
       suggestions?: string[];
       fileCount?: number;
       commitSha?: string;
+      participants?: string[];
+      durationMs?: number;
+      notes?: MeetingNotes | null;
       chunks: NewChunk[];
     }): Promise<void> {
       await db.transaction(async (tx) => {
@@ -166,6 +230,9 @@ export function createDocumentRepository(db: Database) {
             progressTotal: null,
             ...(input.fileCount !== undefined && { fileCount: input.fileCount }),
             ...(input.commitSha !== undefined && { commitSha: input.commitSha }),
+            ...(input.participants !== undefined && { participants: input.participants }),
+            ...(input.durationMs !== undefined && { durationMs: input.durationMs }),
+            ...(input.notes !== undefined && { notes: input.notes }),
           })
           .where(eq(documents.id, input.documentId));
       });

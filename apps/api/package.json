@@ -16,6 +16,7 @@
     "check:embeddings": "tsx --env-file-if-exists=../../.env scripts/check-embeddings.ts",
     "eval:retrieval": "tsx --env-file-if-exists=../../.env scripts/eval-retrieval.ts",
     "eval:code": "tsx --env-file-if-exists=../../.env scripts/eval-code.ts",
+    "eval:meetings": "tsx --env-file-if-exists=../../.env scripts/eval-meetings.ts",
     "eval:faithfulness": "tsx --env-file-if-exists=../../.env scripts/eval-faithfulness.ts"
   },
   "devDependencies": {

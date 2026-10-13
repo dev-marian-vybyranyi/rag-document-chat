@@ -36,6 +36,10 @@ function doc(overrides: Partial<DocumentItem> = {}): DocumentItem {
     repoUrl: null,
     repoRef: null,
     commitSha: null,
+    meetingHeldOn: null,
+    participants: null,
+    durationMs: null,
+    notes: null,
     progress: null,
     suggestions: ['What is HNSW?', 'How fast are queries?', 'What does recall mean?'],
     createdAt: '2026-10-07T10:00:00Z',
@@ -109,11 +113,11 @@ describe('suggested questions in an empty chat', () => {
     expect(list).toHaveTextContent('What are the notes about?');
   });
 
-  it('points to the documents page when there are no documents, and mentions repositories', async () => {
+  it('points to the documents page when there are no documents, and mentions repositories and meetings', async () => {
     setup('/chats/c1', { 'GET /api/documents': jsonResponse(200, { documents: [] }) });
 
     expect(await screen.findByText(/You have no documents yet/)).toHaveTextContent(
-      'import a code repository',
+      'import a code repository or add a meeting',
     );
     expect(screen.getByRole('link', { name: 'Add one' })).toHaveAttribute('href', '/documents');
   });
@@ -310,5 +314,134 @@ describe('suggested questions about a code repository', () => {
       'Your documents and repositories are still being processed.',
     );
     expect(screen.queryByRole('list', { name: 'Suggested questions' })).not.toBeInTheDocument();
+  });
+});
+
+describe('suggested questions about a meeting', () => {
+  const notes = {
+    summary: 'The team planned the release.',
+    topics: ['Release'],
+    decisions: [{ text: 'Ship on Friday.', startMs: 120_000, evidence: 'x' }],
+    actionItems: [
+      { task: 'Update the changelog.', owner: 'Carol', due: null, startMs: 70_000, evidence: 'y' },
+    ],
+    openQuestions: [],
+  };
+
+  const meeting = (overrides: Partial<DocumentItem> = {}) =>
+    doc({
+      id: 'm1',
+      kind: 'transcript',
+      filename: 'Release sync',
+      mimeType: 'text/plain',
+      participants: ['Alice', 'Bob', 'Carol'],
+      durationMs: 600_000,
+      notes,
+      suggestions: [],
+      ...overrides,
+    });
+
+  it('offers questions made from the notes of the meeting, in an empty chat', async () => {
+    setup('/chats/c1', { 'GET /api/documents': jsonResponse(200, { documents: [meeting()] }) });
+
+    const list = await screen.findByRole('list', { name: 'Suggested questions' });
+
+    expect(list).toHaveTextContent('What decisions were made in Release sync?');
+    expect(list).toHaveTextContent('What are the action items from Release sync?');
+    expect(list).toHaveTextContent('What is Carol responsible for in Release sync?');
+  });
+
+  it('offers some even when the meeting has no notes', async () => {
+    setup('/chats/c1', {
+      'GET /api/documents': jsonResponse(200, { documents: [meeting({ notes: null })] }),
+    });
+
+    const list = await screen.findByRole('list', { name: 'Suggested questions' });
+
+    expect(list).toHaveTextContent('What was discussed in Release sync?');
+  });
+
+  it('takes turns with the questions of other sources', async () => {
+    setup('/chats/c1', {
+      'GET /api/documents': jsonResponse(200, { documents: [meeting(), doc()] }),
+    });
+
+    const list = await screen.findByRole('list', { name: 'Suggested questions' });
+
+    expect(list).toHaveTextContent('What decisions were made in Release sync?');
+    expect(list).toHaveTextContent('What is HNSW?');
+    expect(list.querySelectorAll('li')).toHaveLength(4);
+  });
+
+  it('asks the question about the meeting when one is clicked', async () => {
+    const api = setup('/chats/c1', {
+      'GET /api/documents': jsonResponse(200, { documents: [meeting()] }),
+    });
+    const user = userEvent.setup();
+
+    await user.click(
+      await screen.findByRole('button', { name: 'What decisions were made in Release sync?' }),
+    );
+
+    await waitFor(() =>
+      expect(posts(api, 'POST /api/chats/c1/messages').map((c) => c.body)).toEqual([
+        { content: 'What decisions were made in Release sync?' },
+      ]),
+    );
+  });
+
+  it('are on the card of the meeting, and start a chat about that meeting alone', async () => {
+    const created = { ...chat, id: 'c9' };
+    const api = setup('/documents', {
+      'GET /api/documents': jsonResponse(200, { documents: [meeting(), doc()] }),
+      'POST /api/chats': jsonResponse(201, { chat: created }),
+      'GET /api/chats/c9': jsonResponse(200, { chat: created, messages: [] }),
+      'POST /api/chats/c9/messages': () => sseResponse(answerChunks(['Friday'])),
+    });
+    const user = userEvent.setup();
+
+    const questions = await screen.findByRole('list', {
+      name: 'Questions to ask about Release sync',
+    });
+    await user.click(
+      within(questions).getByRole('button', {
+        name: 'What are the action items from Release sync?',
+      }),
+    );
+
+    expect(await screen.findByText('Friday')).toBeInTheDocument();
+    expect(posts(api, 'POST /api/chats').map((c) => c.body)).toEqual([{ sourceIds: ['m1'] }]);
+    expect(posts(api, 'POST /api/chats/c9/messages').map((c) => c.body)).toEqual([
+      { content: 'What are the action items from Release sync?' },
+    ]);
+  });
+
+  it('are not shown on the card while the meeting is still being processed', async () => {
+    setup('/documents', {
+      'GET /api/documents': jsonResponse(200, {
+        documents: [meeting({ status: 'processing', notes: null })],
+      }),
+    });
+
+    await screen.findByText('Release sync');
+
+    expect(
+      screen.queryByRole('list', { name: 'Questions to ask about Release sync' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('follow the notes on the card once they are written', async () => {
+    setup('/documents', {
+      'GET /api/documents': jsonResponse(200, { documents: [meeting({ notes: null })] }),
+    });
+
+    const questions = await screen.findByRole('list', {
+      name: 'Questions to ask about Release sync',
+    });
+
+    expect(within(questions).queryByRole('button', { name: /decisions were made/ })).toBeNull();
+    expect(
+      within(questions).getByRole('button', { name: 'What was discussed in Release sync?' }),
+    ).toBeInTheDocument();
   });
 });
