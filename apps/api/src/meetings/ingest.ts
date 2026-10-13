@@ -9,19 +9,43 @@ import type { DocumentRepository, NewChunk } from '../documents/repository.js';
 import { chunkTranscript, type MeetingChunkOptions } from './chunker.js';
 import { createNoopNotesExtractor, type NotesExtractor } from './notes-extractor.js';
 import { notesPassages } from './notes-text.js';
+import {
+  defaultTranscriptLimits,
+  transcriptLimitProblem,
+  type TranscriptLimits,
+} from './limits.js';
 import type { ParsedTranscript } from './transcript.js';
+import {
+  createUnconfiguredTranscriber,
+  TranscriptionError,
+  type AudioInput,
+  type Transcriber,
+} from './transcriber.js';
 
 export const DEFAULT_MAX_MEETING_CHUNKS = 1_500;
+export const MAX_PENDING_RECORDINGS = 3;
 const UNEXPECTED_MESSAGE = 'Something went wrong while processing the transcript.';
 
-export interface MeetingJob {
+interface MeetingJobBase {
   document: { id: string; userId: string; filename: string };
-  transcript: ParsedTranscript;
   heldOn?: string | null;
 }
 
+export interface TextMeetingJob extends MeetingJobBase {
+  transcript: ParsedTranscript;
+  audio?: undefined;
+}
+
+export interface RecordingMeetingJob extends MeetingJobBase {
+  audio: AudioInput | undefined;
+  transcript?: undefined;
+}
+
+export type MeetingJob = TextMeetingJob | RecordingMeetingJob;
+
 export interface MeetingIngestionService {
   enqueue(job: MeetingJob): void;
+  pendingRecordings(): number;
   idle(): Promise<void>;
 }
 
@@ -31,6 +55,8 @@ export interface MeetingIngestionOptions {
   logger: Logger;
   embeddingModel?: string;
   notes?: NotesExtractor;
+  transcriber?: Transcriber;
+  limits?: TranscriptLimits;
   chunkOptions?: Pick<MeetingChunkOptions, 'maxTokens' | 'maxGapMs'>;
   maxChunks?: number;
   concurrency?: number;
@@ -45,18 +71,50 @@ export function createMeetingIngestion(options: MeetingIngestionOptions): Meetin
     chunkOptions,
     maxChunks = DEFAULT_MAX_MEETING_CHUNKS,
     notes: notesExtractor = createNoopNotesExtractor(),
+    transcriber = createUnconfiguredTranscriber('the transcription service'),
+    limits = defaultTranscriptLimits,
   } = options;
+  let pendingRecordings = 0;
 
   const queue = createJobQueue(options.concurrency ?? 1, (error) =>
     logger.error({ err: error }, 'meeting job crashed'),
   );
 
+  async function transcriptOf(job: MeetingJob, log: Logger): Promise<ParsedTranscript> {
+    const audio = job.audio;
+    if (audio === undefined) {
+      if (job.transcript === undefined) throw new Error('A meeting job has neither text nor audio');
+      return job.transcript;
+    }
+    try {
+      await repository.setProgress(job.document.id, { phase: 'transcribing', done: 0, total: 0 });
+      const startedAt = Date.now();
+      const transcript = await transcriber.transcribe(audio);
+      log.info(
+        {
+          turns: transcript.turns.length,
+          speakers: transcript.participants.length,
+          durationMs: Date.now() - startedAt,
+          outOfOrderTurns: transcript.outOfOrderTurns,
+        },
+        'recording transcribed',
+      );
+      const problem = transcriptLimitProblem(transcript, limits);
+      if (problem) throw new IngestionError(problem);
+      return transcript;
+    } finally {
+      job.audio = undefined;
+      pendingRecordings--;
+    }
+  }
+
   async function process(job: MeetingJob): Promise<void> {
     const log = logger.child({ documentId: job.document.id, userId: job.document.userId });
     const startedAt = Date.now();
-    const { transcript } = job;
+    const fromRecording = job.audio !== undefined;
 
     try {
+      const transcript = await transcriptOf(job, log);
       const chunks = chunkTranscript(transcript.turns, {
         ...chunkOptions,
         title: job.document.filename,
@@ -108,6 +166,9 @@ export function createMeetingIngestion(options: MeetingIngestionOptions): Meetin
         pageCount: null,
         embeddingModel,
         notes,
+        ...(fromRecording
+          ? { participants: transcript.participants, durationMs: transcript.durationMs }
+          : {}),
         chunks: chunks
           .map((chunk, i): NewChunk => ({
             ordinal: i,
@@ -142,7 +203,10 @@ export function createMeetingIngestion(options: MeetingIngestionOptions): Meetin
       return;
     }
 
-    const known = error instanceof IngestionError || error instanceof EmbeddingError;
+    const known =
+      error instanceof IngestionError ||
+      error instanceof EmbeddingError ||
+      error instanceof TranscriptionError;
     if (known) log.warn({ err: error }, 'meeting could not be indexed');
     else log.error({ err: error }, 'unexpected failure while indexing a meeting');
 
@@ -155,8 +219,10 @@ export function createMeetingIngestion(options: MeetingIngestionOptions): Meetin
 
   return {
     enqueue(job) {
+      if (job.audio !== undefined) pendingRecordings++;
       queue.add(() => process(job));
     },
+    pendingRecordings: () => pendingRecordings,
     idle: () => queue.idle(),
   };
 }

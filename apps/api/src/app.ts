@@ -68,7 +68,7 @@ export function createApp({
   cookieSecure,
   ingestion,
   repositoryIngestion = { enqueue: () => {}, idle: async () => {} },
-  meetingIngestion = { enqueue: () => {}, idle: async () => {} },
+  meetingIngestion = { enqueue: () => {}, pendingRecordings: () => 0, idle: async () => {} },
   meetingNotes = { regenerate: async () => ({ status: 'unavailable' }) },
   transcriptLimits = defaultTranscriptLimits,
   maxArchiveBytes = defaultImportLimits.maxArchiveBytes,

@@ -27,8 +27,18 @@ describe('meeting transcript endpoint', () => {
   const db = useTestDb();
   const jobs: MeetingJob[] = [];
   const app = buildTestApp(db, {
-    meetingIngestion: { enqueue: (job) => jobs.push(job), idle: async () => {} },
-    transcriptLimits: { maxBytes: 4096, maxCharacters: 1500, maxTurns: 6, maxSpeakers: 3 },
+    meetingIngestion: {
+      enqueue: (job) => jobs.push(job),
+      pendingRecordings: () => 0,
+      idle: async () => {},
+    },
+    transcriptLimits: {
+      maxBytes: 4096,
+      maxAudioBytes: 2048,
+      maxCharacters: 1500,
+      maxTurns: 6,
+      maxSpeakers: 3,
+    },
     usageLimits: { maxDocumentsPerUser: 2, maxChatsPerUser: 100, maxMessagesPerChat: 200 },
   });
 
@@ -74,8 +84,8 @@ describe('meeting transcript endpoint', () => {
       });
       expect(jobs).toHaveLength(1);
       expect(jobs[0]?.document.id).toBe(res.body.document.id);
-      expect(jobs[0]?.transcript.turns).toHaveLength(3);
-      expect(jobs[0]?.transcript.turns[1]).toEqual({
+      expect(jobs[0]?.transcript?.turns).toHaveLength(3);
+      expect(jobs[0]?.transcript?.turns[1]).toEqual({
         speaker: 'Bob',
         startMs: 12_000,
         text: 'Morning. The release is ready.',

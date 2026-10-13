@@ -29,7 +29,7 @@ export interface NewChunk extends Partial<CodeLocation> {
   embedding: number[];
 }
 
-export type ProgressPhase = 'downloading' | 'reading' | 'analyzing' | 'embedding';
+export type ProgressPhase = 'downloading' | 'reading' | 'analyzing' | 'transcribing' | 'embedding';
 
 export interface Progress {
   phase: ProgressPhase;

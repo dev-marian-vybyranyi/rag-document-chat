@@ -8,9 +8,10 @@ import { singleFileUpload } from '../documents/upload.js';
 import { AppError } from '../http/errors.js';
 import { plural } from '../http/limits.js';
 import { stripInvisibleCharacters } from '../rag/sanitize.js';
-import type { MeetingIngestionService } from './ingest.js';
+import { AUDIO_EXTENSION, checkAudio } from './audio.js';
+import { MAX_PENDING_RECORDINGS, type MeetingIngestionService } from './ingest.js';
 import type { MeetingNotesService } from './regenerate.js';
-import type { TranscriptLimits } from './limits.js';
+import { transcriptLimitProblem, type TranscriptLimits } from './limits.js';
 import { parseTranscript } from './parser.js';
 import { TranscriptParseError, type ParsedTranscript } from './transcript.js';
 
@@ -68,21 +69,31 @@ export function createMeetingsRouter({
       }
       throw error;
     }
-    if (transcript.turns.length > limits.maxTurns) {
-      throw new AppError(
-        400,
-        'invalid_transcript',
-        `The transcript has too many turns (limit ${limits.maxTurns.toLocaleString('en-US')})`,
-      );
-    }
-    if (transcript.participants.length > limits.maxSpeakers) {
-      throw new AppError(
-        400,
-        'invalid_transcript',
-        `The transcript has too many speakers (limit ${limits.maxSpeakers})`,
-      );
-    }
+    const problem = transcriptLimitProblem(transcript, limits);
+    if (problem) throw new AppError(400, 'invalid_transcript', problem);
     return transcript;
+  }
+
+  function readDetails(body: unknown) {
+    const details = detailsSchema.safeParse(body ?? {});
+    if (!details.success) {
+      throw new AppError(
+        400,
+        'validation_error',
+        `Give a title of up to ${MAX_TITLE_LENGTH} characters and a date like 2026-10-01`,
+      );
+    }
+    return details.data;
+  }
+
+  async function requireRoom(userId: string) {
+    if ((await documents.countByUser(userId)) >= maxDocumentsPerUser) {
+      throw new AppError(
+        409,
+        'document_limit',
+        `You have reached the limit of ${plural(maxDocumentsPerUser, 'document')}. Delete one to add another.`,
+      );
+    }
   }
 
   router.post(
@@ -106,27 +117,13 @@ export function createMeetingsRouter({
       const problem = checkContent({ kind: 'text', mimeType }, file.buffer);
       if (problem) throw new AppError(400, 'invalid_file', problem);
 
-      const details = detailsSchema.safeParse(req.body ?? {});
-      if (!details.success) {
-        throw new AppError(
-          400,
-          'validation_error',
-          `Give a title of up to ${MAX_TITLE_LENGTH} characters and a date like 2026-10-01`,
-        );
-      }
-
+      const details = readDetails(req.body);
       const transcript = readTranscript(file.buffer.toString('utf8'));
 
       const userId = userOf(req).id;
-      if ((await documents.countByUser(userId)) >= maxDocumentsPerUser) {
-        throw new AppError(
-          409,
-          'document_limit',
-          `You have reached the limit of ${plural(maxDocumentsPerUser, 'document')}. Delete one to add another.`,
-        );
-      }
+      await requireRoom(userId);
 
-      const title = cleanTitle(details.data.title ?? '') || filename.replace(EXTENSION, '');
+      const title = cleanTitle(details.title ?? '') || filename.replace(EXTENSION, '');
       const document = await documents.create({
         userId,
         kind: 'transcript',
@@ -135,9 +132,58 @@ export function createMeetingsRouter({
         sizeBytes: file.size,
         participants: transcript.participants,
         durationMs: transcript.durationMs,
-        ...(details.data.heldOn && { meetingHeldOn: details.data.heldOn }),
+        ...(details.heldOn && { meetingHeldOn: details.heldOn }),
       });
-      ingestion.enqueue({ document, transcript, heldOn: details.data.heldOn ?? null });
+      ingestion.enqueue({ document, transcript, heldOn: details.heldOn ?? null });
+      res.status(202).json({ document: toPublicDocument({ ...document, chunkCount: 0 }) });
+    },
+  );
+
+  router.post(
+    '/audio',
+    uploadLimiter,
+    singleFileUpload(limits.maxAudioBytes, { textFields: TEXT_FIELDS }),
+    async (req, res) => {
+      const file = req.file;
+      if (!file) throw new AppError(400, 'file_required', 'Choose a recording to upload');
+
+      const filename = sanitizeFilename(file.originalname);
+      if (!AUDIO_EXTENSION.test(filename)) {
+        throw new AppError(
+          415,
+          'unsupported_file_type',
+          'Only .mp3, .wav, .m4a and .webm recordings are supported',
+        );
+      }
+      const audio = checkAudio(filename, file.buffer);
+      if (!audio.ok) throw new AppError(400, 'invalid_file', audio.problem);
+
+      const details = readDetails(req.body);
+
+      const userId = userOf(req).id;
+      await requireRoom(userId);
+      if (ingestion.pendingRecordings() >= MAX_PENDING_RECORDINGS) {
+        throw new AppError(
+          503,
+          'ai_busy',
+          'Other recordings are being transcribed. Try again in a few minutes.',
+        );
+      }
+
+      const title = cleanTitle(details.title ?? '') || filename.replace(AUDIO_EXTENSION, '');
+      const document = await documents.create({
+        userId,
+        kind: 'transcript',
+        filename: title,
+        mimeType: audio.mediaType,
+        sizeBytes: file.size,
+        ...(details.heldOn && { meetingHeldOn: details.heldOn }),
+      });
+      ingestion.enqueue({
+        document,
+        audio: { data: new Uint8Array(file.buffer), mediaType: audio.mediaType },
+        heldOn: details.heldOn ?? null,
+      });
       res.status(202).json({ document: toPublicDocument({ ...document, chunkCount: 0 }) });
     },
   );

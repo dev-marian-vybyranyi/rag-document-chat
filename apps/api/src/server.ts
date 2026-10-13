@@ -70,6 +70,7 @@ const meetingIngestion = createMeetingIngestion({
   logger,
   embeddingModel: env.EMBEDDING_MODEL,
   notes: notesExtractor,
+  transcriber: ai.createTranscriber(logger),
 });
 
 const meetingNotes = createMeetingNotesService({
