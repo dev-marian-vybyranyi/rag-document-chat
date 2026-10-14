@@ -120,7 +120,7 @@ describe('suggested questions in an empty chat', () => {
     setup('/chats/c1', { 'GET /api/documents': jsonResponse(200, { documents: [] }) });
 
     expect(await screen.findByText(/You have no documents yet/)).toHaveTextContent(
-      'import a code repository or add a meeting',
+      'import a code repository, add a meeting, or add your resume and job postings there',
     );
     expect(screen.getByRole('link', { name: 'Add one' })).toHaveAttribute('href', '/documents');
   });
@@ -446,5 +446,135 @@ describe('suggested questions about a meeting', () => {
     expect(
       within(questions).getByRole('button', { name: 'What was discussed in Release sync?' }),
     ).toBeInTheDocument();
+  });
+});
+
+describe('suggested questions about a resume and job postings', () => {
+  const career = (overrides: Partial<DocumentItem>) =>
+    doc({ suggestions: [], pageCount: null, ...overrides });
+  const resume = career({ id: 'r1', kind: 'resume', filename: 'cv.pdf' });
+  const job = career({
+    id: 'j2',
+    kind: 'job_posting',
+    filename: 'Platform Engineer at Acme',
+    jobNumber: 2,
+  });
+
+  it('are offered in an empty chat, and asked in that chat when one is clicked', async () => {
+    const api = setup('/chats/c1', {
+      'GET /api/documents': jsonResponse(200, { documents: [resume, job] }),
+    });
+    const user = userEvent.setup();
+
+    const list = await screen.findByRole('list', { name: 'Suggested questions' });
+    expect(
+      within(list)
+        .getAllByRole('button')
+        .map((b) => b.textContent),
+    ).toEqual([
+      'What skills am I missing for Job #2?',
+      'How does my experience align with Job #2?',
+      'Prepare me for an interview for Job #2.',
+    ]);
+    await user.click(
+      within(list).getByRole('button', { name: 'Prepare me for an interview for Job #2.' }),
+    );
+
+    await waitFor(() =>
+      expect(posts(api, 'POST /api/chats/c1/messages').map((c) => c.body)).toEqual([
+        { content: 'Prepare me for an interview for Job #2.' },
+      ]),
+    );
+  });
+
+  it('are about the sources of the chat only', async () => {
+    setup('/chats/c1', {
+      'GET /api/chats': jsonResponse(200, { chats: [{ ...chat, sourceIds: ['d1'] }] }),
+      'GET /api/chats/c1': jsonResponse(200, {
+        chat: { ...chat, sourceIds: ['d1'] },
+        messages: [],
+      }),
+      'GET /api/documents': jsonResponse(200, { documents: [doc(), resume, job] }),
+    });
+
+    const list = await screen.findByRole('list', { name: 'Suggested questions' });
+
+    expect(list).not.toHaveTextContent('Job #2');
+    expect(list).toHaveTextContent('What is HNSW?');
+  });
+
+  it('are on the card of a posting, and start a chat limited to the resume and that posting', async () => {
+    const created = { ...chat, id: 'c9' };
+    const api = setup('/documents', {
+      'GET /api/documents': jsonResponse(200, { documents: [resume, job] }),
+      'POST /api/chats': jsonResponse(201, { chat: created }),
+      'GET /api/chats/c9': jsonResponse(200, { chat: created, messages: [] }),
+      'POST /api/chats/c9/messages': () => sseResponse(answerChunks(['Kubernetes is missing'])),
+    });
+    const user = userEvent.setup();
+
+    const questions = await screen.findByRole('list', {
+      name: 'Questions to ask about Job #2 · Platform Engineer at Acme',
+    });
+    await user.click(
+      within(questions).getByRole('button', { name: 'What skills am I missing for Job #2?' }),
+    );
+
+    expect(await screen.findByText('Kubernetes is missing')).toBeInTheDocument();
+    expect(posts(api, 'POST /api/chats')[0]?.body).toEqual({ sourceIds: ['r1', 'j2'] });
+    expect(posts(api, 'POST /api/chats/c9/messages').map((c) => c.body)).toEqual([
+      { content: 'What skills am I missing for Job #2?' },
+    ]);
+  });
+
+  it('are on the card of the resume, and start a chat limited to the resume', async () => {
+    const created = { ...chat, id: 'c9' };
+    const api = setup('/documents', {
+      'GET /api/documents': jsonResponse(200, { documents: [resume, job] }),
+      'POST /api/chats': jsonResponse(201, { chat: created }),
+      'GET /api/chats/c9': jsonResponse(200, { chat: created, messages: [] }),
+      'POST /api/chats/c9/messages': () => sseResponse(answerChunks(['Go and Rust'])),
+    });
+    const user = userEvent.setup();
+
+    const questions = await screen.findByRole('list', { name: 'Questions to ask about Resume' });
+    await user.click(
+      within(questions).getByRole('button', {
+        name: 'What are the strongest skills on my resume?',
+      }),
+    );
+
+    expect(await screen.findByText('Go and Rust')).toBeInTheDocument();
+    expect(posts(api, 'POST /api/chats')[0]?.body).toEqual({ sourceIds: ['r1'] });
+  });
+
+  it('on a posting without a resume ask only what the posting says', async () => {
+    setup('/documents', { 'GET /api/documents': jsonResponse(200, { documents: [job] }) });
+
+    const questions = await screen.findByRole('list', {
+      name: 'Questions to ask about Job #2 · Platform Engineer at Acme',
+    });
+
+    expect(
+      within(questions)
+        .getAllByRole('button')
+        .map((b) => b.textContent),
+    ).toEqual(['What does Job #2 require?', 'What are the responsibilities of Job #2?']);
+  });
+
+  it('are not on a card that is still being processed', async () => {
+    setup('/documents', {
+      'GET /api/documents': jsonResponse(200, {
+        documents: [resume, { ...job, status: 'processing' }],
+      }),
+    });
+
+    await screen.findByText('Job #2 · Platform Engineer at Acme');
+
+    expect(
+      screen.queryByRole('list', {
+        name: 'Questions to ask about Job #2 · Platform Engineer at Acme',
+      }),
+    ).not.toBeInTheDocument();
   });
 });

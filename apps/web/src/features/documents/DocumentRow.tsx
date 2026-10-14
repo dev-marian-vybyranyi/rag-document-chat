@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import type { DocumentItem } from './api';
 import { useStartChat } from '../chats/useStartChat';
 import { CareerDetails } from './CareerDetails';
+import { cardQuestions } from './career-questions';
 import { careerTitle, describeCareerStatus, isCareer } from './career-status';
 import { useDocuments } from './documents-context';
 import { suggestionsOf } from './meeting-questions';
@@ -80,7 +81,7 @@ function RepositoryDetails({ document }: { document: DocumentItem }) {
 }
 
 export function DocumentRow({ document }: { document: DocumentItem }) {
-  const { remove } = useDocuments();
+  const { remove, state } = useDocuments();
   const { start, failed: startFailed } = useStartChat();
   const [confirming, setConfirming] = useState(false);
   const [pending, setPending] = useState(false);
@@ -113,7 +114,9 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
   const name = career ? careerTitle(document) : document.filename;
   const speakers = isMeeting && document.participants ? shownSpeakers(document.participants) : null;
   const fraction = progressFraction(document.progress);
-  const suggestions = suggestionsOf(document);
+  const { questions: suggestions, sourceIds } = career
+    ? cardQuestions(document, state.status === 'ready' ? state.documents : [])
+    : { questions: suggestionsOf(document), sourceIds: [document.id] };
 
   return (
     <li className="flex flex-col gap-1 rounded-lg border bg-background px-4 py-3">
@@ -213,17 +216,14 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
         </ul>
       )}
       {document.status === 'ready' && suggestions.length > 0 && (
-        <ul
-          className="flex flex-wrap gap-1.5 pt-1"
-          aria-label={`Questions to ask about ${document.filename}`}
-        >
+        <ul className="flex flex-wrap gap-1.5 pt-1" aria-label={`Questions to ask about ${name}`}>
           {suggestions.map((question) => (
             <li key={question} className="max-w-full">
               <Button
                 variant="outline"
                 size="xs"
                 className="h-auto max-w-full py-1 text-left whitespace-normal"
-                onClick={() => void start(question, [document.id])}
+                onClick={() => void start(question, sourceIds)}
               >
                 {question}
               </Button>

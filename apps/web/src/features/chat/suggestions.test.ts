@@ -64,4 +64,38 @@ describe('pickSuggestions', () => {
       'a2?',
     ]);
   });
+
+  describe('with a resume and job postings', () => {
+    const resume = () => ({ ...doc('r1', []), kind: 'resume' as const, filename: 'cv' });
+    const job = (n: number) => ({
+      ...doc(`j${n}`, []),
+      kind: 'job_posting' as const,
+      filename: `Role ${n}`,
+      jobNumber: n,
+    });
+
+    it('offers questions about them, which the documents themselves cannot have', () => {
+      expect(pickSuggestions([resume(), job(2)])).toEqual([
+        'What skills am I missing for Job #2?',
+        'How does my experience align with Job #2?',
+        'Prepare me for an interview for Job #2.',
+      ]);
+    });
+
+    it('gives them one place among the questions of other documents, not all of them', () => {
+      expect(pickSuggestions([doc('a', ['a1?', 'a2?']), resume(), job(2)])).toEqual([
+        'a1?',
+        'What skills am I missing for Job #2?',
+        'a2?',
+        'How does my experience align with Job #2?',
+      ]);
+    });
+
+    it('does not offer them while the resume or the posting is not ready', () => {
+      const waiting = { ...resume(), status: 'processing' as const };
+
+      expect(pickSuggestions([waiting, job(2)])).toEqual(['What does Job #2 require?']);
+      expect(pickSuggestions([waiting])).toEqual([]);
+    });
+  });
 });

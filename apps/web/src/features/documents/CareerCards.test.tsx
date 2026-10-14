@@ -128,7 +128,9 @@ describe('the card of a resume', () => {
     const li = await card('Resume');
 
     expect(li).toHaveTextContent('No skills were found in the resume.');
-    expect(within(li).queryByRole('list')).not.toBeInTheDocument();
+    expect(
+      within(li).queryByRole('list', { name: 'Skills in the resume' }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows the progress while it is processed, with a bar and no skills', async () => {
