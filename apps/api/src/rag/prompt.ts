@@ -1,5 +1,6 @@
 import { formatTimestamp } from '../meetings/timestamp.js';
 import type { MeetingLocation } from '../meetings/types.js';
+import type { CareerSection } from '../career/types.js';
 import type { CareerSource } from './career-source.js';
 import type { CodeSource } from './code-source.js';
 import type { RetrievedChunk } from './fusion.js';
@@ -78,6 +79,7 @@ function kindsOf(sources: PromptSource[]): Set<SourceKind> {
   const kinds = new Set<SourceKind>();
   if (sources.some((source) => source.code)) kinds.add('code');
   if (sources.some((source) => source.meeting)) kinds.add('meeting');
+  if (sources.some((source) => source.career)) kinds.add('career');
   return kinds;
 }
 
@@ -91,7 +93,7 @@ function buildSources(chunks: RetrievedChunk[], maxChars: number) {
     const page = chunk.page === null ? '' : ` page="${chunk.page}"`;
     const filename = escapeAttribute(stripInvisibleCharacters(chunk.filename));
     const content = escapeMarkup(stripInvisibleCharacters(chunk.content));
-    const block = `<source id="${id}" document="${filename}"${page}${codeAttributes(chunk.code)}${meetingAttributes(chunk.meeting)}>\n${content}\n</source>`;
+    const block = `<source id="${id}" document="${filename}"${page}${codeAttributes(chunk.code)}${meetingAttributes(chunk.meeting)}${careerAttributes(chunk.career)}>\n${content}\n</source>`;
     if (sources.length > 0 && used + block.length > maxChars) break;
 
     used += block.length;
@@ -124,6 +126,21 @@ function codeAttributes(code: CodeSource | undefined): string {
     attribute('lines', lines) +
     attribute('symbol', code.symbol) +
     attribute('language', code.language)
+  );
+}
+
+const GENERATED_SECTIONS: ReadonlySet<CareerSection> = new Set(['profile', 'fit', 'overview']);
+
+function careerAttributes(career: CareerSource | undefined): string {
+  if (!career) return '';
+  const generated = career.section !== null && GENERATED_SECTIONS.has(career.section);
+  const kind = generated ? career.section! : career.role;
+  const section = generated || career.section === null ? null : career.section;
+  const job = career.role === 'job_posting' ? career.jobNumber : null;
+  return (
+    ` kind="${kind}"` +
+    (section === null || section === 'other' ? '' : ` section="${section}"`) +
+    (job === null ? '' : ` job="${job}"`)
   );
 }
 
