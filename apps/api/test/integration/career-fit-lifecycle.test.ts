@@ -778,12 +778,13 @@ describe('analysing the fit of a resume and its postings', () => {
     });
 
     it('answers 409 while the posting is still being processed', async () => {
-      const { app } = setup();
+      const { app, settle } = setup();
       const agent = await signedIn(app);
       await addResume(agent);
       const job = await addJob(agent, posting('Backend', 'Go'));
 
       const res = await agent.post(`/career/jobs/${job}/fit`);
+      await settle();
 
       expect(res.status).toBe(409);
       expect(res.body.error.message).toBe('The file is still being processed');
