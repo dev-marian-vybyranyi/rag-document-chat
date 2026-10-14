@@ -16,8 +16,10 @@ import {
 } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import { chunks, documents } from '../db/schema.js';
+import type { CareerSection } from '../career/types.js';
 import type { MeetingFacts, MeetingFilter } from '../meetings/question-filters.js';
 import type { MeetingLocation } from '../meetings/types.js';
+import type { CareerSource } from './career-source.js';
 import type { CodeSource } from './code-source.js';
 import { codeSearchTerms, toTsQueryOr } from './code-terms.js';
 
@@ -29,11 +31,17 @@ export interface RetrievalCandidate {
   page: number | null;
   code?: CodeSource;
   meeting?: MeetingLocation;
+  career?: CareerSource;
   content: string;
   score: number;
 }
 
-const PROSE_KINDS: Array<(typeof documents.kind.enumValues)[number]> = ['document', 'transcript'];
+const PROSE_KINDS: Array<(typeof documents.kind.enumValues)[number]> = [
+  'document',
+  'transcript',
+  'resume',
+  'job_posting',
+];
 
 export interface SearchScope {
   documentIds?: string[];
@@ -79,6 +87,9 @@ export function createRetrievalStore(
     startMs: chunks.startMs,
     endMs: chunks.endMs,
     speakers: chunks.speakers,
+    kind: documents.kind,
+    section: chunks.section,
+    jobNumber: documents.jobNumber,
   };
 
   function toCandidate<
@@ -91,14 +102,43 @@ export function createRetrievalStore(
       startMs: number | null;
       endMs: number | null;
       speakers: string[] | null;
+      kind: (typeof documents.kind.enumValues)[number];
+      section: CareerSection | null;
+      jobNumber: number | null;
     },
-  >({ path, language, startLine, endLine, symbol, startMs, endMs, speakers, ...rest }: Row) {
+  >({
+    path,
+    language,
+    startLine,
+    endLine,
+    symbol,
+    startMs,
+    endMs,
+    speakers,
+    kind,
+    section,
+    jobNumber,
+    ...rest
+  }: Row) {
     const candidate: Omit<
       Row,
-      'path' | 'language' | 'startLine' | 'endLine' | 'symbol' | 'startMs' | 'endMs' | 'speakers'
-    > & { code?: CodeSource; meeting?: MeetingLocation } = rest;
+      | 'path'
+      | 'language'
+      | 'startLine'
+      | 'endLine'
+      | 'symbol'
+      | 'startMs'
+      | 'endMs'
+      | 'speakers'
+      | 'kind'
+      | 'section'
+      | 'jobNumber'
+    > & { code?: CodeSource; meeting?: MeetingLocation; career?: CareerSource } = rest;
     if (path !== null) candidate.code = { path, language, startLine, endLine, symbol };
     if (speakers !== null) candidate.meeting = { startMs, endMs, speakers };
+    if (kind === 'resume' || kind === 'job_posting') {
+      candidate.career = { role: kind, section, jobNumber };
+    }
     return candidate;
   }
 

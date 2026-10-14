@@ -1,5 +1,6 @@
 import { formatTimestamp } from '../meetings/timestamp.js';
 import type { MeetingLocation } from '../meetings/types.js';
+import type { CareerSource } from './career-source.js';
 import type { CodeSource } from './code-source.js';
 import type { RetrievedChunk } from './fusion.js';
 import { recentTurns, type ChatTurn } from './history.js';
@@ -31,6 +32,7 @@ export interface PromptSource {
   page: number | null;
   code?: CodeSource;
   meeting?: MeetingLocation;
+  career?: CareerSource;
   ordinal: number;
 }
 
@@ -102,6 +104,7 @@ function buildSources(chunks: RetrievedChunk[], maxChars: number) {
       page: chunk.page,
       ...(chunk.code && { code: chunk.code }),
       ...(chunk.meeting && { meeting: chunk.meeting }),
+      ...(chunk.career && { career: chunk.career }),
       ordinal: chunk.ordinal,
     });
   }

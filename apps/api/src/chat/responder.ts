@@ -85,6 +85,7 @@ export function closestPassages(chunks: RetrievedChunk[]): ClosestPassage[] {
               page: chunk.page,
               ...(chunk.code && { code: chunk.code }),
               ...(chunk.meeting && { meeting: chunk.meeting }),
+              ...(chunk.career && { career: chunk.career }),
               score: chunk.vectorScore,
             },
           ]
@@ -124,6 +125,7 @@ export function toTracedChunks(chunks: RetrievedChunk[], sentIds: Set<string>): 
     page: chunk.page,
     ...(chunk.code && { code: chunk.code }),
     ...(chunk.meeting && { meeting: chunk.meeting }),
+    ...(chunk.career && { career: chunk.career }),
     ordinal: chunk.ordinal,
     vectorScore: chunk.vectorScore,
     vectorRank: chunk.vectorRank,
