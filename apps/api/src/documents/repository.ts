@@ -1,5 +1,7 @@
 import { and, asc, count, desc, eq, getTableColumns, gte, lte, sql } from 'drizzle-orm';
+import type { CareerProfile, CareerSection, Fit } from '../career/types.js';
 import type { Database } from '../db/client.js';
+import { PG_UNIQUE_VIOLATION, pgErrorCode } from '../db/errors.js';
 import { chunks, documents } from '../db/schema.js';
 import type { MeetingLocation, MeetingNotes } from '../meetings/types.js';
 import type { CodeSource } from '../rag/code-source.js';
@@ -22,6 +24,7 @@ export interface NewChunk extends Partial<CodeLocation> {
   startMs?: number | null;
   endMs?: number | null;
   speakers?: string[] | null;
+  section?: CareerSection | null;
   ordinal: number;
   page: number | null;
   content: string;
@@ -46,26 +49,87 @@ export interface Passage {
 }
 
 const CHUNK_INSERT_BATCH_SIZE = 100;
+const MAX_NUMBERING_ATTEMPTS = 5;
+
+export interface NewDocument {
+  userId: string;
+  kind?: DocumentKind;
+  repoUrl?: string;
+  repoRef?: string | null;
+  commitSha?: string;
+  meetingHeldOn?: string;
+  participants?: string[];
+  durationMs?: number;
+  jobNumber?: number;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+}
 
 const chunkCountOf = sql<number>`(select count(*)::int from "chunks" c where c."document_id" = "documents"."id")`;
 
+type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];
+
+async function replaceChunksOfSection(
+  tx: Transaction,
+  section: CareerSection,
+  input: { documentId: string; userId: string; chunks: Omit<NewChunk, 'ordinal'>[] },
+): Promise<void> {
+  await tx
+    .delete(chunks)
+    .where(and(eq(chunks.documentId, input.documentId), eq(chunks.section, section)));
+  const [last] = await tx
+    .select({ ordinal: sql<number>`coalesce(max(${chunks.ordinal}), -1)::int` })
+    .from(chunks)
+    .where(eq(chunks.documentId, input.documentId));
+  const first = (last?.ordinal ?? -1) + 1;
+  if (input.chunks.length === 0) return;
+  await tx.insert(chunks).values(
+    input.chunks.map((chunk, i) => ({
+      ...chunk,
+      ordinal: first + i,
+      section,
+      documentId: input.documentId,
+      userId: input.userId,
+    })),
+  );
+}
+
 export function createDocumentRepository(db: Database) {
   return {
-    async create(input: {
-      userId: string;
-      kind?: DocumentKind;
-      repoUrl?: string;
-      repoRef?: string | null;
-      commitSha?: string;
-      meetingHeldOn?: string;
-      participants?: string[];
-      durationMs?: number;
-      filename: string;
-      mimeType: string;
-      sizeBytes: number;
-    }): Promise<DocumentRecord> {
+    async create(input: NewDocument): Promise<DocumentRecord> {
       const [document] = await db.insert(documents).values(input).returning();
       return document!;
+    },
+
+    async createJobPosting(
+      input: Omit<NewDocument, 'kind' | 'jobNumber'>,
+    ): Promise<DocumentRecord> {
+      for (let attempt = 1; ; attempt++) {
+        const [last] = await db
+          .select({ number: sql<number>`coalesce(max(${documents.jobNumber}), 0)::int` })
+          .from(documents)
+          .where(and(eq(documents.userId, input.userId), eq(documents.kind, 'job_posting')));
+        try {
+          const [document] = await db
+            .insert(documents)
+            .values({ ...input, kind: 'job_posting', jobNumber: (last?.number ?? 0) + 1 })
+            .returning();
+          return document!;
+        } catch (error) {
+          if (pgErrorCode(error) !== PG_UNIQUE_VIOLATION || attempt >= MAX_NUMBERING_ATTEMPTS) {
+            throw error;
+          }
+        }
+      }
+    },
+
+    async countByKind(userId: string, kind: DocumentKind): Promise<number> {
+      const [row] = await db
+        .select({ total: count() })
+        .from(documents)
+        .where(and(eq(documents.userId, userId), eq(documents.kind, kind)));
+      return row?.total ?? 0;
     },
 
     async countByUser(userId: string): Promise<number> {
@@ -153,6 +217,61 @@ export function createDocumentRepository(db: Database) {
       return rows.map((row) => row.content);
     },
 
+    async careerPassages(id: string, userId: string): Promise<string[]> {
+      const rows = await db
+        .select({ content: chunks.content })
+        .from(chunks)
+        .where(
+          and(
+            eq(chunks.documentId, id),
+            eq(chunks.userId, userId),
+            sql`(${chunks.section} is null or ${chunks.section} not in ('profile', 'fit', 'overview'))`,
+          ),
+        )
+        .orderBy(asc(chunks.ordinal));
+      return rows.map((row) => row.content);
+    },
+
+    async replaceProfile(input: {
+      documentId: string;
+      userId: string;
+      profile: CareerProfile;
+      chunks: Omit<NewChunk, 'ordinal'>[];
+    }): Promise<void> {
+      await db.transaction(async (tx) => {
+        await replaceChunksOfSection(tx, 'profile', input);
+        await tx
+          .update(documents)
+          .set({ profile: input.profile })
+          .where(eq(documents.id, input.documentId));
+      });
+    },
+
+    async replaceFit(input: {
+      documentId: string;
+      userId: string;
+      fit: Fit | null;
+      chunks: Omit<NewChunk, 'ordinal'>[];
+    }): Promise<void> {
+      await db.transaction(async (tx) => {
+        await replaceChunksOfSection(tx, 'fit', input);
+        await tx
+          .update(documents)
+          .set({ fit: input.fit })
+          .where(eq(documents.id, input.documentId));
+      });
+    },
+
+    async replaceOverview(input: {
+      documentId: string;
+      userId: string;
+      chunks: Omit<NewChunk, 'ordinal'>[];
+    }): Promise<void> {
+      await db.transaction(async (tx) => {
+        await replaceChunksOfSection(tx, 'overview', input);
+      });
+    },
+
     async replaceNotes(input: {
       documentId: string;
       userId: string;
@@ -204,6 +323,7 @@ export function createDocumentRepository(db: Database) {
       participants?: string[];
       durationMs?: number;
       notes?: MeetingNotes | null;
+      profile?: CareerProfile | null;
       chunks: NewChunk[];
     }): Promise<void> {
       await db.transaction(async (tx) => {
@@ -233,6 +353,7 @@ export function createDocumentRepository(db: Database) {
             ...(input.participants !== undefined && { participants: input.participants }),
             ...(input.durationMs !== undefined && { durationMs: input.durationMs }),
             ...(input.notes !== undefined && { notes: input.notes }),
+            ...(input.profile !== undefined && { profile: input.profile }),
           })
           .where(eq(documents.id, input.documentId));
       });

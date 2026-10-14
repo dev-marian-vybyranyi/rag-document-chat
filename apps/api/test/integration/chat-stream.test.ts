@@ -18,6 +18,7 @@ import { createChatRepository } from '../../src/chat/repository.js';
 import type { ChatDeps } from '../../src/chat/responder.js';
 import { chunks, documents, messages } from '../../src/db/schema.js';
 import { createRetrievalStore } from '../../src/rag/retrieval.js';
+import { buildSystemPrompt } from '../../src/rag/system-prompt.js';
 import { createRetriever } from '../../src/rag/retriever.js';
 import type { QueryRewriter } from '../../src/rag/rewrite.js';
 import { createPassthroughRewriter } from '../../src/rag/rewrite.js';
@@ -674,7 +675,7 @@ describe('POST /chats/:id/messages', () => {
       const { app } = setup({
         model,
         embedder: asksOnlyAbout(LOGIN),
-        relevanceThreshold: { document: 0.99, code: 0.5, meeting: 0.99 },
+        relevanceThreshold: { document: 0.99, code: 0.5, meeting: 0.99, career: 0.99 },
       });
       const { agent, userId } = await signedIn(app, 'ann@example.com');
       await addRepository(userId);
@@ -694,7 +695,7 @@ describe('POST /chats/:id/messages', () => {
       const { app } = setup({
         model,
         embedder: asksOnlyAbout(LOGIN),
-        relevanceThreshold: { document: -1, code: 1.01, meeting: -1 },
+        relevanceThreshold: { document: -1, code: 1.01, meeting: -1, career: -1 },
       });
       const { agent, userId } = await signedIn(app, 'ann@example.com');
       await addRepository(userId);
@@ -738,6 +739,101 @@ describe('POST /chats/:id/messages', () => {
 
       expect(textOf(parts)).not.toContain('[4]');
       expect(textOf(parts)).toContain('[1]');
+    });
+  });
+
+  describe('a question about a resume and a job posting', () => {
+    const SKILLS = 'HNSW tuning, Kubernetes operators and Terraform modules in production.';
+    const ASK = 'HNSW: what do I have for Job #2?';
+
+    async function addResumeAndJob(userId: string) {
+      const [resume] = await db
+        .insert(documents)
+        .values({
+          userId,
+          kind: 'resume',
+          filename: 'cv.pdf',
+          mimeType: 'application/pdf',
+          sizeBytes: 1,
+          status: 'ready',
+        })
+        .returning();
+      await db.insert(chunks).values({
+        documentId: resume!.id,
+        userId,
+        ordinal: 0,
+        section: 'skills',
+        content: SKILLS,
+        tokenCount: 15,
+        embedding: fakeVector(SKILLS),
+      });
+      return resume!;
+    }
+
+    it('is judged by the career threshold, not the document threshold', async () => {
+      const model = modelStreaming('You list HNSW tuning [1].');
+      const { app } = setup({
+        model,
+        embedder: asksOnlyAbout(SKILLS),
+        relevanceThreshold: { document: 1.01, code: 1.01, meeting: 1.01, career: 0.5 },
+      });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addResumeAndJob(userId);
+      const chat = await chats.create(userId);
+
+      const { parts } = await ask(agent, chat.id, ASK);
+
+      expect(textOf(parts)).toBe('You list HNSW tuning [1].');
+      const sourcesPart = parts.find((p) => p.type === 'data-sources')!;
+      expect(sourcesPart.data).toMatchObject({
+        retrieval: { outcome: 'answered', threshold: 0.5 },
+      });
+    });
+
+    it('is declined when the career threshold is not reached, and says which one applied', async () => {
+      const model = modelStreaming('should not be called');
+      const { app } = setup({
+        model,
+        embedder: asksOnlyAbout(SKILLS),
+        relevanceThreshold: { document: -1, code: -1, meeting: -1, career: 1.01 },
+      });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addResumeAndJob(userId);
+      const chat = await chats.create(userId);
+
+      const { parts } = await ask(agent, chat.id, ASK);
+
+      expect(textOf(parts)).toBe(NO_ANSWER_MESSAGE);
+      expect(model.doStreamCalls).toHaveLength(0);
+      const sourcesPart = parts.find((p) => p.type === 'data-sources')!;
+      expect(sourcesPart.data).toMatchObject({
+        retrieval: {
+          outcome: 'declined',
+          threshold: 1.01,
+          closest: [
+            { filename: 'cv.pdf', career: { role: 'resume', section: 'skills', jobNumber: null } },
+          ],
+        },
+      });
+    });
+
+    it('shows the model the career rules and the attributes of the source, and the user the same place', async () => {
+      const model = modelStreaming('You list HNSW tuning [1].');
+      const { app } = setup({ model, embedder: asksOnlyAbout(SKILLS) });
+      const { agent, userId } = await signedIn(app, 'ann@example.com');
+      await addResumeAndJob(userId);
+      const chat = await chats.create(userId);
+
+      const { parts } = await ask(agent, chat.id, ASK);
+
+      expect(streamedPromptText(model, 'user')).toContain(
+        '<source id="1" document="cv.pdf" kind="resume" section="skills">',
+      );
+      expect(streamedPromptText(model, 'system')).toBe(buildSystemPrompt(new Set(['career'])));
+      const sourcesPart = parts.find((p) => p.type === 'data-sources')!;
+      expect(sourcesPart.data).toMatchObject({
+        sources: [{ id: 1, career: { role: 'resume', section: 'skills', jobNumber: null } }],
+      });
     });
   });
 

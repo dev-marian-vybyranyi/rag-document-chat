@@ -23,6 +23,8 @@ export class ExtractionError extends Error {
 export interface ExtractOptions {
   /** Refuse PDFs longer than this; guards the free instance against huge documents. */
   maxPages?: number;
+  /** Keep the line breaks of a PDF, for text whose layout carries meaning (headings, lists). */
+  preserveLines?: boolean;
 }
 
 export const DEFAULT_MAX_PAGES = 500;
@@ -33,14 +35,23 @@ export async function extractText(
   content: Buffer,
   options: ExtractOptions = {},
 ): Promise<ExtractedText> {
-  if (type.kind === 'pdf') return extractFromPdf(content, options.maxPages ?? DEFAULT_MAX_PAGES);
+  if (type.kind === 'pdf')
+    return extractFromPdf(
+      content,
+      options.maxPages ?? DEFAULT_MAX_PAGES,
+      options.preserveLines ?? false,
+    );
 
   const text = normalizeText(stripBom(content.toString('utf8')));
   if (text.length === 0) throw new ExtractionError('The document contains no text');
   return { segments: [{ page: null, text }], pageCount: null };
 }
 
-async function extractFromPdf(content: Buffer, maxPages: number): Promise<ExtractedText> {
+async function extractFromPdf(
+  content: Buffer,
+  maxPages: number,
+  preserveLines: boolean,
+): Promise<ExtractedText> {
   let pdf: Awaited<ReturnType<typeof getDocumentProxy>>;
   try {
     // PDF.js takes ownership of the bytes it is given, so hand it a copy.
@@ -59,7 +70,10 @@ async function extractFromPdf(content: Buffer, maxPages: number): Promise<Extrac
 
     const { text: pages } = await extractPdfPages(pdf, { mergePages: false });
     const segments = pages
-      .map((text, index) => ({ page: index + 1, text: normalizePdfText(text) }))
+      .map((text, index) => ({
+        page: index + 1,
+        text: preserveLines ? normalizeText(text) : normalizePdfText(text),
+      }))
       .filter((segment) => segment.text.length > 0);
 
     if (segments.length === 0) {

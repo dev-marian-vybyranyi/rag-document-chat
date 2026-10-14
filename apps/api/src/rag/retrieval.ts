@@ -8,6 +8,7 @@ import {
   gte,
   inArray,
   isNotNull,
+  isNull,
   lte,
   ne,
   notInArray,
@@ -16,8 +17,11 @@ import {
 } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import { chunks, documents } from '../db/schema.js';
+import type { JobFacts } from '../career/question-jobs.js';
+import { GENERATED_SECTIONS, type CareerSection } from '../career/types.js';
 import type { MeetingFacts, MeetingFilter } from '../meetings/question-filters.js';
 import type { MeetingLocation } from '../meetings/types.js';
+import type { CareerSource } from './career-source.js';
 import type { CodeSource } from './code-source.js';
 import { codeSearchTerms, toTsQueryOr } from './code-terms.js';
 
@@ -29,19 +33,29 @@ export interface RetrievalCandidate {
   page: number | null;
   code?: CodeSource;
   meeting?: MeetingLocation;
+  career?: CareerSource;
   content: string;
   score: number;
 }
 
-const PROSE_KINDS: Array<(typeof documents.kind.enumValues)[number]> = ['document', 'transcript'];
+const PROSE_KINDS: Array<(typeof documents.kind.enumValues)[number]> = [
+  'document',
+  'transcript',
+  'resume',
+  'job_posting',
+];
 
 export interface SearchScope {
   documentIds?: string[];
   meeting?: MeetingFilter;
+  jobs?: string[];
+  rawOnly?: boolean;
 }
 
 export interface RetrievalStore {
   meetingFacts(userId: string, scope?: SearchScope): Promise<MeetingFacts[]>;
+  jobFacts(userId: string, scope?: SearchScope): Promise<JobFacts[]>;
+  resumeId(userId: string, scope?: SearchScope): Promise<string | null>;
   vectorSearch(
     userId: string,
     queryEmbedding: number[],
@@ -79,6 +93,9 @@ export function createRetrievalStore(
     startMs: chunks.startMs,
     endMs: chunks.endMs,
     speakers: chunks.speakers,
+    kind: documents.kind,
+    section: chunks.section,
+    jobNumber: documents.jobNumber,
   };
 
   function toCandidate<
@@ -91,14 +108,43 @@ export function createRetrievalStore(
       startMs: number | null;
       endMs: number | null;
       speakers: string[] | null;
+      kind: (typeof documents.kind.enumValues)[number];
+      section: CareerSection | null;
+      jobNumber: number | null;
     },
-  >({ path, language, startLine, endLine, symbol, startMs, endMs, speakers, ...rest }: Row) {
+  >({
+    path,
+    language,
+    startLine,
+    endLine,
+    symbol,
+    startMs,
+    endMs,
+    speakers,
+    kind,
+    section,
+    jobNumber,
+    ...rest
+  }: Row) {
     const candidate: Omit<
       Row,
-      'path' | 'language' | 'startLine' | 'endLine' | 'symbol' | 'startMs' | 'endMs' | 'speakers'
-    > & { code?: CodeSource; meeting?: MeetingLocation } = rest;
+      | 'path'
+      | 'language'
+      | 'startLine'
+      | 'endLine'
+      | 'symbol'
+      | 'startMs'
+      | 'endMs'
+      | 'speakers'
+      | 'kind'
+      | 'section'
+      | 'jobNumber'
+    > & { code?: CodeSource; meeting?: MeetingLocation; career?: CareerSource } = rest;
     if (path !== null) candidate.code = { path, language, startLine, endLine, symbol };
     if (speakers !== null) candidate.meeting = { startMs, endMs, speakers };
+    if (kind === 'resume' || kind === 'job_posting') {
+      candidate.career = { role: kind, section, jobNumber };
+    }
     return candidate;
   }
 
@@ -130,6 +176,14 @@ export function createRetrievalStore(
     return kept.length === 0 ? undefined : or(ne(documents.kind, 'transcript'), and(...kept));
   };
 
+  const jobCondition = ({ jobs }: SearchScope) =>
+    jobs ? or(ne(documents.kind, 'job_posting'), inArray(documents.id, jobs)) : undefined;
+
+  const rawCondition = ({ rawOnly }: SearchScope) =>
+    rawOnly
+      ? or(isNull(chunks.section), notInArray(chunks.section, [...GENERATED_SECTIONS]))
+      : undefined;
+
   async function searchProse(userId: string, queryText: string, limit: number, scope: SearchScope) {
     const anyTerm = sql`replace(plainto_tsquery('english', ${queryText}::text)::text, ' & ', ' | ')::tsquery`;
     const rank = sql<number>`ts_rank(${chunks.searchVector}, ${anyTerm}, 32)`;
@@ -145,6 +199,8 @@ export function createRetrievalStore(
           sameModel,
           inScope(scope),
           meetingCondition(scope),
+          jobCondition(scope),
+          rawCondition(scope),
           sql`${chunks.searchVector} @@ ${anyTerm}`,
         ),
       )
@@ -210,6 +266,54 @@ export function createRetrievalStore(
       }));
     },
 
+    async jobFacts(userId, scope = {}) {
+      if (scope.documentIds?.length === 0) return [];
+      const rows = await db
+        .select({
+          id: documents.id,
+          jobNumber: documents.jobNumber,
+          name: documents.filename,
+          profile: documents.profile,
+        })
+        .from(documents)
+        .where(
+          and(
+            eq(documents.userId, userId),
+            eq(documents.kind, 'job_posting'),
+            eq(documents.status, 'ready'),
+            isNotNull(documents.jobNumber),
+            sameModel,
+            inScope(scope),
+          ),
+        )
+        .orderBy(asc(documents.jobNumber));
+      return rows.map((row) => ({
+        id: row.id,
+        jobNumber: row.jobNumber!,
+        name: row.name,
+        title: row.profile?.role === 'job' ? row.profile.title : null,
+        company: row.profile?.role === 'job' ? row.profile.company : null,
+      }));
+    },
+
+    async resumeId(userId, scope = {}) {
+      if (scope.documentIds?.length === 0) return null;
+      const [row] = await db
+        .select({ id: documents.id })
+        .from(documents)
+        .where(
+          and(
+            eq(documents.userId, userId),
+            eq(documents.kind, 'resume'),
+            eq(documents.status, 'ready'),
+            sameModel,
+            inScope(scope),
+          ),
+        )
+        .limit(1);
+      return row?.id ?? null;
+    },
+
     async vectorSearch(userId, queryEmbedding, limit, scope = {}) {
       if (limit <= 0 || scope.documentIds?.length === 0) return [];
       const distance = cosineDistance(chunks.embedding, queryEmbedding);
@@ -220,7 +324,16 @@ export function createRetrievalStore(
           .select({ ...columns, score: sql<number>`1 - (${distance})` })
           .from(chunks)
           .innerJoin(documents, eq(documents.id, chunks.documentId))
-          .where(and(eq(chunks.userId, userId), sameModel, inScope(scope), meetingCondition(scope)))
+          .where(
+            and(
+              eq(chunks.userId, userId),
+              sameModel,
+              inScope(scope),
+              meetingCondition(scope),
+              jobCondition(scope),
+              rawCondition(scope),
+            ),
+          )
           .orderBy(distance, asc(chunks.documentId), asc(chunks.ordinal))
           .limit(limit);
         return rows.map(toCandidate);

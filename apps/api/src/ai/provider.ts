@@ -1,5 +1,8 @@
 import type { LanguageModel } from 'ai';
 import type { Logger } from 'pino';
+import type { FitMatcher } from '../career/matcher.js';
+import type { JobProfileExtractor } from '../career/job-profile.js';
+import type { ResumeProfileExtractor } from '../career/resume-profile.js';
 import type { ChatDeps } from '../chat/responder.js';
 import type { QueryRewriter } from '../rag/rewrite.js';
 import type { QuestionSuggester } from '../rag/suggest.js';
@@ -28,6 +31,9 @@ export interface AiProvider {
   createRewriter(logger: Logger): QueryRewriter;
   createSuggester(logger: Logger): QuestionSuggester;
   createNotesExtractor(logger: Logger): NotesExtractor;
+  createResumeProfileExtractor(logger: Logger): ResumeProfileExtractor;
+  createJobProfileExtractor(logger: Logger): JobProfileExtractor;
+  createFitMatcher(logger: Logger): FitMatcher;
   createTranscriber(logger: Logger): Transcriber;
   createJudgeModel(modelId: string, thinkingLevel: ThinkingLevel): JudgeModel;
 }

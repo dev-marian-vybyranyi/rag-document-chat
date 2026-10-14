@@ -196,6 +196,32 @@ describe('fuseRankings', () => {
     });
   });
 
+  describe('career location', () => {
+    const location = {
+      role: 'job_posting' as const,
+      section: 'requirements' as const,
+      jobNumber: 2,
+    };
+
+    it('travels with the chunk through the fusion', () => {
+      const fused = fuseRankings([candidate('a', { career: location })], [], { limit: 5 });
+
+      expect(fused[0]!.career).toEqual(location);
+    });
+
+    it('is kept when only the keyword list found the chunk', () => {
+      const fused = fuseRankings([], [candidate('a', { career: location })], { limit: 5 });
+
+      expect(fused[0]!.career).toEqual(location);
+    });
+
+    it('is absent for a document passage', () => {
+      const fused = fuseRankings([candidate('a')], [], { limit: 5 });
+
+      expect(fused[0]).not.toHaveProperty('career');
+    });
+  });
+
   describe('code location', () => {
     const location = {
       path: 'src/a.ts',

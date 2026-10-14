@@ -1,6 +1,15 @@
 import { createGoogle } from '@ai-sdk/google';
 import type { Env } from '../../config/env.js';
 import { EMBEDDING_DIMENSIONS } from '../../db/schema.js';
+import {
+  createJobProfileExtractor,
+  createNoopJobProfileExtractor,
+} from '../../career/job-profile.js';
+import { createFitMatcher, createNoopFitMatcher } from '../../career/matcher.js';
+import {
+  createNoopResumeProfileExtractor,
+  createResumeProfileExtractor,
+} from '../../career/resume-profile.js';
 import { createNoopNotesExtractor, createNotesExtractor } from '../../meetings/notes-extractor.js';
 import { createLanguageModelTranscriber } from '../../meetings/transcribe-with-language-model.js';
 import { createUnconfiguredTranscriber } from '../../meetings/transcriber.js';
@@ -50,6 +59,9 @@ export function createGoogleProvider(env: GoogleProviderEnv): AiProvider {
       createRewriter: () => createPassthroughRewriter(),
       createSuggester: () => createNoopSuggester(),
       createNotesExtractor: () => createNoopNotesExtractor(),
+      createResumeProfileExtractor: () => createNoopResumeProfileExtractor(),
+      createJobProfileExtractor: () => createNoopJobProfileExtractor(),
+      createFitMatcher: () => createNoopFitMatcher(),
       createTranscriber: () => createUnconfiguredTranscriber(KEY_VARIABLE),
       createJudgeModel: () => {
         throw new Error(`${KEY_VARIABLE} is not set`);
@@ -91,6 +103,24 @@ export function createGoogleProvider(env: GoogleProviderEnv): AiProvider {
       }),
     createNotesExtractor: (logger) =>
       createNotesExtractor({
+        model: google(env.REWRITE_MODEL),
+        logger,
+        providerOptions: lowThinking,
+      }),
+    createResumeProfileExtractor: (logger) =>
+      createResumeProfileExtractor({
+        model: google(env.REWRITE_MODEL),
+        logger,
+        providerOptions: lowThinking,
+      }),
+    createJobProfileExtractor: (logger) =>
+      createJobProfileExtractor({
+        model: google(env.REWRITE_MODEL),
+        logger,
+        providerOptions: lowThinking,
+      }),
+    createFitMatcher: (logger) =>
+      createFitMatcher({
         model: google(env.REWRITE_MODEL),
         logger,
         providerOptions: lowThinking,

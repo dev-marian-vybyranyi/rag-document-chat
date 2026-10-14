@@ -33,6 +33,9 @@ function repository(overrides: Partial<DocumentItem> = {}): DocumentItem {
     durationMs: null,
     notes: null,
     progress: null,
+    jobNumber: null,
+    profile: null,
+    fit: null,
     suggestions: [
       'How is this project structured?',
       'What dependencies does this project use?',

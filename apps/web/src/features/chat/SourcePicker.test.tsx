@@ -40,6 +40,9 @@ function source(
     durationMs: null,
     notes: null,
     progress: null,
+    jobNumber: null,
+    profile: null,
+    fit: null,
     suggestions: [`A question about ${filename}?`],
     createdAt: '2026-10-07T10:00:00Z',
     ...overrides,
@@ -172,6 +175,7 @@ describe('choosing the sources of a chat', () => {
 
   describe('the groups', () => {
     const retro = source('m1', 'Retro', 'transcript');
+    const standupMeeting = () => source('m2', 'Standup', 'transcript');
     const standup = source('m2', 'Standup', 'transcript');
     const mixed = [retro, shop, handbook, standup, notes];
 
@@ -250,6 +254,86 @@ describe('choosing the sources of a chat', () => {
       );
     });
 
+    describe('with a resume and job postings', () => {
+      const cv = source('c1', 'alex-cv.pdf', 'resume');
+      const backend = source('j1', 'Backend Engineer at Globex', 'job_posting', { jobNumber: 1 });
+      const platform = source('j2', 'Platform Engineer at Acme', 'job_posting', { jobNumber: 2 });
+      const career = [handbook, cv, backend, platform];
+
+      it('has a group for the resume and one for the postings, named as in the questions', async () => {
+        setup(null, {}, career);
+        const user = userEvent.setup();
+
+        const list = await openPicker(user);
+
+        expect(within(list).getByRole('list', { name: 'Resume' })).toBeInTheDocument();
+        expect(within(list).getByRole('list', { name: 'Job postings' })).toBeInTheDocument();
+        expect(within(list).getByText('Job postings')).toBeInTheDocument();
+        expect(within(list).getAllByText('Resume')).toHaveLength(2);
+        const names = (group: string) =>
+          within(within(list).getByRole('list', { name: group }))
+            .getAllByRole('checkbox')
+            .map((box) => box.closest('label')!.textContent);
+        expect(names('Resume')).toEqual(['Resume']);
+        expect(names('Job postings')).toEqual([
+          'Job #1 · Backend Engineer at Globex',
+          'Job #2 · Platform Engineer at Acme',
+        ]);
+        expect(names('Documents')).toEqual(['handbook.pdf']);
+      });
+
+      it('lists the groups after documents, code and meetings', async () => {
+        setup(null, {}, [platform, cv, standupMeeting(), shop, handbook]);
+        const user = userEvent.setup();
+
+        const list = await openPicker(user);
+
+        expect(
+          within(list)
+            .getAllByRole('checkbox')
+            .map((b) => b.closest('label')!.textContent),
+        ).toEqual([
+          'handbook.pdf',
+          'acme/shop',
+          'Standup',
+          'Resume',
+          'Job #2 · Platform Engineer at Acme',
+        ]);
+      });
+
+      it('has the choice "Resume and jobs only"', async () => {
+        const api = setup(null, { 'PATCH /api/chats/c1': respond(['c1', 'j1', 'j2']) }, career);
+        const user = userEvent.setup();
+        await openPicker(user);
+
+        await user.click(screen.getByRole('button', { name: 'Resume and jobs only' }));
+
+        await waitFor(() =>
+          expect(patches(api).map((c) => c.body)).toEqual([{ sourceIds: ['c1', 'j1', 'j2'] }]),
+        );
+      });
+
+      it('cannot choose them when the library has none', async () => {
+        setup(null, {}, [handbook, shop]);
+        const user = userEvent.setup();
+        await openPicker(user);
+
+        expect(screen.getByRole('button', { name: 'Resume and jobs only' })).toBeDisabled();
+      });
+
+      it('names the one chosen posting on the button, the way the group names it', async () => {
+        setup(['j2'], {}, career);
+
+        expect(await trigger()).toHaveTextContent('Job #2 · Platform Engineer at Acme');
+      });
+
+      it('names the resume on the button when it is the only one chosen', async () => {
+        setup(['c1'], {}, career);
+
+        expect(await trigger()).toHaveTextContent('Searching in: Resume');
+      });
+    });
+
     it('cannot choose meetings when the library has none', async () => {
       setup(null, {}, [handbook, shop]);
       const user = userEvent.setup();
@@ -264,7 +348,9 @@ describe('choosing the sources of a chat', () => {
 
       await user.click(await trigger());
 
-      expect(await screen.findByText(/a code repository or a meeting first/)).toBeInTheDocument();
+      expect(
+        await screen.findByText(/a meeting, a resume or a job posting first/),
+      ).toBeInTheDocument();
     });
   });
 

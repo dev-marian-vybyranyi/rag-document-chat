@@ -3,6 +3,7 @@ import { SidePanel } from './SidePanel';
 import { citedIds } from './citations';
 import {
   describeLocation,
+  isPlaced,
   formatDuration,
   formatPercent,
   formatScoreAgainst,
@@ -90,7 +91,7 @@ export function WhyContent({ data }: { data: WhyData }) {
               {retrieval.closest.map((passage, index) => (
                 <li key={index} className="rounded-md border px-2.5 py-1.5">
                   <span className="font-medium">
-                    {passage.code || passage.meeting ? describeLocation(passage) : passage.filename}
+                    {isPlaced(passage) ? describeLocation(passage) : passage.filename}
                   </span>
                   {passage.page !== null && (
                     <span className="text-muted-foreground"> · page {passage.page}</span>
@@ -115,7 +116,7 @@ export function WhyContent({ data }: { data: WhyData }) {
                   <div className="flex items-start justify-between gap-2">
                     <p className="min-w-0 break-words">
                       <span className="font-medium">[{source.id}]</span>{' '}
-                      {source.code || source.meeting ? describeLocation(source) : source.filename}
+                      {isPlaced(source) ? describeLocation(source) : source.filename}
                       {source.page !== null && (
                         <span className="text-muted-foreground"> · page {source.page}</span>
                       )}
@@ -153,17 +154,36 @@ function Filters({ filters }: { filters: NonNullable<WhyData['retrieval']['filte
     ...(filters.speakers.length > 0 ? [`what ${filters.speakers.join(' or ')} said`] : []),
     ...(filters.time ? [filters.time] : []),
   ].join(', ');
-  return filters.relaxed ? (
-    <p>
-      <span className="text-muted-foreground">Meetings: </span>
-      Your question named {named}, but nothing matched that, so the search was widened to the whole
-      meeting.
-    </p>
-  ) : (
-    <p>
-      <span className="text-muted-foreground">Meetings: </span>
-      Limited to {named}, as your question asked.
-    </p>
+  const jobs = filters.jobs ?? [];
+  return (
+    <>
+      {named !== '' &&
+        (filters.relaxed ? (
+          <p>
+            <span className="text-muted-foreground">Meetings: </span>
+            Your question named {named}, but nothing matched that, so the search was widened to the
+            whole meeting.
+          </p>
+        ) : (
+          <p>
+            <span className="text-muted-foreground">Meetings: </span>
+            Limited to {named}, as your question asked.
+          </p>
+        ))}
+      {jobs.length > 0 &&
+        (filters.relaxed ? (
+          <p>
+            <span className="text-muted-foreground">Job postings: </span>
+            Your question named {jobs.join(' and ')}, but nothing matched that, so the search was
+            widened to all your job postings.
+          </p>
+        ) : (
+          <p>
+            <span className="text-muted-foreground">Job postings: </span>
+            Limited to {jobs.join(' and ')} and your resume, as your question asked.
+          </p>
+        ))}
+    </>
   );
 }
 

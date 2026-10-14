@@ -1,0 +1,19 @@
+Platform Engineer
+Company: Contoso Cloud
+
+About the role
+Contoso Cloud runs an internal developer platform used by about forty product teams. The platform team keeps it fast, safe and boring.
+
+Requirements
+- Kubernetes
+- Terraform
+- AWS
+- CI/CD pipelines
+- 4+ years of experience in infrastructure or backend roles
+
+Nice to have
+- Go
+- Prometheus monitoring
+
+Responsibilities
+Run the deployment pipelines of the developer platform and the clusters under them. Write the Terraform modules that product teams reuse. Help teams move their services onto the platform.

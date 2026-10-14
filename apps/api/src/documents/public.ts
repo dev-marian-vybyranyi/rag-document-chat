@@ -1,3 +1,4 @@
+import { summarizeFit, summarizeProfile } from '../career/summary.js';
 import type { DocumentWithChunkCount } from './repository.js';
 
 export function toPublicDocument(document: DocumentWithChunkCount) {
@@ -28,6 +29,9 @@ export function toPublicDocument(document: DocumentWithChunkCount) {
     participants: document.participants,
     durationMs: document.durationMs,
     notes: document.notes,
+    jobNumber: document.jobNumber,
+    profile: summarizeProfile(document.profile),
+    fit: summarizeFit(document.fit),
     progress,
     suggestions: document.suggestions,
     createdAt: document.createdAt,

@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ApiError } from '../../lib/api';
-import { documentsApi, type DocumentItem, type MeetingDetails } from './api';
+import { documentsApi, type DocumentItem, type JobDetails, type MeetingDetails } from './api';
 import {
   DocumentsContext,
   type DocumentsContextValue,
   type DocumentsState,
   type UploadEntry,
 } from './documents-context';
+import { awaitsFit } from './career-status';
 import { pollDelay } from './polling';
 import { MAX_UPLOAD_BYTES, formatBytes, validateFile } from './validation';
 
@@ -32,10 +33,13 @@ function uploadMessage(error: unknown): string {
   return 'The upload failed. Try again.';
 }
 
+export const MAX_FIT_POLLS = 30;
+
 export function DocumentsProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<DocumentsState>({ status: 'loading' });
   const [uploads, setUploads] = useState<UploadEntry[]>([]);
   const [reloadCount, setReloadCount] = useState(0);
+  const [exhaustedKey, setExhaustedKey] = useState<string | null>(null);
   const nextKey = useRef(0);
 
   useEffect(() => {
@@ -52,6 +56,16 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
   const anyProcessing =
     state.status === 'ready' && state.documents.some((doc) => doc.status === 'processing');
 
+  const refresh = useCallback(async (signal: AbortSignal) => {
+    const fresh = new Map((await documentsApi.list(signal)).map((doc) => [doc.id, doc]));
+    setState((current) => {
+      if (current.status !== 'ready') return current;
+      const documents = current.documents.map((doc) => fresh.get(doc.id) ?? doc);
+      const message = announcementFor(current.documents, documents);
+      return { ...current, documents, announcement: message || current.announcement };
+    });
+  }, []);
+
   useEffect(() => {
     if (!anyProcessing) return;
     const controller = new AbortController();
@@ -60,15 +74,7 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
 
     const poll = async () => {
       try {
-        const fresh = new Map(
-          (await documentsApi.list(controller.signal)).map((doc) => [doc.id, doc]),
-        );
-        setState((current) => {
-          if (current.status !== 'ready') return current;
-          const documents = current.documents.map((doc) => fresh.get(doc.id) ?? doc);
-          const message = announcementFor(current.documents, documents);
-          return { ...current, documents, announcement: message || current.announcement };
-        });
+        await refresh(controller.signal);
       } catch {
         if (controller.signal.aborted) return;
       }
@@ -80,7 +86,47 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       controller.abort();
       clearTimeout(timer);
     };
-  }, [anyProcessing]);
+  }, [anyProcessing, refresh]);
+
+  const awaitingFit = useMemo(
+    () =>
+      state.status === 'ready'
+        ? state.documents.filter((doc) => awaitsFit(doc, state.documents)).map((doc) => doc.id)
+        : [],
+    [state],
+  );
+  const awaitingKey = awaitingFit.join(',');
+  const comparingIds = useMemo(
+    () => (awaitingKey === '' || exhaustedKey === awaitingKey ? [] : awaitingFit),
+    [awaitingKey, exhaustedKey, awaitingFit],
+  );
+
+  useEffect(() => {
+    if (awaitingKey === '') return;
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
+    let attempt = 0;
+
+    const poll = async () => {
+      try {
+        await refresh(controller.signal);
+      } catch {
+        if (controller.signal.aborted) return;
+      }
+      attempt++;
+      if (attempt >= MAX_FIT_POLLS) {
+        setExhaustedKey(awaitingKey);
+        return;
+      }
+      timer = setTimeout(poll, pollDelay(attempt));
+    };
+
+    timer = setTimeout(poll, pollDelay(0));
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [awaitingKey, refresh]);
 
   const reload = useCallback(() => {
     setState({ status: 'loading' });
@@ -152,6 +198,38 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     [addDocument],
   );
 
+  const addResume = useCallback(
+    async (file: File) => addDocument(await documentsApi.addResume(file)),
+    [addDocument],
+  );
+
+  const addJob = useCallback(
+    async (file: File, details?: JobDetails) =>
+      addDocument(await documentsApi.addJob(file, details)),
+    [addDocument],
+  );
+
+  const replaceDocument = useCallback((fresh: DocumentItem) => {
+    setState((current) =>
+      current.status === 'ready'
+        ? {
+            ...current,
+            documents: current.documents.map((doc) => (doc.id === fresh.id ? fresh : doc)),
+          }
+        : current,
+    );
+  }, []);
+
+  const analyze = useCallback(
+    async (id: string) => replaceDocument(await documentsApi.analyze(id)),
+    [replaceDocument],
+  );
+
+  const compare = useCallback(
+    async (id: string) => replaceDocument(await documentsApi.compare(id)),
+    [replaceDocument],
+  );
+
   const regenerateNotes = useCallback(async (id: string) => {
     const fresh = await documentsApi.regenerateNotes(id);
     setState((current) =>
@@ -185,12 +263,17 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       uploads,
       announcement,
       anyProcessing,
+      comparingIds,
       reload,
       upload,
       addRepositoryUrl,
       addRepositoryZip,
       addMeeting,
       addRecording,
+      addResume,
+      addJob,
+      analyze,
+      compare,
       regenerateNotes,
       dismissUpload,
       remove,
@@ -200,12 +283,17 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       uploads,
       announcement,
       anyProcessing,
+      comparingIds,
       reload,
       upload,
       addRepositoryUrl,
       addRepositoryZip,
       addMeeting,
       addRecording,
+      addResume,
+      addJob,
+      analyze,
+      compare,
       regenerateNotes,
       dismissUpload,
       remove,

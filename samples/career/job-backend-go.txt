@@ -1,0 +1,19 @@
+Senior Backend Engineer
+Company: Northwind Payments
+
+About the role
+Northwind Payments processes card payments for small shops. We are growing the team that owns the settlement services and need a senior backend engineer to join it.
+
+Requirements
+- Go, used in production services
+- PostgreSQL
+- Docker
+- Design of REST APIs
+- 5+ years of backend experience
+
+Nice to have
+- gRPC
+- Kubernetes
+
+Responsibilities
+Own the design and the operation of the settlement services. Review the code of the team and help new colleagues find their way around the system. Take part in the on-call rotation, one week in five.

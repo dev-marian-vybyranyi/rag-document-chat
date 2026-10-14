@@ -22,7 +22,8 @@ export function SuggestedQuestions({
         <Link to="/documents" className="font-medium text-foreground underline underline-offset-4">
           Add one
         </Link>{' '}
-        to get answers from it, or import a code repository or add a meeting there.
+        to get answers from it, or import a code repository, add a meeting, or add your resume and
+        job postings there.
       </p>
     );
   }

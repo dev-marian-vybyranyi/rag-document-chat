@@ -1,5 +1,6 @@
 import type { AppliedFilters } from '../meetings/question-filters.js';
 import type { MeetingLocation } from '../meetings/types.js';
+import type { CareerSource } from '../rag/career-source.js';
 import type { CodeSource } from '../rag/code-source.js';
 
 export interface MessageSource {
@@ -10,6 +11,7 @@ export interface MessageSource {
   page: number | null;
   code?: CodeSource;
   meeting?: MeetingLocation;
+  career?: CareerSource;
   ordinal: number;
   excerpt: string;
   score: number | null;
@@ -24,6 +26,7 @@ export interface ClosestPassage {
   page: number | null;
   code?: CodeSource;
   meeting?: MeetingLocation;
+  career?: CareerSource;
   score: number;
 }
 

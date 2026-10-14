@@ -3,6 +3,8 @@ import {
   describeMatch,
   describeMeetingPart,
   describeSource,
+  describeCareerName,
+  describeCareerPart,
   describeLines,
   describeSpeakers,
 } from './source-format';
@@ -29,13 +31,19 @@ export function Citation({ source, children }: { source: ChatSource; children: R
         </button>
       </HoverCardTrigger>
       <HoverCardContent>
-        <p className="text-sm font-medium break-words">{source.code?.path ?? source.filename}</p>
+        <p className="text-sm font-medium break-words">
+          {source.code?.path ??
+            (source.career ? describeCareerName(source.filename, source.career) : source.filename)}
+        </p>
         <p className="text-xs text-muted-foreground">
           {source.page !== null && `Page ${source.page} · `}
           {source.meeting && `${describeMeetingPart(source.meeting)} · `}
           {source.meeting &&
             source.meeting.speakers.length > 0 &&
             `${describeSpeakers(source.meeting.speakers)} · `}
+          {source.career &&
+            describeCareerPart(source.career) &&
+            `${describeCareerPart(source.career)} · `}
           {source.code && describeLines(source.code) && `Lines ${describeLines(source.code)} · `}
           {describeMatch(source.score)}
         </p>

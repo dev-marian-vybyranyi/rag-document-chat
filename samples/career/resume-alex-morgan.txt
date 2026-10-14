@@ -1,0 +1,35 @@
+Alex Morgan
+Backend Engineer
+alex.morgan@example.com | +1 (415) 555-0134
+linkedin.com/in/alex-morgan-example | github.com/alexmorgan-example
+Address: 410 Congress Avenue, Austin, TX 78701
+Date of birth: 12 May 1994
+Marital status: single
+Citizenship: Canadian citizen with US work authorization
+
+SUMMARY
+Backend engineer with almost six years of experience building and running payment services. Strongest in Go and PostgreSQL, comfortable with Docker and CI pipelines. Looking for a senior backend role.
+
+EXPERIENCE
+Senior Backend Engineer, Initech (2021-03 – 2024-06)
+- Built Go microservices for the billing platform, running in Docker on AWS ECS.
+- Designed REST and gRPC APIs used by six internal teams.
+- Moved the nightly batch jobs to Rust workers, which cut the run time from four hours to forty minutes.
+- Introduced RabbitMQ for event-driven communication between services.
+- Mentored two junior engineers and ran the weekly code review.
+
+Backend Engineer, Hooli Pay (2018-09 – 2021-02)
+- Developed the Python and Django payments service with PostgreSQL and Redis.
+- Built CI pipelines with GitHub Actions.
+- Wrote SQL migrations and tuned slow queries.
+- Took part in the on-call rotation for the payments API.
+
+SKILLS
+Go, Rust, Python, SQL, PostgreSQL, Redis, Docker, AWS (ECS, S3), gRPC, REST, GitHub Actions
+Familiar with Kubernetes from a side project; no production experience.
+
+EDUCATION
+BSc Computer Science, State Technical University, 2018
+
+LANGUAGES
+English (fluent), Ukrainian (native)

@@ -2,7 +2,16 @@ import { api } from '../../lib/api';
 
 export type DocumentStatus = 'processing' | 'ready' | 'failed';
 
-export type DocumentKind = 'document' | 'repository' | 'transcript';
+export type DocumentKind = 'document' | 'repository' | 'transcript' | 'resume' | 'job_posting';
+
+export type ProfileSummary =
+  | { role: 'resume'; skills: string[]; totalExperienceYears: number | null }
+  | { role: 'job'; title: string | null; company: string | null; requirementCount: number };
+
+export interface FitSummary {
+  coverage: number;
+  mustCoverage: number | null;
+}
 
 export interface IngestionProgress {
   phase: 'downloading' | 'reading' | 'analyzing' | 'transcribing' | 'embedding';
@@ -29,6 +38,11 @@ export interface MeetingDetails {
   heldOn?: string;
 }
 
+export interface JobDetails {
+  title?: string;
+  company?: string;
+}
+
 export interface DocumentItem {
   id: string;
   kind: DocumentKind;
@@ -47,6 +61,9 @@ export interface DocumentItem {
   participants: string[] | null;
   durationMs: number | null;
   notes: MeetingNotes | null;
+  jobNumber: number | null;
+  profile: ProfileSummary | null;
+  fit: FitSummary | null;
   progress: IngestionProgress | null;
   suggestions: string[];
   createdAt: string;
@@ -64,6 +81,12 @@ export interface MeetingLocation {
   startMs: number | null;
   endMs: number | null;
   speakers: string[];
+}
+
+export interface CareerLocation {
+  role: 'resume' | 'job_posting';
+  section: string | null;
+  jobNumber: number | null;
 }
 
 export interface Passage {
@@ -136,6 +159,34 @@ export const documentsApi = {
       signal,
     }).then((r) => r.document);
   },
+  addResume: (file: File, signal?: AbortSignal) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api<{ document: DocumentItem }>('/career/resume', {
+      method: 'POST',
+      body: form,
+      signal,
+    }).then((r) => r.document);
+  },
+  addJob: (file: File, details: JobDetails = {}, signal?: AbortSignal) => {
+    const form = new FormData();
+    if (details.title) form.append('title', details.title);
+    if (details.company) form.append('company', details.company);
+    form.append('file', file);
+    return api<{ document: DocumentItem }>('/career/jobs', {
+      method: 'POST',
+      body: form,
+      signal,
+    }).then((r) => r.document);
+  },
+  analyze: (id: string, signal?: AbortSignal) =>
+    api<{ document: DocumentItem }>(`/career/${id}/analysis`, { method: 'POST', signal }).then(
+      (r) => r.document,
+    ),
+  compare: (id: string, signal?: AbortSignal) =>
+    api<{ document: DocumentItem }>(`/career/jobs/${id}/fit`, { method: 'POST', signal }).then(
+      (r) => r.document,
+    ),
   regenerateNotes: (id: string, signal?: AbortSignal) =>
     api<{ document: DocumentItem }>(`/meetings/${id}/notes`, { method: 'POST', signal }).then(
       (r) => r.document,

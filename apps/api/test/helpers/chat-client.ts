@@ -51,15 +51,25 @@ export async function askQuestion(
             symbol: string | null;
           };
           meeting?: { startMs: number | null; endMs: number | null; speakers: string[] };
+          career?: {
+            role: 'resume' | 'job_posting';
+            section: string | null;
+            jobNumber: number | null;
+          };
         }>;
         retrieval: {
           outcome: string;
           threshold: number;
           bestScore: number | null;
-          filters?: { speakers: string[]; time: string | null; relaxed: boolean };
+          filters?: { speakers: string[]; time: string | null; jobs?: string[]; relaxed: boolean };
           closest: Array<{
             filename: string;
             meeting?: { startMs: number | null; endMs: number | null; speakers: string[] };
+            career?: {
+              role: 'resume' | 'job_posting';
+              section: string | null;
+              jobNumber: number | null;
+            };
           }>;
         };
       }

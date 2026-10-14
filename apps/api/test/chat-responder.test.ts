@@ -256,3 +256,62 @@ describe('the location of a meeting passage', () => {
     expect(traced!.meeting).toEqual(location);
   });
 });
+
+describe('the location of a resume or job posting passage', () => {
+  const location = { role: 'job_posting' as const, section: 'requirements' as const, jobNumber: 2 };
+  const chunk = (chunkId: string, withCareer: boolean): RetrievedChunk => ({
+    chunkId,
+    documentId: 'doc',
+    filename: 'Platform Engineer',
+    ordinal: 1,
+    page: null,
+    ...(withCareer && { career: location }),
+    content: 'Hands-on Kubernetes experience.',
+    score: 0.03,
+    vectorScore: 0.7,
+    vectorRank: 1,
+    keywordScore: null,
+    keywordRank: null,
+  });
+
+  it('is kept on the sources shown with an answer', () => {
+    const sources = toMessageSources(
+      [
+        {
+          id: 1,
+          chunkId: 'j',
+          documentId: 'doc',
+          filename: 'Platform Engineer',
+          page: null,
+          career: location,
+          ordinal: 1,
+        },
+        {
+          id: 2,
+          chunkId: 'd',
+          documentId: 'doc',
+          filename: 'Platform Engineer',
+          page: null,
+          ordinal: 1,
+        },
+      ],
+      [chunk('j', true), chunk('d', false)],
+    );
+
+    expect(sources[0]!.career).toEqual(location);
+    expect(sources[1]).not.toHaveProperty('career');
+  });
+
+  it('is kept on the closest passages shown with a refusal', () => {
+    const [closest] = closestPassages([chunk('j', true)]);
+
+    expect(closest!.career).toEqual(location);
+    expect(closestPassages([chunk('d', false)])[0]).not.toHaveProperty('career');
+  });
+
+  it('is kept in the trace', () => {
+    const [traced] = toTracedChunks([chunk('j', true)], new Set(['j']));
+
+    expect(traced!.career).toEqual(location);
+  });
+});

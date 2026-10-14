@@ -1,5 +1,5 @@
 import type { UIMessage } from 'ai';
-import type { CodeLocation, MeetingLocation } from '../documents/api';
+import type { CareerLocation, CodeLocation, MeetingLocation } from '../documents/api';
 
 export interface ChatSource {
   id: number;
@@ -9,6 +9,7 @@ export interface ChatSource {
   page: number | null;
   code?: CodeLocation;
   meeting?: MeetingLocation;
+  career?: CareerLocation;
   ordinal: number;
   excerpt: string;
   score: number | null;
@@ -25,13 +26,14 @@ export interface ChatRetrieval {
   bestScore: number | null;
   outcome: 'answered' | 'declined';
   threshold?: number;
-  filters?: { speakers: string[]; time: string | null; relaxed: boolean };
+  filters?: { speakers: string[]; time: string | null; jobs?: string[]; relaxed: boolean };
   timings?: { rewriteMs: number; retrievalMs: number };
   closest?: Array<{
     filename: string;
     page: number | null;
     code?: CodeLocation;
     meeting?: MeetingLocation;
+    career?: CareerLocation;
     score: number;
   }>;
 }

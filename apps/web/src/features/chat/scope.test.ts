@@ -22,6 +22,9 @@ function source(id: string, kind: DocumentItem['kind'] = 'document'): DocumentIt
     durationMs: null,
     notes: null,
     progress: null,
+    jobNumber: null,
+    profile: null,
+    fit: null,
     suggestions: [],
     createdAt: '2026-10-07T10:00:00Z',
   };

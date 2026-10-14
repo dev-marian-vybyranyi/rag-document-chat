@@ -9,9 +9,12 @@ import { cn } from '@/lib/utils';
 import { CodeSnippet } from './CodeSnippet';
 import { githubPermalink } from './permalink';
 import {
+  describeCareerName,
+  describeCareerPart,
   describeLines,
   describeMatch,
   describeMeetingPart,
+  isGeneratedCareerPassage,
   isMeetingNotes,
   OVERVIEW_PATH,
 } from './source-format';
@@ -56,7 +59,14 @@ function Panel({ source, onClose }: { source: ChatSource; onClose: () => void })
 
   const code = source.code;
   const isFile = code !== undefined && code.path !== OVERVIEW_PATH;
-  const title = !code ? source.filename : isFile ? code.path : `Overview of ${source.filename}`;
+  const career = source.career;
+  const title = career
+    ? describeCareerName(source.filename, career)
+    : !code
+      ? source.filename
+      : isFile
+        ? code.path
+        : `Overview of ${source.filename}`;
   const origin = isFile ? `${source.filename} · ` : '';
   const meeting = source.meeting;
   const isTranscript = meeting !== undefined && !isMeetingNotes(meeting);
@@ -65,7 +75,7 @@ function Panel({ source, onClose }: { source: ChatSource; onClose: () => void })
     <SidePanel
       label="Source viewer"
       title={title}
-      subtitle={`${origin}Source [${source.id}]${source.page !== null ? ` · Page ${source.page}` : ''}${meeting ? ` · ${describeMeetingPart(meeting)}` : ''} · ${describeMatch(source.score)}`}
+      subtitle={`${origin}Source [${source.id}]${source.page !== null ? ` · Page ${source.page}` : ''}${meeting ? ` · ${describeMeetingPart(meeting)}` : ''}${career && describeCareerPart(career) ? ` · ${describeCareerPart(career)}` : ''} · ${describeMatch(source.score)}`}
       closeLabel="Close source viewer"
       onClose={onClose}
     >
@@ -104,6 +114,13 @@ function Panel({ source, onClose }: { source: ChatSource; onClose: () => void })
 
       {loaded.status === 'ready' && isTranscript && (
         <TranscriptView data={loaded.data} target={target} />
+      )}
+
+      {loaded.status === 'ready' && career && isGeneratedCareerPassage(career) && (
+        <p className="mb-3 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+          This passage was generated from your resume and the job postings. It is not text you
+          wrote. The exact lines of the documents are more reliable when they differ.
+        </p>
       )}
 
       {loaded.status === 'ready' && !isFile && !isTranscript && (

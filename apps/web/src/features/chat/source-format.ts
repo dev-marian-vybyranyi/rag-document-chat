@@ -1,4 +1,4 @@
-import type { CodeLocation, MeetingLocation } from '../documents/api';
+import type { CareerLocation, CodeLocation, MeetingLocation } from '../documents/api';
 import { formatClock } from '../documents/meeting-status';
 import type { ChatSource } from './types';
 
@@ -38,13 +38,57 @@ function describeMeetingSource(filename: string, meeting: MeetingLocation): stri
   return `${filename} · ${formatClock(meeting.startMs)}${speakers ? ` · ${speakers}` : ''}`;
 }
 
+const SECTION_NAMES: Record<string, string> = {
+  summary: 'Summary',
+  experience: 'Experience',
+  skills: 'Skills',
+  education: 'Education',
+  requirements: 'Requirements',
+  nice_to_have: 'Nice to have',
+  responsibilities: 'Responsibilities',
+  profile: 'Profile',
+  fit: 'Fit analysis',
+  overview: 'Overview',
+};
+
+const GENERATED_SECTIONS = new Set(['profile', 'fit', 'overview']);
+
+export function isGeneratedCareerPassage(career: CareerLocation): boolean {
+  return career.section !== null && GENERATED_SECTIONS.has(career.section);
+}
+
+export function describeCareerName(filename: string, career: CareerLocation): string {
+  if (career.role === 'resume') return 'Resume';
+  return career.jobNumber === null ? filename : `Job #${career.jobNumber} · ${filename}`;
+}
+
+export function describeCareerPart(career: CareerLocation): string | null {
+  return career.section === null ? null : (SECTION_NAMES[career.section] ?? null);
+}
+
+function describeCareerSource(filename: string, career: CareerLocation): string {
+  return [describeCareerName(filename, career), describeCareerPart(career)]
+    .filter((part) => part !== null)
+    .join(' · ');
+}
+
+export const isPlaced = (source: {
+  code?: CodeLocation;
+  meeting?: MeetingLocation;
+  career?: CareerLocation;
+}): boolean => Boolean(source.code || source.meeting || source.career);
+
 export function describeLocation(source: {
   filename: string;
   page: number | null;
   code?: CodeLocation;
   meeting?: MeetingLocation;
+  career?: CareerLocation;
 }): string {
   const { code } = source;
+  if (!code && !source.meeting && source.career) {
+    return describeCareerSource(source.filename, source.career);
+  }
   if (!code && source.meeting) return describeMeetingSource(source.filename, source.meeting);
   if (!code) {
     return source.page === null ? source.filename : `${source.filename}, page ${source.page}`;

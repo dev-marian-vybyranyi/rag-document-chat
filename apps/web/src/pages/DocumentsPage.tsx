@@ -1,20 +1,26 @@
 import { Loader2Icon, XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AddJobDialog } from '@/features/documents/AddJobDialog';
 import { AddMeetingDialog } from '@/features/documents/AddMeetingDialog';
 import { AddRepositoryDialog } from '@/features/documents/AddRepositoryDialog';
+import { AddResumeDialog } from '@/features/documents/AddResumeDialog';
 import { useDocuments } from '@/features/documents/documents-context';
 import { DocumentRow } from '@/features/documents/DocumentRow';
 import { Dropzone } from '@/features/documents/Dropzone';
 
 export function DocumentsPage() {
   const { state, uploads, announcement, upload, dismissUpload, reload } = useDocuments();
+  const hasResume =
+    state.status === 'ready' && state.documents.some((document) => document.kind === 'resume');
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">Your documents</h2>
         <div className="flex flex-wrap gap-2">
+          <AddResumeDialog hasResume={hasResume} />
+          <AddJobDialog />
           <AddMeetingDialog />
           <AddRepositoryDialog />
         </div>
@@ -77,8 +83,8 @@ export function DocumentsPage() {
 
       {state.status === 'ready' && state.documents.length === 0 && (
         <p className="text-center text-sm text-muted-foreground">
-          No documents yet. Add a file above, a meeting transcript or a code repository to start
-          asking questions about it.
+          No documents yet. Add a file above, a meeting transcript, a code repository, or your
+          resume and some job postings to start asking questions about them.
         </p>
       )}
 

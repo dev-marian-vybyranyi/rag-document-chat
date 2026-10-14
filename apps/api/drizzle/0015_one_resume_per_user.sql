@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "documents_one_resume_per_user_idx" ON "documents" USING btree ("user_id") WHERE "documents"."kind" = 'resume';

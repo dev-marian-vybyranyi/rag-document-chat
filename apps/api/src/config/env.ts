@@ -40,6 +40,7 @@ const envSchema = z
     RELEVANCE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.65),
     CODE_RELEVANCE_THRESHOLD: z.coerce.number().min(0).max(1).optional(),
     MEETING_RELEVANCE_THRESHOLD: z.coerce.number().min(0).max(1).optional(),
+    CAREER_RELEVANCE_THRESHOLD: z.coerce.number().min(0).max(1).optional(),
     CHAT_MODEL: z.string().min(1).optional(),
     CHAT_THINKING_LEVEL: z.enum(['minimal', 'low', 'medium', 'high']).default('minimal'),
     CHAT_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(10),

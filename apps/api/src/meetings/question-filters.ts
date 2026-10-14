@@ -34,6 +34,7 @@ export interface MeetingFilter {
 export interface AppliedFilters {
   speakers: string[];
   time: string | null;
+  jobs?: string[];
   relaxed: boolean;
 }
 
@@ -234,10 +235,15 @@ export function describeTime(time: TimeExpression): string {
   }
 }
 
-export function appliedFilters(filters: QuestionFilters, relaxed: boolean): AppliedFilters {
+export function appliedFilters(
+  filters: QuestionFilters | null,
+  relaxed: boolean,
+  jobs: string[] = [],
+): AppliedFilters {
   return {
-    speakers: filters.speakers,
-    time: filters.time ? describeTime(filters.time) : null,
+    speakers: filters?.speakers ?? [],
+    time: filters?.time ? describeTime(filters.time) : null,
+    ...(jobs.length > 0 && { jobs }),
     relaxed,
   };
 }

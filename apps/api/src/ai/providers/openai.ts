@@ -1,6 +1,15 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import type { Env } from '../../config/env.js';
 import { EMBEDDING_DIMENSIONS } from '../../db/schema.js';
+import {
+  createJobProfileExtractor,
+  createNoopJobProfileExtractor,
+} from '../../career/job-profile.js';
+import { createFitMatcher, createNoopFitMatcher } from '../../career/matcher.js';
+import {
+  createNoopResumeProfileExtractor,
+  createResumeProfileExtractor,
+} from '../../career/resume-profile.js';
 import { createNoopNotesExtractor, createNotesExtractor } from '../../meetings/notes-extractor.js';
 import { createDiarizingTranscriber } from '../../meetings/transcribe-with-diarization.js';
 import { createUnconfiguredTranscriber } from '../../meetings/transcriber.js';
@@ -42,6 +51,9 @@ export function createOpenAiProvider(env: OpenAiProviderEnv): AiProvider {
       createRewriter: () => createPassthroughRewriter(),
       createSuggester: () => createNoopSuggester(),
       createNotesExtractor: () => createNoopNotesExtractor(),
+      createResumeProfileExtractor: () => createNoopResumeProfileExtractor(),
+      createJobProfileExtractor: () => createNoopJobProfileExtractor(),
+      createFitMatcher: () => createNoopFitMatcher(),
       createTranscriber: () => createUnconfiguredTranscriber(KEY_VARIABLE),
       createJudgeModel: () => {
         throw new Error(`${KEY_VARIABLE} is not set`);
@@ -81,6 +93,24 @@ export function createOpenAiProvider(env: OpenAiProviderEnv): AiProvider {
       }),
     createNotesExtractor: (logger) =>
       createNotesExtractor({
+        model: openai.chat(env.REWRITE_MODEL),
+        logger,
+        providerOptions: lowReasoning,
+      }),
+    createResumeProfileExtractor: (logger) =>
+      createResumeProfileExtractor({
+        model: openai.chat(env.REWRITE_MODEL),
+        logger,
+        providerOptions: lowReasoning,
+      }),
+    createJobProfileExtractor: (logger) =>
+      createJobProfileExtractor({
+        model: openai.chat(env.REWRITE_MODEL),
+        logger,
+        providerOptions: lowReasoning,
+      }),
+    createFitMatcher: (logger) =>
+      createFitMatcher({
         model: openai.chat(env.REWRITE_MODEL),
         logger,
         providerOptions: lowReasoning,

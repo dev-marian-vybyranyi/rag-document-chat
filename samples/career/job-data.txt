@@ -1,0 +1,18 @@
+Data Engineer
+Company: Adventure Analytics
+
+About the role
+Adventure Analytics turns booking data from travel companies into reports. The data team builds the pipelines that feed them.
+
+Requirements
+- Python
+- SQL
+- Apache Spark
+- Airflow
+
+Nice to have
+- Kafka
+- dbt
+
+Responsibilities
+Build and maintain the daily data pipelines. Check the quality of the data before it reaches the reports. Work with analysts on the tables they need.

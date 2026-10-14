@@ -3,6 +3,7 @@ import { ChatsLayout } from './features/chats/ChatsLayout';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { RedirectIfAuthenticated, RequireAuth } from './features/auth/RouteGuards';
+import { CareerPage } from './pages/CareerPage';
 import { ChatPage } from './pages/ChatPage';
 import { DocumentsPage } from './pages/DocumentsPage';
 import { HomePage } from './pages/HomePage';
@@ -14,6 +15,7 @@ export function App() {
         <Route element={<ChatsLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/documents" element={<DocumentsPage />} />
+          <Route path="/career" element={<CareerPage />} />
           <Route path="/chats/:chatId" element={<ChatPage />} />
         </Route>
       </Route>

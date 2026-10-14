@@ -1,4 +1,11 @@
-import { ChevronDownIcon, FileTextIcon, FolderGit2Icon, UsersIcon } from 'lucide-react';
+import {
+  BriefcaseBusinessIcon,
+  ChevronDownIcon,
+  FileTextIcon,
+  FileUserIcon,
+  FolderGit2Icon,
+  UsersIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -6,12 +13,15 @@ import { cn } from '@/lib/utils';
 import { useChats } from '@/features/chats/chats-context';
 import { useDocuments } from '@/features/documents/documents-context';
 import type { DocumentItem } from '@/features/documents/api';
+import { sourceName } from '@/features/documents/career-status';
 import { describeScope, idsOf, liveIds, normalizeScope } from './scope';
 
 const GROUPS: Array<{ kind: DocumentItem['kind']; label: string; Icon: typeof FileTextIcon }> = [
   { kind: 'document', label: 'Documents', Icon: FileTextIcon },
   { kind: 'repository', label: 'Code repositories', Icon: FolderGit2Icon },
   { kind: 'transcript', label: 'Meetings', Icon: UsersIcon },
+  { kind: 'resume', label: 'Resume', Icon: FileUserIcon },
+  { kind: 'job_posting', label: 'Job postings', Icon: BriefcaseBusinessIcon },
 ];
 
 export function SourcePicker({
@@ -31,6 +41,9 @@ export function SourcePicker({
   const documents = library.filter((source) => source.kind === 'document');
   const repositories = library.filter((source) => source.kind === 'repository');
   const meetings = library.filter((source) => source.kind === 'transcript');
+  const career = library.filter(
+    (source) => source.kind === 'resume' || source.kind === 'job_posting',
+  );
   const groups = GROUPS.map((group) => ({
     ...group,
     sources: library.filter((source) => source.kind === group.kind),
@@ -105,6 +118,10 @@ export function SourcePicker({
             'Meetings only',
             meetings.map((source) => source.id),
           )}
+          {preset(
+            'Resume and jobs only',
+            career.map((source) => source.id),
+          )}
         </div>
 
         {state.status !== 'ready' && (
@@ -112,7 +129,8 @@ export function SourcePicker({
         )}
         {state.status === 'ready' && library.length === 0 && (
           <p className="text-xs text-muted-foreground">
-            You have no sources yet. Add a document, a code repository or a meeting first.
+            You have no sources yet. Add a document, a code repository, a meeting, a resume or a job
+            posting first.
           </p>
         )}
 
@@ -142,8 +160,8 @@ export function SourcePicker({
                             className="size-4 accent-primary"
                           />
                           <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                          <span className="min-w-0 flex-1 truncate" title={source.filename}>
-                            {source.filename}
+                          <span className="min-w-0 flex-1 truncate" title={sourceName(source)}>
+                            {sourceName(source)}
                           </span>
                           {source.status === 'processing' && (
                             <span className="text-xs text-muted-foreground">indexing…</span>

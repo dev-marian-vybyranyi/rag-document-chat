@@ -1,8 +1,18 @@
-import { FileTextIcon, FolderGit2Icon, Trash2Icon, UsersIcon } from 'lucide-react';
+import {
+  BriefcaseBusinessIcon,
+  FileTextIcon,
+  FileUserIcon,
+  FolderGit2Icon,
+  Trash2Icon,
+  UsersIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { DocumentItem } from './api';
 import { useStartChat } from '../chats/useStartChat';
+import { CareerDetails } from './CareerDetails';
+import { cardQuestions } from './career-questions';
+import { careerTitle, describeCareerStatus, isCareer } from './career-status';
 import { useDocuments } from './documents-context';
 import { suggestionsOf } from './meeting-questions';
 import { MeetingNotesDialog } from './MeetingNotesDialog';
@@ -22,6 +32,7 @@ function plural(count: number, word: string): string {
 }
 
 function describeStatus(document: DocumentItem): string {
+  if (isCareer(document)) return describeCareerStatus(document);
   if (document.kind === 'repository') return describeRepositoryStatus(document);
   if (document.kind === 'transcript') return describeMeetingStatus(document);
   if (document.status === 'processing') return 'Processing…';
@@ -70,7 +81,7 @@ function RepositoryDetails({ document }: { document: DocumentItem }) {
 }
 
 export function DocumentRow({ document }: { document: DocumentItem }) {
-  const { remove } = useDocuments();
+  const { remove, state } = useDocuments();
   const { start, failed: startFailed } = useStartChat();
   const [confirming, setConfirming] = useState(false);
   const [pending, setPending] = useState(false);
@@ -90,17 +101,29 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
   const isRepository = document.kind === 'repository';
   const isMeeting = document.kind === 'transcript';
   const repositoryUrl = isRepository ? safeGithubUrl(document.repoUrl) : null;
-  const Icon = isRepository ? FolderGit2Icon : isMeeting ? UsersIcon : FileTextIcon;
+  const career = isCareer(document);
+  const Icon = isRepository
+    ? FolderGit2Icon
+    : isMeeting
+      ? UsersIcon
+      : document.kind === 'resume'
+        ? FileUserIcon
+        : document.kind === 'job_posting'
+          ? BriefcaseBusinessIcon
+          : FileTextIcon;
+  const name = career ? careerTitle(document) : document.filename;
   const speakers = isMeeting && document.participants ? shownSpeakers(document.participants) : null;
   const fraction = progressFraction(document.progress);
-  const suggestions = suggestionsOf(document);
+  const { questions: suggestions, sourceIds } = career
+    ? cardQuestions(document, state.status === 'ready' ? state.documents : [])
+    : { questions: suggestionsOf(document), sourceIds: [document.id] };
 
   return (
     <li className="flex flex-col gap-1 rounded-lg border bg-background px-4 py-3">
       <div className="flex items-center gap-3">
         <Icon className="size-5 shrink-0 text-muted-foreground" aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium" title={document.filename}>
+          <p className="truncate text-sm font-medium" title={name}>
             {repositoryUrl ? (
               <a
                 href={repositoryUrl}
@@ -112,11 +135,11 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
                 {document.filename}
               </a>
             ) : (
-              document.filename
+              name
             )}
           </p>
           <p className="text-xs text-muted-foreground">
-            {isRepository || isMeeting ? (
+            {isRepository || isMeeting || career ? (
               <>
                 {describeStatus(document)}
                 <RepositoryDetails document={document} />
@@ -148,7 +171,7 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={`Delete ${document.filename}`}
+            aria-label={`Delete ${name}`}
             onClick={() => {
               setFailed(false);
               setConfirming(true);
@@ -161,7 +184,7 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
       {document.status === 'processing' && (
         <div
           role="progressbar"
-          aria-label={`Processing ${document.filename}`}
+          aria-label={`Processing ${name}`}
           {...(fraction !== null && {
             'aria-valuemin': 0,
             'aria-valuemax': 100,
@@ -179,6 +202,7 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
           )}
         </div>
       )}
+      {career && <CareerDetails document={document} />}
       {speakers && speakers.shown.length > 0 && (
         <ul className="flex flex-wrap gap-1.5 pt-1" aria-label={`Speakers in ${document.filename}`}>
           {speakers.shown.map((name) => (
@@ -192,17 +216,14 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
         </ul>
       )}
       {document.status === 'ready' && suggestions.length > 0 && (
-        <ul
-          className="flex flex-wrap gap-1.5 pt-1"
-          aria-label={`Questions to ask about ${document.filename}`}
-        >
+        <ul className="flex flex-wrap gap-1.5 pt-1" aria-label={`Questions to ask about ${name}`}>
           {suggestions.map((question) => (
             <li key={question} className="max-w-full">
               <Button
                 variant="outline"
                 size="xs"
                 className="h-auto max-w-full py-1 text-left whitespace-normal"
-                onClick={() => void start(question, [document.id])}
+                onClick={() => void start(question, sourceIds)}
               >
                 {question}
               </Button>

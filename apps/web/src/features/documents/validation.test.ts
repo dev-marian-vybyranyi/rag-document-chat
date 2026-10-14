@@ -8,6 +8,8 @@ import {
   validateGithubAddress,
   MAX_RECORDING_BYTES,
   validateRecording,
+  validateCareerFile,
+  validateCareerText,
 } from './validation';
 
 function file(name: string, size: number): File {
@@ -138,5 +140,48 @@ describe('validateRecording', () => {
 
     expect(validateRecording(at)).toBeNull();
     expect(validateRecording(over)).toBe('The file is too large (limit 15 MB).');
+  });
+});
+
+describe('validateCareerFile', () => {
+  const limit = { maxBytes: 1000, label: '1 KB', what: 'job posting' };
+
+  it.each(['cv.pdf', 'cv.txt', 'cv.md', 'cv.markdown', 'CV.PDF'])('accepts %s', (name) => {
+    expect(validateCareerFile(file(name, 10), limit)).toBeNull();
+  });
+
+  it.each(['cv.docx', 'cv.png', 'cv', 'cv.pdf.exe'])(
+    'refuses %s and names what is expected',
+    (name) => {
+      expect(validateCareerFile(file(name, 10), limit)).toBe(
+        'Choose the job posting as a PDF, TXT or Markdown file.',
+      );
+    },
+  );
+
+  it('refuses an empty file', () => {
+    expect(validateCareerFile(file('cv.txt', 0), limit)).toBe('The file is empty.');
+  });
+
+  it('allows exactly the size limit and refuses one byte more, saying what the limit is', () => {
+    expect(validateCareerFile(file('cv.txt', 1000), limit)).toBeNull();
+    expect(validateCareerFile(file('cv.txt', 1001), limit)).toBe(
+      'The file is too large (limit 1 KB).',
+    );
+  });
+});
+
+describe('validateCareerText', () => {
+  const limit = { maxCharacters: 1000, what: 'resume' };
+
+  it('accepts text up to the limit and refuses one character more', () => {
+    expect(validateCareerText('a'.repeat(1000), limit)).toBeNull();
+    expect(validateCareerText('a'.repeat(1001), limit)).toBe(
+      'The text is too long (limit 1,000 characters).',
+    );
+  });
+
+  it.each(['', '   ', '\n\t \n'])('asks for text instead of %j', (text) => {
+    expect(validateCareerText(text, limit)).toBe('Paste the text of the resume.');
   });
 });

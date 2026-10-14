@@ -1,4 +1,4 @@
-import { describeLocation } from './source-format';
+import { describeLocation, isPlaced } from './source-format';
 import { useSourceViewer } from './source-viewer-context';
 import type { ChatSource } from './types';
 
@@ -19,7 +19,7 @@ export function SourceList({ sources }: { sources: ChatSource[] }) {
               className="block max-w-full cursor-pointer truncate rounded-md border bg-muted/50 px-2 py-0.5 text-left text-xs hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               <span className="font-medium">[{source.id}]</span>{' '}
-              {source.code || source.meeting ? describeLocation(source) : source.filename}
+              {isPlaced(source) ? describeLocation(source) : source.filename}
               {source.page !== null && (
                 <span className="text-muted-foreground"> · p. {source.page}</span>
               )}

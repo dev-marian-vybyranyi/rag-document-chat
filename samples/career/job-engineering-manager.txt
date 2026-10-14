@@ -1,0 +1,15 @@
+Engineering Manager
+Company: Globex
+
+About the role
+Globex builds logistics software. The engineering manager leads one team of eight engineers and reports to the head of engineering.
+
+Requirements
+- Technical background in backend development
+- Experience leading a team of engineers
+- Hiring and interviewing engineers
+- Roadmap planning
+- 7+ years of professional experience
+
+Responsibilities
+Lead the team day to day and plan its roadmap with product. Hire new engineers and help the current ones grow. Remove what blocks the team.

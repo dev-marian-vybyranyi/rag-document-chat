@@ -1,4 +1,5 @@
 import type { DocumentItem } from '../documents/api';
+import { sourceName } from '../documents/career-status';
 
 export interface ScopeDescription {
   label: string;
@@ -35,6 +36,6 @@ export function describeScope(
   const live = sourcesInScope(sourceIds, library);
   const missing = sourceIds.length - live.length;
   if (live.length === 0) return { label: 'Chosen sources deleted', missing, empty: true };
-  const label = live.length === 1 ? live[0]!.filename : `${live.length} sources`;
+  const label = live.length === 1 ? sourceName(live[0]!) : `${live.length} sources`;
   return { label, missing, empty: false };
 }
