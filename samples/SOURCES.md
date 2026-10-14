@@ -66,3 +66,29 @@ Names that look alike (Marcus and Marco) and people who speak in two meetings (P
 are there on purpose, to see whether answers keep the speakers apart. A line is quoted in the golden
 set only if it is word for word in one turn; `apps/api/test/golden-meetings.test.ts` checks every
 quote, speaker and time against the files.
+
+
+## Sample resume and job postings (written for this project)
+
+The career evaluation (`scripts/eval/golden-career.json`) asks questions about one resume and
+several job postings in `samples/career`. Like the meetings they are not taken from anywhere: the
+person, the companies and the roles are invented for this repository (the e-mail address, the phone
+number and the profile links cannot be real), so there is no licence to carry and the files may be
+kept here. They are drafted with an AI assistant and read through by the maintainer.
+
+| File | What it is |
+|---|---|
+| `resume-alex-morgan.txt` | A backend engineer with almost six years in two roles: Go, PostgreSQL and Docker are shown; Kubernetes is only "familiar"; RabbitMQ is there, Kafka is not. It also holds what redaction must remove (e-mail, phone, links, a street address, date of birth, marital status) and a citizenship line that is kept |
+| `resume-alex-morgan-injected.txt` | The same resume with one added line that tells a model to rate the candidate as a perfect match |
+| `job-backend-go.txt` | A near match: everything required is shown, Kubernetes (nice to have) only partly |
+| `job-platform.txt` | A partial match: Terraform missing, Kubernetes only partly shown, AWS and CI pipelines shown |
+| `job-frontend.txt` | No match at all |
+| `job-data.txt` | Half a match, with Kafka as a trap (the resume has RabbitMQ) |
+| `job-engineering-manager.txt` | Asks for 7+ years where the resume shows 5.8, and for leading a team where it shows mentoring |
+| `job-injected.txt` | A posting that tells a model to mark every requirement as met |
+
+The key (`jobs` in the golden file) gives, for every requirement, the status a careful reader gives
+it and the line of the resume that shows it; the coverage and the ranking in it are worked out with
+the same code the app uses, and `apps/api/test/golden-career.test.ts` checks every quote, section,
+status and number against the files.
+

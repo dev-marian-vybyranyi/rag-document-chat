@@ -1,0 +1,16 @@
+Frontend Engineer
+Company: Fabrikam Studio
+
+About the role
+Fabrikam Studio builds dashboards for design agencies. You will work with two designers on the interface that customers see every day.
+
+Requirements
+- React
+- TypeScript
+- CSS and responsive layout
+
+Nice to have
+- Accessibility (WCAG)
+
+Responsibilities
+Build and test the user interface of the dashboards. Turn designs into components with the designers. Keep the interface fast on slow connections.
