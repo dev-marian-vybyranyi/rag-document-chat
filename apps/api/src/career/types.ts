@@ -11,6 +11,11 @@ export type CareerSection =
   | 'overview'
   | 'other';
 
+export const GENERATED_SECTIONS: readonly CareerSection[] = ['profile', 'fit', 'overview'];
+
+export const isGeneratedSection = (section: CareerSection | null): boolean =>
+  section !== null && GENERATED_SECTIONS.includes(section);
+
 export type RequirementImportance = 'must' | 'nice';
 
 export type RequirementStatus = 'met' | 'partial' | 'not_shown';

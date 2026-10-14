@@ -12,6 +12,7 @@ const QUESTION = 'Kubernetes Terraform pipeline experience';
 interface Passage {
   content: string;
   embeddingOf?: string;
+  section?: 'overview' | 'fit' | 'profile';
 }
 
 const questionEmbedder: Embedder = {
@@ -75,6 +76,7 @@ describe('keeping both sides of a comparison in the context', () => {
         userId,
         ordinal,
         content: passage.content,
+        section: passage.section ?? null,
         tokenCount: 5,
         embedding: fakeVector(passage.embeddingOf ?? passage.content),
       })),
@@ -244,6 +246,68 @@ describe('keeping both sides of a comparison in the context', () => {
 
       expect(result.chunks).toHaveLength(6);
       expect(result.chunks.every((chunk) => roleOf(chunk) === 'other')).toBe(true);
+    });
+
+    it('does not count an analysis of the resume as the resume itself', async () => {
+      const { ada } = await seed({
+        resume: [{ ...strong('overview'), section: 'overview' }, ...sideResume],
+      });
+
+      const result = await retrieverWith().retrieve(ada.id, QUESTION);
+
+      const fromResume = result.chunks.filter((chunk) => roleOf(chunk) === 'resume');
+      const plain = fromResume.filter((chunk) => chunk.career?.section === null);
+      expect(plain).toHaveLength(BALANCE_PASSAGES);
+      expect(texts({ chunks: plain }).sort()).toEqual(
+        [
+          'Kubernetes cluster operations in resume two.',
+          'Terraform pipeline modules in resume one.',
+        ].sort(),
+      );
+    });
+
+    it('does not count an analysis of a posting as the posting itself', async () => {
+      const { ada } = await seed({
+        jobs: [{ ...strong('fit'), section: 'fit' }, ...sideJobs],
+        resume: strongMany('cv-', 3),
+      });
+
+      const result = await retrieverWith().retrieve(ada.id, QUESTION, { limit: 4 });
+
+      expect(result.chunks.slice(0, 4).some((chunk) => chunk.career?.section === 'fit')).toBe(true);
+      const added = result.chunks.slice(4);
+      expect(added).toHaveLength(BALANCE_PASSAGES);
+      expect(added.every((chunk) => chunk.career?.role === 'job_posting')).toBe(true);
+      expect(added.every((chunk) => chunk.career?.section === null)).toBe(true);
+    });
+
+    it('does not take an analysis for the missing side when it adds passages', async () => {
+      const { ada } = await seed({
+        resume: [
+          { ...strong('profile'), section: 'profile' },
+          { ...strong('overview'), section: 'overview' },
+          ...sideResume,
+        ],
+        jobs: strongMany('one-', 14),
+      });
+
+      const result = await retrieverWith().retrieve(ada.id, QUESTION, { limit: 3 });
+
+      const added = result.chunks.slice(3);
+      expect(added).toHaveLength(BALANCE_PASSAGES);
+      expect(added.every((chunk) => chunk.career?.section === null)).toBe(true);
+    });
+
+    it('adds nothing when only analyses were found, on either side', async () => {
+      const { ada } = await seed({
+        resume: [{ ...strong('overview'), section: 'overview' }, weak('resume x')],
+        jobs: [{ ...strong('fit'), section: 'fit' }, weak('one x')],
+      });
+
+      const result = await retrieverWith().retrieve(ada.id, QUESTION, { limit: 2 });
+
+      expect(result.chunks).toHaveLength(2);
+      expect(result.chunks.every((chunk) => chunk.career?.section !== null)).toBe(true);
     });
 
     it('does not count a document as either side', async () => {

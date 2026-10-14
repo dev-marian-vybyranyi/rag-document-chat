@@ -8,6 +8,7 @@ import {
   gte,
   inArray,
   isNotNull,
+  isNull,
   lte,
   ne,
   notInArray,
@@ -17,7 +18,7 @@ import {
 import type { Database } from '../db/client.js';
 import { chunks, documents } from '../db/schema.js';
 import type { JobFacts } from '../career/question-jobs.js';
-import type { CareerSection } from '../career/types.js';
+import { GENERATED_SECTIONS, type CareerSection } from '../career/types.js';
 import type { MeetingFacts, MeetingFilter } from '../meetings/question-filters.js';
 import type { MeetingLocation } from '../meetings/types.js';
 import type { CareerSource } from './career-source.js';
@@ -48,6 +49,7 @@ export interface SearchScope {
   documentIds?: string[];
   meeting?: MeetingFilter;
   jobs?: string[];
+  rawOnly?: boolean;
 }
 
 export interface RetrievalStore {
@@ -177,6 +179,11 @@ export function createRetrievalStore(
   const jobCondition = ({ jobs }: SearchScope) =>
     jobs ? or(ne(documents.kind, 'job_posting'), inArray(documents.id, jobs)) : undefined;
 
+  const rawCondition = ({ rawOnly }: SearchScope) =>
+    rawOnly
+      ? or(isNull(chunks.section), notInArray(chunks.section, [...GENERATED_SECTIONS]))
+      : undefined;
+
   async function searchProse(userId: string, queryText: string, limit: number, scope: SearchScope) {
     const anyTerm = sql`replace(plainto_tsquery('english', ${queryText}::text)::text, ' & ', ' | ')::tsquery`;
     const rank = sql<number>`ts_rank(${chunks.searchVector}, ${anyTerm}, 32)`;
@@ -193,6 +200,7 @@ export function createRetrievalStore(
           inScope(scope),
           meetingCondition(scope),
           jobCondition(scope),
+          rawCondition(scope),
           sql`${chunks.searchVector} @@ ${anyTerm}`,
         ),
       )
@@ -323,6 +331,7 @@ export function createRetrievalStore(
               inScope(scope),
               meetingCondition(scope),
               jobCondition(scope),
+              rawCondition(scope),
             ),
           )
           .orderBy(distance, asc(chunks.documentId), asc(chunks.ordinal))

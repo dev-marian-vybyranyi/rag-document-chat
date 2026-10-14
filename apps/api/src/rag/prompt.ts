@@ -1,6 +1,6 @@
 import { formatTimestamp } from '../meetings/timestamp.js';
 import type { MeetingLocation } from '../meetings/types.js';
-import type { CareerSection } from '../career/types.js';
+import { isGeneratedSection } from '../career/types.js';
 import type { CareerSource } from './career-source.js';
 import type { CodeSource } from './code-source.js';
 import type { RetrievedChunk } from './fusion.js';
@@ -129,11 +129,9 @@ function codeAttributes(code: CodeSource | undefined): string {
   );
 }
 
-const GENERATED_SECTIONS: ReadonlySet<CareerSection> = new Set(['profile', 'fit', 'overview']);
-
 function careerAttributes(career: CareerSource | undefined): string {
   if (!career) return '';
-  const generated = career.section !== null && GENERATED_SECTIONS.has(career.section);
+  const generated = isGeneratedSection(career.section);
   const kind = generated ? career.section! : career.role;
   const section = generated || career.section === null ? null : career.section;
   const job = career.role === 'job_posting' ? career.jobNumber : null;

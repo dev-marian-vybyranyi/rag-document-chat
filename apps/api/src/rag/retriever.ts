@@ -1,6 +1,7 @@
 import type { Logger } from 'pino';
 import { EmbeddingError, type Embedder } from '../ai/embeddings.js';
 import { describeJob, detectJobs } from '../career/question-jobs.js';
+import { isGeneratedSection } from '../career/types.js';
 import { fuseRankings, type RetrievedChunk } from './fusion.js';
 import {
   appliedFilters,
@@ -89,11 +90,16 @@ export function createRetriever({ store, embedder, logger }: RetrieverDeps): Ret
       ): Promise<RetrievalResult> => {
         if (!balanceSides || resumeId === null || jobIds.length === 0) return result;
         const sides = new Set(
-          result.chunks.flatMap((chunk) => (chunk.career ? [chunk.career.role] : [])),
+          result.chunks.flatMap((chunk) =>
+            chunk.career && !isGeneratedSection(chunk.career.section) ? [chunk.career.role] : [],
+          ),
         );
         if (sides.size !== 1) return result;
         const missing = sides.has('resume') ? jobIds : [resumeId];
-        const extra = await search({ ...base, documentIds: missing }, BALANCE_PASSAGES);
+        const extra = await search(
+          { ...base, documentIds: missing, rawOnly: true },
+          BALANCE_PASSAGES,
+        );
         return { ...result, chunks: [...result.chunks, ...extra.chunks] };
       };
 

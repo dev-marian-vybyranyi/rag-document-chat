@@ -131,6 +131,37 @@ describe('searching resumes and job postings', () => {
     expect(found.map((hit) => hit.career?.section).sort()).toEqual(['fit', 'overview']);
   });
 
+  it('can leave out the passages that were generated, in both kinds of search', async () => {
+    const ada = await createUser('ada@example.com');
+    await addSource(ada.id, { kind: 'resume', filename: 'cv.pdf' }, [
+      { content: 'Spark in the resume text.', section: 'skills' },
+      { content: 'Spark in the profile.', section: 'profile' },
+      { content: 'Spark in the overview.', section: 'overview' },
+      { content: 'Spark in the plain text.' },
+    ]);
+    await addSource(ada.id, { kind: 'job_posting', filename: 'Data', jobNumber: 1 }, [
+      { content: 'Spark in the fit.', section: 'fit' },
+      { content: 'Spark in the requirements.', section: 'requirements' },
+    ]);
+    await addSource(ada.id, { kind: 'document', filename: 'handbook.pdf' }, [
+      { content: 'Spark in the handbook.' },
+    ]);
+    const raw = [
+      'Spark in the handbook.',
+      'Spark in the plain text.',
+      'Spark in the requirements.',
+      'Spark in the resume text.',
+    ];
+
+    const keyword = await store.keywordSearch(ada.id, 'Spark', 10, { rawOnly: true });
+    const vector = await store.vectorSearch(ada.id, embedding(0), 10, { rawOnly: true });
+    const everything = await store.keywordSearch(ada.id, 'Spark', 10);
+
+    expect(keyword.map((hit) => hit.content).sort()).toEqual(raw);
+    expect(vector.map((hit) => hit.content).sort()).toEqual(raw);
+    expect(everything).toHaveLength(7);
+  });
+
   it('gives no career location for documents, and finds them next to the career sources', async () => {
     const { ada } = await seed();
     await addSource(ada.id, { kind: 'document', filename: 'handbook.pdf' }, [
