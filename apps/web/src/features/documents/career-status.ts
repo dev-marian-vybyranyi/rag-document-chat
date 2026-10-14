@@ -9,6 +9,9 @@ function plural(count: number, word: string): string {
 export const isCareer = (document: DocumentItem): boolean =>
   document.kind === 'resume' || document.kind === 'job_posting';
 
+export const sourceName = (document: DocumentItem): string =>
+  isCareer(document) ? careerTitle(document) : document.filename;
+
 export function careerTitle(document: DocumentItem): string {
   if (document.kind === 'resume') return 'Resume';
   return document.jobNumber === null

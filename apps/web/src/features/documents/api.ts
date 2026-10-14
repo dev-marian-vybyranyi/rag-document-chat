@@ -83,6 +83,12 @@ export interface MeetingLocation {
   speakers: string[];
 }
 
+export interface CareerLocation {
+  role: 'resume' | 'job_posting';
+  section: string | null;
+  jobNumber: number | null;
+}
+
 export interface Passage {
   ordinal: number;
   page: number | null;

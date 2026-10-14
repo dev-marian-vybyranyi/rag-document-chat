@@ -3,6 +3,7 @@ import { SidePanel } from './SidePanel';
 import { citedIds } from './citations';
 import {
   describeLocation,
+  isPlaced,
   formatDuration,
   formatPercent,
   formatScoreAgainst,
@@ -90,7 +91,7 @@ export function WhyContent({ data }: { data: WhyData }) {
               {retrieval.closest.map((passage, index) => (
                 <li key={index} className="rounded-md border px-2.5 py-1.5">
                   <span className="font-medium">
-                    {passage.code || passage.meeting ? describeLocation(passage) : passage.filename}
+                    {isPlaced(passage) ? describeLocation(passage) : passage.filename}
                   </span>
                   {passage.page !== null && (
                     <span className="text-muted-foreground"> · page {passage.page}</span>
@@ -115,7 +116,7 @@ export function WhyContent({ data }: { data: WhyData }) {
                   <div className="flex items-start justify-between gap-2">
                     <p className="min-w-0 break-words">
                       <span className="font-medium">[{source.id}]</span>{' '}
-                      {source.code || source.meeting ? describeLocation(source) : source.filename}
+                      {isPlaced(source) ? describeLocation(source) : source.filename}
                       {source.page !== null && (
                         <span className="text-muted-foreground"> · page {source.page}</span>
                       )}

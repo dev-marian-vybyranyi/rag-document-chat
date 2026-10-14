@@ -1,5 +1,5 @@
 import type { UIMessage } from 'ai';
-import type { CodeLocation, MeetingLocation } from '../documents/api';
+import type { CareerLocation, CodeLocation, MeetingLocation } from '../documents/api';
 
 export interface ChatSource {
   id: number;
@@ -9,6 +9,7 @@ export interface ChatSource {
   page: number | null;
   code?: CodeLocation;
   meeting?: MeetingLocation;
+  career?: CareerLocation;
   ordinal: number;
   excerpt: string;
   score: number | null;
@@ -32,6 +33,7 @@ export interface ChatRetrieval {
     page: number | null;
     code?: CodeLocation;
     meeting?: MeetingLocation;
+    career?: CareerLocation;
     score: number;
   }>;
 }

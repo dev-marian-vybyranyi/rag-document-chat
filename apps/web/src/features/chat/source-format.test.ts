@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  describeCareerName,
+  describeCareerPart,
   describeLines,
   describeLocation,
   describeMatch,
@@ -10,6 +12,8 @@ import {
   formatDuration,
   formatPercent,
   formatScoreAgainst,
+  isGeneratedCareerPassage,
+  isPlaced,
 } from './source-format';
 import type { ChatSource } from './types';
 
@@ -177,5 +181,96 @@ describe('naming a passage of a meeting', () => {
     expect(describeMeetingPart(notes)).toBe('Meeting notes');
     expect(isMeetingNotes(notes)).toBe(true);
     expect(isMeetingNotes(spoken)).toBe(false);
+  });
+});
+
+describe('naming a passage of a resume or a job posting', () => {
+  const resume = (section: string | null) => ({
+    role: 'resume' as const,
+    section,
+    jobNumber: null,
+  });
+  const job = (section: string | null, jobNumber: number | null = 2) => ({
+    role: 'job_posting' as const,
+    section,
+    jobNumber,
+  });
+
+  it('calls the resume Resume, whatever its file is called, and names the part', () => {
+    expect(
+      describeLocation({ filename: 'alex-cv.pdf', page: 1, career: resume('experience') }),
+    ).toBe('Resume · Experience');
+  });
+
+  it('numbers a posting, the way the user asks about it, and names the part', () => {
+    expect(
+      describeLocation({
+        filename: 'Platform Engineer at Acme',
+        page: null,
+        career: job('requirements'),
+      }),
+    ).toBe('Job #2 · Platform Engineer at Acme · Requirements');
+  });
+
+  it.each([
+    ['summary', 'Summary'],
+    ['experience', 'Experience'],
+    ['skills', 'Skills'],
+    ['education', 'Education'],
+    ['requirements', 'Requirements'],
+    ['nice_to_have', 'Nice to have'],
+    ['responsibilities', 'Responsibilities'],
+    ['profile', 'Profile'],
+    ['fit', 'Fit analysis'],
+    ['overview', 'Overview'],
+  ])('calls the section %s %s', (section, name) => {
+    expect(describeCareerPart(job(section))).toBe(name);
+  });
+
+  it('names no part for an unknown section, no section, or the rest', () => {
+    expect(describeCareerPart(job(null))).toBeNull();
+    expect(describeCareerPart(job('other'))).toBeNull();
+    expect(describeCareerPart(job('something new'))).toBeNull();
+    expect(describeLocation({ filename: 'Role', page: null, career: job(null) })).toBe(
+      'Job #2 · Role',
+    );
+    expect(describeLocation({ filename: 'cv', page: null, career: resume('other') })).toBe(
+      'Resume',
+    );
+  });
+
+  it('leaves out the number of a posting that has none', () => {
+    expect(describeCareerName('Role', job('requirements', null))).toBe('Role');
+    expect(describeCareerName('cv.pdf', resume(null))).toBe('Resume');
+  });
+
+  it('names the generated analyses', () => {
+    expect(describeLocation({ filename: 'Role', page: null, career: job('fit') })).toBe(
+      'Job #2 · Role · Fit analysis',
+    );
+    expect(describeLocation({ filename: 'cv', page: null, career: resume('overview') })).toBe(
+      'Resume · Overview',
+    );
+  });
+
+  it('is the same through describeSource', () => {
+    expect(describeSource({ ...source(null), career: resume('skills') })).toBe('Resume · Skills');
+  });
+
+  it('knows which sections are generated', () => {
+    expect(isGeneratedCareerPassage(job('fit'))).toBe(true);
+    expect(isGeneratedCareerPassage(resume('overview'))).toBe(true);
+    expect(isGeneratedCareerPassage(job('profile'))).toBe(true);
+    expect(isGeneratedCareerPassage(resume('experience'))).toBe(false);
+    expect(isGeneratedCareerPassage(job(null))).toBe(false);
+  });
+
+  it('counts a career location as a place', () => {
+    expect(isPlaced({ career: resume(null) })).toBe(true);
+    expect(isPlaced({})).toBe(false);
+  });
+
+  it('does not change the way documents and code are named', () => {
+    expect(describeLocation({ filename: 'handbook.pdf', page: 4 })).toBe('handbook.pdf, page 4');
   });
 });
