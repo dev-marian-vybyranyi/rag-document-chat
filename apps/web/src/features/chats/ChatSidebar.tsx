@@ -1,4 +1,4 @@
-import { FileTextIcon, Loader2Icon, PlusIcon } from 'lucide-react';
+import { BriefcaseBusinessIcon, FileTextIcon, Loader2Icon, PlusIcon } from 'lucide-react';
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
@@ -65,6 +65,19 @@ export function ChatSidebar() {
             <span className="sr-only">(processing)</span>
           </>
         )}
+      </NavLink>
+
+      <NavLink
+        to="/career"
+        className={({ isActive }) =>
+          cn(
+            'flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors hover:bg-muted',
+            isActive && 'bg-muted font-medium',
+          )
+        }
+      >
+        <BriefcaseBusinessIcon className="size-4" aria-hidden />
+        Career
       </NavLink>
 
       <nav aria-label="Conversations" className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
