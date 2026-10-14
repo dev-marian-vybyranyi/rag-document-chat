@@ -7,11 +7,13 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Client } from 'pg';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { createDb } from '../../src/db/client.js';
+import { runMigrations } from '../../src/db/migrate.js';
 import { documents, EMBEDDING_DIMENSIONS } from '../../src/db/schema.js';
 import { createDocumentRepository } from '../../src/documents/repository.js';
 
 const MIGRATIONS = fileURLToPath(new URL('../../drizzle', import.meta.url));
 const LAST_LEGACY_MIGRATION = '0007_embedding_model';
+const LAST_DEPLOYED_MIGRATION = '0013_transcript_source_and_meeting_metadata';
 
 interface Journal {
   entries: Array<{ idx: number; tag: string }>;
@@ -37,6 +39,7 @@ describe('upgrading a database that already holds documents', () => {
   const scratchUrl = new URL(baseUrl);
   scratchUrl.pathname = `/${scratchName}`;
   const legacyFolder = migrationsUpTo(LAST_LEGACY_MIGRATION);
+  const deployedFolder = migrationsUpTo(LAST_DEPLOYED_MIGRATION);
 
   async function withAdmin<T>(action: (admin: Client) => Promise<T>): Promise<T> {
     const adminUrl = new URL(baseUrl);
@@ -76,13 +79,15 @@ describe('upgrading a database that already holds documents', () => {
     await db.execute(
       sql`insert into chats (id, user_id, title) values (${chatId}, ${userId}, 'Old chat')`,
     );
-    await migrate(db, { migrationsFolder: MIGRATIONS });
+    await migrate(db, { migrationsFolder: deployedFolder });
+    await runMigrations(db);
   });
 
   afterAll(async () => {
     await pool.end();
     await withAdmin((admin) => admin.query(`drop database if exists "${scratchName}"`));
     rmSync(legacyFolder, { recursive: true, force: true });
+    rmSync(deployedFolder, { recursive: true, force: true });
   });
 
   it('turns existing documents into plain documents', async () => {

@@ -69,6 +69,12 @@ Raw material for the README – not a polished document.
 - Why: `preDeployCommand` is not something to rely on for free services; startup migration works on every plan.
 - Trade-offs / when to revisit: with several API instances this races; production would run migrations as a separate release step.
 
+### Each migration is its own transaction
+
+- Chosen: `runMigrations` applies the pending migrations one by one, each in its own transaction, and keeps Drizzle's own bookkeeping table (`drizzle.__drizzle_migrations`, same columns and hash), so a database migrated by `drizzle-kit` or by `migrate()` is read the same way.
+- Why: Drizzle's `migrate()` runs all pending migrations in one transaction, and Postgres does not allow a new value of an enum to be used before the transaction that added it has committed. The first deploy of the career migrations failed on this: `0014` added `resume` to `document_kind` and `0015` built a partial index on `kind = 'resume'`, in one transaction, on a database where the type already existed. A fresh database (all the tests) did not show it, because a type created in the same transaction may be used at once. The upgrade test now starts from the state that is deployed (migrated up to `0013`) before applying the rest.
+- Trade-offs / when to revisit: a migration that fails half way no longer takes the earlier ones with it, so each file should be safe to run again after a fix; concurrent starts still race, as before.
+
 ### Password hashing with Node's built-in scrypt
 
 - Chosen: `crypto.scrypt` (N=2^15, r=8, p=3, 16-byte salt), stored as `scrypt$N$r$p$salt$hash`.
