@@ -18,6 +18,7 @@ const candidate = (n: number): RetrievalCandidate => ({
 
 const store: RetrievalStore = {
   meetingFacts: async () => [],
+  jobFacts: async () => [],
   vectorSearch: async () => [candidate(1), candidate(2)],
   keywordSearch: async () => [candidate(2), candidate(3)],
 };

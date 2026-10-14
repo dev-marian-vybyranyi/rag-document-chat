@@ -1,5 +1,6 @@
 import type { Logger } from 'pino';
 import { EmbeddingError, type Embedder } from '../ai/embeddings.js';
+import { describeJob, detectJobs } from '../career/question-jobs.js';
 import { fuseRankings, type RetrievedChunk } from './fusion.js';
 import {
   appliedFilters,
@@ -68,15 +69,24 @@ export function createRetriever({ store, embedder, logger }: RetrieverDeps): Ret
         };
       };
 
-      const facts = await store.meetingFacts(userId, base);
+      const [facts, jobFacts] = await Promise.all([
+        store.meetingFacts(userId, base),
+        store.jobFacts(userId, base),
+      ]);
       const detected = detectFilters(query, facts);
-      if (!detected) return search(base);
+      const jobs = detectJobs(query, jobFacts);
+      if (!detected && jobs.length === 0) return search(base);
 
-      const filtered = await search({ ...base, meeting: toMeetingFilter(detected, facts) });
+      const labels = jobs.map(describeJob);
+      const filtered = await search({
+        ...base,
+        ...(detected && { meeting: toMeetingFilter(detected, facts) }),
+        ...(jobs.length > 0 && { jobs: jobs.map((job) => job.id) }),
+      });
       if (filtered.chunks.length > 0) {
-        return { ...filtered, filters: appliedFilters(detected, false) };
+        return { ...filtered, filters: appliedFilters(detected, false, labels) };
       }
-      return { ...(await search(base)), filters: appliedFilters(detected, true) };
+      return { ...(await search(base)), filters: appliedFilters(detected, true, labels) };
     },
   };
 }

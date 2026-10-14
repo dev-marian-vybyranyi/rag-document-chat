@@ -250,7 +250,7 @@ export function createMeetingSearcher({
   };
   const filtered = createRetriever({ store, embedder: cachedEmbedder, logger });
   const plain = createRetriever({
-    store: { ...store, meetingFacts: async () => [] },
+    store: { ...store, meetingFacts: async () => [], jobFacts: async () => [] },
     embedder: cachedEmbedder,
     logger,
   });

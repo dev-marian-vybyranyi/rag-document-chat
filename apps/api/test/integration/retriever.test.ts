@@ -138,6 +138,7 @@ describe('retriever', () => {
     const ada = await createUser('ada@example.com');
     const spy: RetrievalStore = {
       meetingFacts: vi.fn(store.meetingFacts),
+      jobFacts: vi.fn(store.jobFacts),
       vectorSearch: vi.fn(store.vectorSearch),
       keywordSearch: vi.fn(store.keywordSearch),
     };
@@ -153,6 +154,7 @@ describe('retriever', () => {
     const ada = await createUser('ada@example.com');
     const spy: RetrievalStore = {
       meetingFacts: vi.fn(store.meetingFacts),
+      jobFacts: vi.fn(store.jobFacts),
       vectorSearch: vi.fn(store.vectorSearch),
       keywordSearch: vi.fn(store.keywordSearch),
     };

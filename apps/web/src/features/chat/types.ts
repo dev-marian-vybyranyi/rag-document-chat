@@ -25,7 +25,7 @@ export interface ChatRetrieval {
   bestScore: number | null;
   outcome: 'answered' | 'declined';
   threshold?: number;
-  filters?: { speakers: string[]; time: string | null; relaxed: boolean };
+  filters?: { speakers: string[]; time: string | null; jobs?: string[]; relaxed: boolean };
   timings?: { rewriteMs: number; retrievalMs: number };
   closest?: Array<{
     filename: string;

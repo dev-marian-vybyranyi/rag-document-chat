@@ -153,17 +153,36 @@ function Filters({ filters }: { filters: NonNullable<WhyData['retrieval']['filte
     ...(filters.speakers.length > 0 ? [`what ${filters.speakers.join(' or ')} said`] : []),
     ...(filters.time ? [filters.time] : []),
   ].join(', ');
-  return filters.relaxed ? (
-    <p>
-      <span className="text-muted-foreground">Meetings: </span>
-      Your question named {named}, but nothing matched that, so the search was widened to the whole
-      meeting.
-    </p>
-  ) : (
-    <p>
-      <span className="text-muted-foreground">Meetings: </span>
-      Limited to {named}, as your question asked.
-    </p>
+  const jobs = filters.jobs ?? [];
+  return (
+    <>
+      {named !== '' &&
+        (filters.relaxed ? (
+          <p>
+            <span className="text-muted-foreground">Meetings: </span>
+            Your question named {named}, but nothing matched that, so the search was widened to the
+            whole meeting.
+          </p>
+        ) : (
+          <p>
+            <span className="text-muted-foreground">Meetings: </span>
+            Limited to {named}, as your question asked.
+          </p>
+        ))}
+      {jobs.length > 0 &&
+        (filters.relaxed ? (
+          <p>
+            <span className="text-muted-foreground">Job postings: </span>
+            Your question named {jobs.join(' and ')}, but nothing matched that, so the search was
+            widened to all your job postings.
+          </p>
+        ) : (
+          <p>
+            <span className="text-muted-foreground">Job postings: </span>
+            Limited to {jobs.join(' and ')} and your resume, as your question asked.
+          </p>
+        ))}
+    </>
   );
 }
 

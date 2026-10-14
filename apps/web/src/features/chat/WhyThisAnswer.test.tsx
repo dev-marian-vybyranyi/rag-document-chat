@@ -152,6 +152,81 @@ describe('WhyContent for meetings', () => {
     expect(screen.queryByText(/Limited to/)).not.toBeInTheDocument();
   });
 
+  it('says which job postings the question was limited to', () => {
+    render(
+      <WhyContent
+        data={data({
+          retrieval: {
+            ...retrieval,
+            filters: {
+              speakers: [],
+              time: null,
+              jobs: ['Job #1 · Data Engineer', 'Job #2 · Platform Engineer'],
+              relaxed: false,
+            },
+          },
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        /Limited to Job #1 · Data Engineer and Job #2 · Platform Engineer and your resume, as your question asked\./,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Meetings:/)).not.toBeInTheDocument();
+  });
+
+  it('says plainly when the job posting limit had to be given up', () => {
+    render(
+      <WhyContent
+        data={data({
+          retrieval: {
+            ...retrieval,
+            filters: {
+              speakers: [],
+              time: null,
+              jobs: ['Job #2 · Platform Engineer'],
+              relaxed: true,
+            },
+          },
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        /named Job #2 · Platform Engineer, but nothing matched that, so the search was widened to all your job postings/,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Limited to/)).not.toBeInTheDocument();
+  });
+
+  it('says both when a person and a job posting were named', () => {
+    render(
+      <WhyContent
+        data={data({
+          retrieval: {
+            ...retrieval,
+            filters: {
+              speakers: ['Carol'],
+              time: null,
+              jobs: ['Job #2 · Platform Engineer'],
+              relaxed: false,
+            },
+          },
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText(/Limited to what Carol said, as your question asked\./),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Limited to Job #2 · Platform Engineer and your resume/),
+    ).toBeInTheDocument();
+  });
+
   it('says nothing about meetings when the question did not name anyone or any time', () => {
     render(<WhyContent data={data()} />);
 

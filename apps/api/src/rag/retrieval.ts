@@ -16,6 +16,7 @@ import {
 } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import { chunks, documents } from '../db/schema.js';
+import type { JobFacts } from '../career/question-jobs.js';
 import type { CareerSection } from '../career/types.js';
 import type { MeetingFacts, MeetingFilter } from '../meetings/question-filters.js';
 import type { MeetingLocation } from '../meetings/types.js';
@@ -46,10 +47,12 @@ const PROSE_KINDS: Array<(typeof documents.kind.enumValues)[number]> = [
 export interface SearchScope {
   documentIds?: string[];
   meeting?: MeetingFilter;
+  jobs?: string[];
 }
 
 export interface RetrievalStore {
   meetingFacts(userId: string, scope?: SearchScope): Promise<MeetingFacts[]>;
+  jobFacts(userId: string, scope?: SearchScope): Promise<JobFacts[]>;
   vectorSearch(
     userId: string,
     queryEmbedding: number[],
@@ -170,6 +173,9 @@ export function createRetrievalStore(
     return kept.length === 0 ? undefined : or(ne(documents.kind, 'transcript'), and(...kept));
   };
 
+  const jobCondition = ({ jobs }: SearchScope) =>
+    jobs ? or(ne(documents.kind, 'job_posting'), inArray(documents.id, jobs)) : undefined;
+
   async function searchProse(userId: string, queryText: string, limit: number, scope: SearchScope) {
     const anyTerm = sql`replace(plainto_tsquery('english', ${queryText}::text)::text, ' & ', ' | ')::tsquery`;
     const rank = sql<number>`ts_rank(${chunks.searchVector}, ${anyTerm}, 32)`;
@@ -185,6 +191,7 @@ export function createRetrievalStore(
           sameModel,
           inScope(scope),
           meetingCondition(scope),
+          jobCondition(scope),
           sql`${chunks.searchVector} @@ ${anyTerm}`,
         ),
       )
@@ -250,6 +257,36 @@ export function createRetrievalStore(
       }));
     },
 
+    async jobFacts(userId, scope = {}) {
+      if (scope.documentIds?.length === 0) return [];
+      const rows = await db
+        .select({
+          id: documents.id,
+          jobNumber: documents.jobNumber,
+          name: documents.filename,
+          profile: documents.profile,
+        })
+        .from(documents)
+        .where(
+          and(
+            eq(documents.userId, userId),
+            eq(documents.kind, 'job_posting'),
+            eq(documents.status, 'ready'),
+            isNotNull(documents.jobNumber),
+            sameModel,
+            inScope(scope),
+          ),
+        )
+        .orderBy(asc(documents.jobNumber));
+      return rows.map((row) => ({
+        id: row.id,
+        jobNumber: row.jobNumber!,
+        name: row.name,
+        title: row.profile?.role === 'job' ? row.profile.title : null,
+        company: row.profile?.role === 'job' ? row.profile.company : null,
+      }));
+    },
+
     async vectorSearch(userId, queryEmbedding, limit, scope = {}) {
       if (limit <= 0 || scope.documentIds?.length === 0) return [];
       const distance = cosineDistance(chunks.embedding, queryEmbedding);
@@ -260,7 +297,15 @@ export function createRetrievalStore(
           .select({ ...columns, score: sql<number>`1 - (${distance})` })
           .from(chunks)
           .innerJoin(documents, eq(documents.id, chunks.documentId))
-          .where(and(eq(chunks.userId, userId), sameModel, inScope(scope), meetingCondition(scope)))
+          .where(
+            and(
+              eq(chunks.userId, userId),
+              sameModel,
+              inScope(scope),
+              meetingCondition(scope),
+              jobCondition(scope),
+            ),
+          )
           .orderBy(distance, asc(chunks.documentId), asc(chunks.ordinal))
           .limit(limit);
         return rows.map(toCandidate);
