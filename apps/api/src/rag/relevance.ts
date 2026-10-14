@@ -7,6 +7,7 @@ export interface RelevanceThresholds {
   document: number;
   code: number;
   meeting: number;
+  career: number;
 }
 
 export interface Relevance {
@@ -19,11 +20,13 @@ export function relevanceThresholds(settings: {
   RELEVANCE_THRESHOLD: number;
   CODE_RELEVANCE_THRESHOLD?: number | undefined;
   MEETING_RELEVANCE_THRESHOLD?: number | undefined;
+  CAREER_RELEVANCE_THRESHOLD?: number | undefined;
 }): RelevanceThresholds {
   return {
     document: settings.RELEVANCE_THRESHOLD,
     code: settings.CODE_RELEVANCE_THRESHOLD ?? settings.RELEVANCE_THRESHOLD,
     meeting: settings.MEETING_RELEVANCE_THRESHOLD ?? settings.RELEVANCE_THRESHOLD,
+    career: settings.CAREER_RELEVANCE_THRESHOLD ?? settings.RELEVANCE_THRESHOLD,
   };
 }
 
@@ -34,11 +37,12 @@ export function assessRelevance(
 ): Relevance {
   const thresholds =
     typeof threshold === 'number'
-      ? { document: threshold, code: threshold, meeting: threshold }
+      ? { document: threshold, code: threshold, meeting: threshold, career: threshold }
       : threshold;
   const thresholdOf = (chunk: RetrievedChunk) => {
     if (chunk.code) return thresholds.code;
     if (chunk.meeting) return thresholds.meeting;
+    if (chunk.career) return thresholds.career;
     return thresholds.document;
   };
 

@@ -121,6 +121,25 @@ describe('loadEnv', () => {
     );
   });
 
+  it('reads an optional relevance threshold for a resume and job postings, between 0 and 1', () => {
+    expect(loadEnv(base).CAREER_RELEVANCE_THRESHOLD).toBeUndefined();
+    expect(loadEnv({ ...base, CAREER_RELEVANCE_THRESHOLD: '0.3' }).CAREER_RELEVANCE_THRESHOLD).toBe(
+      0.3,
+    );
+    expect(loadEnv({ ...base, CAREER_RELEVANCE_THRESHOLD: '0' }).CAREER_RELEVANCE_THRESHOLD).toBe(
+      0,
+    );
+    expect(() => loadEnv({ ...base, CAREER_RELEVANCE_THRESHOLD: '1.5' })).toThrow(
+      /CAREER_RELEVANCE_THRESHOLD/,
+    );
+    expect(() => loadEnv({ ...base, CAREER_RELEVANCE_THRESHOLD: '-0.1' })).toThrow(
+      /CAREER_RELEVANCE_THRESHOLD/,
+    );
+    expect(() => loadEnv({ ...base, CAREER_RELEVANCE_THRESHOLD: 'loose' })).toThrow(
+      /CAREER_RELEVANCE_THRESHOLD/,
+    );
+  });
+
   it('only accepts a thinking level the model API knows', () => {
     expect(loadEnv({ ...base, CHAT_THINKING_LEVEL: 'low' }).CHAT_THINKING_LEVEL).toBe('low');
     expect(() => loadEnv({ ...base, CHAT_THINKING_LEVEL: 'extreme' })).toThrow(
