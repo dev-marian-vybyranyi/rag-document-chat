@@ -19,7 +19,18 @@ function stubMatchMedia(matches = false) {
   }));
 }
 
+const pendingTimers = new Set<ReturnType<typeof setTimeout>>();
+let timerSpy: { mockRestore: () => void } | undefined;
+
 beforeEach(() => {
+  const nativeSetTimeout = globalThis.setTimeout;
+  timerSpy = vi.spyOn(globalThis, 'setTimeout').mockImplementation(((
+    ...args: Parameters<typeof setTimeout>
+  ) => {
+    const timer = nativeSetTimeout(...args);
+    pendingTimers.add(timer);
+    return timer;
+  }) as typeof setTimeout);
   vi.stubGlobal('ResizeObserver', ResizeObserverStub);
   vi.stubGlobal('matchMedia', stubMatchMedia());
   localStorage.clear();
@@ -28,5 +39,8 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  for (const timer of pendingTimers) clearTimeout(timer);
+  pendingTimers.clear();
+  timerSpy?.mockRestore();
   vi.unstubAllGlobals();
 });
