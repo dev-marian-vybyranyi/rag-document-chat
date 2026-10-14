@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ApiError } from '../../lib/api';
-import { documentsApi, type DocumentItem, type MeetingDetails } from './api';
+import { documentsApi, type DocumentItem, type JobDetails, type MeetingDetails } from './api';
 import {
   DocumentsContext,
   type DocumentsContextValue,
@@ -152,6 +152,17 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
     [addDocument],
   );
 
+  const addResume = useCallback(
+    async (file: File) => addDocument(await documentsApi.addResume(file)),
+    [addDocument],
+  );
+
+  const addJob = useCallback(
+    async (file: File, details?: JobDetails) =>
+      addDocument(await documentsApi.addJob(file, details)),
+    [addDocument],
+  );
+
   const regenerateNotes = useCallback(async (id: string) => {
     const fresh = await documentsApi.regenerateNotes(id);
     setState((current) =>
@@ -191,6 +202,8 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       addRepositoryZip,
       addMeeting,
       addRecording,
+      addResume,
+      addJob,
       regenerateNotes,
       dismissUpload,
       remove,
@@ -206,6 +219,8 @@ export function DocumentsProvider({ children }: { children: ReactNode }) {
       addRepositoryZip,
       addMeeting,
       addRecording,
+      addResume,
+      addJob,
       regenerateNotes,
       dismissUpload,
       remove,

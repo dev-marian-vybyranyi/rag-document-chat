@@ -47,6 +47,39 @@ export function validateTranscript(file: File): string | null {
   return null;
 }
 
+export const MAX_RESUME_BYTES = 5 * 1024 * 1024;
+export const RESUME_LIMIT_LABEL = '5 MB';
+export const MAX_RESUME_CHARACTERS = 40_000;
+export const MAX_JOB_BYTES = 1_000_000;
+export const JOB_LIMIT_LABEL = '1 MB';
+export const MAX_JOB_CHARACTERS = 25_000;
+export const MAX_JOB_TITLE_LENGTH = 120;
+export const MAX_COMPANY_LENGTH = 80;
+
+export function validateCareerFile(
+  file: File,
+  limit: { maxBytes: number; label: string; what: string },
+): string | null {
+  const name = file.name.toLowerCase();
+  if (!ACCEPTED_EXTENSIONS.some((extension) => name.endsWith(extension))) {
+    return `Choose the ${limit.what} as a PDF, TXT or Markdown file.`;
+  }
+  if (file.size === 0) return 'The file is empty.';
+  if (file.size > limit.maxBytes) return `The file is too large (limit ${limit.label}).`;
+  return null;
+}
+
+export function validateCareerText(
+  text: string,
+  limit: { maxCharacters: number; what: string },
+): string | null {
+  if (text.trim().length === 0) return `Paste the text of the ${limit.what}.`;
+  if (text.length > limit.maxCharacters) {
+    return `The text is too long (limit ${limit.maxCharacters.toLocaleString('en-US')} characters).`;
+  }
+  return null;
+}
+
 export const MAX_RECORDING_BYTES = 15 * 1024 * 1024;
 export const RECORDING_LIMIT_LABEL = '15 MB';
 export const RECORDING_EXTENSIONS = ['.mp3', '.wav', '.m4a', '.webm'];

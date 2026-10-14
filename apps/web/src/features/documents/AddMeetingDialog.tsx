@@ -11,8 +11,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ApiError } from '../../lib/api';
 import { useDocuments } from './documents-context';
+import { failureMessage } from './failure-message';
 import { RecordingField } from './RecordingField';
 import { MAX_MEETING_TITLE_LENGTH, TRANSCRIPT_LIMIT_LABEL, validateTranscript } from './validation';
 
@@ -22,15 +22,6 @@ const MODES: Array<{ mode: Mode; label: string }> = [
   { mode: 'transcript', label: 'Transcript' },
   { mode: 'recording', label: 'Recording' },
 ];
-
-function failureMessage(error: unknown): string {
-  if (error instanceof ApiError) {
-    if (error.code === 'ai_busy') return error.message;
-    if (error.isUnavailable) return 'The server is not responding. Try again in a moment.';
-    return error.message;
-  }
-  return 'Something went wrong. Try again.';
-}
 
 export function AddMeetingDialog() {
   const { addMeeting, addRecording } = useDocuments();

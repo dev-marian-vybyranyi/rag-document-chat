@@ -29,6 +29,9 @@ function doc(overrides: Partial<DocumentItem> = {}): DocumentItem {
     durationMs: null,
     notes: null,
     progress: null,
+    jobNumber: null,
+    profile: null,
+    fit: null,
     suggestions: [],
     createdAt: '2026-10-07T10:00:00Z',
     ...overrides,
@@ -109,7 +112,7 @@ describe('documents page', () => {
       setup();
 
       expect(await screen.findByText(/No documents yet/)).toHaveTextContent(
-        'Add a file above, a meeting transcript or a code repository',
+        'Add a file above, a meeting transcript, a code repository, or your resume and some job postings',
       );
     });
 
