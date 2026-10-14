@@ -152,7 +152,7 @@ describe('adding a resume', () => {
       });
       const user = userEvent.setup();
 
-      await user.click(await screen.findByRole('button', { name: 'Delete cv' }));
+      await user.click(await screen.findByRole('button', { name: 'Delete Resume' }));
       await user.click(screen.getByRole('button', { name: 'Delete' }));
 
       await waitFor(() =>
@@ -177,7 +177,7 @@ describe('adding a resume', () => {
       expect((call?.form?.get('file') as File).name).toBe('alex-morgan-cv.pdf');
       expect(call?.form?.has('title')).toBe(false);
       const list = await screen.findByRole('list', { name: 'Documents' });
-      expect(within(list).getByText('cv')).toBeInTheDocument();
+      expect(within(list).getByText('Resume')).toBeInTheDocument();
     });
 
     it('shows that it is working, blocks a second submit and cannot be closed meanwhile', async () => {

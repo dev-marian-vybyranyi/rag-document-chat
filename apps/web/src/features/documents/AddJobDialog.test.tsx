@@ -136,7 +136,7 @@ describe('adding a job posting', () => {
       expect(call?.form?.get('company')).toBe('Acme');
       expect((call?.form?.get('file') as File).name).toBe('export-9.txt');
       const list = await screen.findByRole('list', { name: 'Documents' });
-      expect(within(list).getByText('Platform Engineer at Acme')).toBeInTheDocument();
+      expect(within(list).getByText('Job #1 · Platform Engineer at Acme')).toBeInTheDocument();
     });
 
     it('leaves out a title and a company that were not given', async () => {

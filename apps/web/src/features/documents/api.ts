@@ -173,6 +173,14 @@ export const documentsApi = {
       signal,
     }).then((r) => r.document);
   },
+  analyze: (id: string, signal?: AbortSignal) =>
+    api<{ document: DocumentItem }>(`/career/${id}/analysis`, { method: 'POST', signal }).then(
+      (r) => r.document,
+    ),
+  compare: (id: string, signal?: AbortSignal) =>
+    api<{ document: DocumentItem }>(`/career/jobs/${id}/fit`, { method: 'POST', signal }).then(
+      (r) => r.document,
+    ),
   regenerateNotes: (id: string, signal?: AbortSignal) =>
     api<{ document: DocumentItem }>(`/meetings/${id}/notes`, { method: 'POST', signal }).then(
       (r) => r.document,

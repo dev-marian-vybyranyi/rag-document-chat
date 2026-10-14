@@ -18,6 +18,7 @@ export interface DocumentsContextValue {
   uploads: UploadEntry[];
   announcement: string;
   anyProcessing: boolean;
+  comparingIds: string[];
   reload: () => void;
   upload: (files: File[]) => void;
   addRepositoryUrl: (url: string) => Promise<void>;
@@ -26,6 +27,8 @@ export interface DocumentsContextValue {
   addRecording: (file: File, details?: MeetingDetails) => Promise<void>;
   addResume: (file: File) => Promise<void>;
   addJob: (file: File, details?: JobDetails) => Promise<void>;
+  analyze: (id: string) => Promise<void>;
+  compare: (id: string) => Promise<void>;
   regenerateNotes: (id: string) => Promise<void>;
   dismissUpload: (key: number) => void;
   remove: (id: string) => Promise<void>;
