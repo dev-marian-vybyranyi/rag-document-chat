@@ -250,7 +250,12 @@ export function createMeetingSearcher({
   };
   const filtered = createRetriever({ store, embedder: cachedEmbedder, logger });
   const plain = createRetriever({
-    store: { ...store, meetingFacts: async () => [], jobFacts: async () => [] },
+    store: {
+      ...store,
+      meetingFacts: async () => [],
+      jobFacts: async () => [],
+      resumeId: async () => null,
+    },
     embedder: cachedEmbedder,
     logger,
   });

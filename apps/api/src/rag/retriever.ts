@@ -12,6 +12,7 @@ import type { RetrievalCandidate, RetrievalStore, SearchScope } from './retrieva
 
 export const DEFAULT_CANDIDATES = 20;
 export const DEFAULT_LIMIT = 6;
+export const BALANCE_PASSAGES = 2;
 
 export type RetrievalMode = 'hybrid' | 'keyword-only';
 
@@ -25,6 +26,7 @@ export interface RetrieveOptions {
   candidates?: number;
   limit?: number;
   documentIds?: string[];
+  balanceSides?: boolean;
 }
 
 export interface Retriever {
@@ -40,7 +42,12 @@ interface RetrieverDeps {
 export function createRetriever({ store, embedder, logger }: RetrieverDeps): Retriever {
   return {
     async retrieve(userId, query, options = {}) {
-      const { candidates = DEFAULT_CANDIDATES, limit = DEFAULT_LIMIT, documentIds } = options;
+      const {
+        candidates = DEFAULT_CANDIDATES,
+        limit = DEFAULT_LIMIT,
+        documentIds,
+        balanceSides = true,
+      } = options;
       const base: SearchScope = documentIds ? { documentIds } : {};
       if (query.trim().length === 0) return { chunks: [], mode: 'hybrid' };
 
@@ -52,7 +59,7 @@ export function createRetriever({ store, embedder, logger }: RetrieverDeps): Ret
           return null;
         }));
 
-      const search = async (scope: SearchScope): Promise<RetrievalResult> => {
+      const search = async (scope: SearchScope, take = limit): Promise<RetrievalResult> => {
         const searchByVector = async (): Promise<RetrievalCandidate[] | null> => {
           const embedding = await embedQuery();
           return embedding === null
@@ -64,18 +71,35 @@ export function createRetriever({ store, embedder, logger }: RetrieverDeps): Ret
           store.keywordSearch(userId, query, candidates, scope),
         ]);
         return {
-          chunks: fuseRankings(vectorResults ?? [], keywordResults, { limit }),
+          chunks: fuseRankings(vectorResults ?? [], keywordResults, { limit: take }),
           mode: vectorResults === null ? 'keyword-only' : 'hybrid',
         };
       };
 
-      const [facts, jobFacts] = await Promise.all([
+      const [facts, jobFacts, resumeId] = await Promise.all([
         store.meetingFacts(userId, base),
         store.jobFacts(userId, base),
+        store.resumeId(userId, base),
       ]);
+      const everyJobId = jobFacts.map((job) => job.id);
+
+      const withBothSides = async (
+        result: RetrievalResult,
+        jobIds: string[],
+      ): Promise<RetrievalResult> => {
+        if (!balanceSides || resumeId === null || jobIds.length === 0) return result;
+        const sides = new Set(
+          result.chunks.flatMap((chunk) => (chunk.career ? [chunk.career.role] : [])),
+        );
+        if (sides.size !== 1) return result;
+        const missing = sides.has('resume') ? jobIds : [resumeId];
+        const extra = await search({ ...base, documentIds: missing }, BALANCE_PASSAGES);
+        return { ...result, chunks: [...result.chunks, ...extra.chunks] };
+      };
+
       const detected = detectFilters(query, facts);
       const jobs = detectJobs(query, jobFacts);
-      if (!detected && jobs.length === 0) return search(base);
+      if (!detected && jobs.length === 0) return withBothSides(await search(base), everyJobId);
 
       const labels = jobs.map(describeJob);
       const filtered = await search({
@@ -84,9 +108,14 @@ export function createRetriever({ store, embedder, logger }: RetrieverDeps): Ret
         ...(jobs.length > 0 && { jobs: jobs.map((job) => job.id) }),
       });
       if (filtered.chunks.length > 0) {
-        return { ...filtered, filters: appliedFilters(detected, false, labels) };
+        const named = jobs.length > 0 ? jobs.map((job) => job.id) : everyJobId;
+        return {
+          ...(await withBothSides(filtered, named)),
+          filters: appliedFilters(detected, false, labels),
+        };
       }
-      return { ...(await search(base)), filters: appliedFilters(detected, true, labels) };
+      const widened = await withBothSides(await search(base), everyJobId);
+      return { ...widened, filters: appliedFilters(detected, true, labels) };
     },
   };
 }

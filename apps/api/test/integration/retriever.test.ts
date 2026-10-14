@@ -139,6 +139,7 @@ describe('retriever', () => {
     const spy: RetrievalStore = {
       meetingFacts: vi.fn(store.meetingFacts),
       jobFacts: vi.fn(store.jobFacts),
+      resumeId: vi.fn(store.resumeId),
       vectorSearch: vi.fn(store.vectorSearch),
       keywordSearch: vi.fn(store.keywordSearch),
     };
@@ -155,6 +156,7 @@ describe('retriever', () => {
     const spy: RetrievalStore = {
       meetingFacts: vi.fn(store.meetingFacts),
       jobFacts: vi.fn(store.jobFacts),
+      resumeId: vi.fn(store.resumeId),
       vectorSearch: vi.fn(store.vectorSearch),
       keywordSearch: vi.fn(store.keywordSearch),
     };

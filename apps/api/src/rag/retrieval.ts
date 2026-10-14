@@ -53,6 +53,7 @@ export interface SearchScope {
 export interface RetrievalStore {
   meetingFacts(userId: string, scope?: SearchScope): Promise<MeetingFacts[]>;
   jobFacts(userId: string, scope?: SearchScope): Promise<JobFacts[]>;
+  resumeId(userId: string, scope?: SearchScope): Promise<string | null>;
   vectorSearch(
     userId: string,
     queryEmbedding: number[],
@@ -285,6 +286,24 @@ export function createRetrievalStore(
         title: row.profile?.role === 'job' ? row.profile.title : null,
         company: row.profile?.role === 'job' ? row.profile.company : null,
       }));
+    },
+
+    async resumeId(userId, scope = {}) {
+      if (scope.documentIds?.length === 0) return null;
+      const [row] = await db
+        .select({ id: documents.id })
+        .from(documents)
+        .where(
+          and(
+            eq(documents.userId, userId),
+            eq(documents.kind, 'resume'),
+            eq(documents.status, 'ready'),
+            sameModel,
+            inScope(scope),
+          ),
+        )
+        .limit(1);
+      return row?.id ?? null;
     },
 
     async vectorSearch(userId, queryEmbedding, limit, scope = {}) {
