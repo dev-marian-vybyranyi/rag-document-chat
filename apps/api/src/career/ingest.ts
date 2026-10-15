@@ -27,6 +27,7 @@ export interface CareerJob {
 
 export interface CareerIngestionService {
   enqueue(job: CareerJob): void;
+  pending(): number;
   idle(): Promise<void>;
 }
 
@@ -195,6 +196,7 @@ export function createCareerIngestion(options: CareerIngestionOptions): CareerIn
     enqueue(job) {
       queue.add(() => process(job));
     },
+    pending: () => queue.pending(),
     idle: () => queue.idle(),
   };
 }

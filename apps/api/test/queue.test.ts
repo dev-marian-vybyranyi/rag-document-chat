@@ -83,4 +83,27 @@ describe('createJobQueue', () => {
 
     expect(ran).toEqual([1, 2]);
   });
+
+  it('counts jobs that are running and waiting, and none once they finish', async () => {
+    const queue = createJobQueue(1, vi.fn());
+    expect(queue.pending()).toBe(0);
+
+    for (let i = 0; i < 3; i++) queue.add(async () => void (await tick()));
+    expect(queue.pending()).toBe(3);
+
+    await queue.idle();
+    expect(queue.pending()).toBe(0);
+  });
+
+  it('keeps counting a job that failed until it is done', async () => {
+    const queue = createJobQueue(1, vi.fn());
+
+    queue.add(async () => {
+      throw new Error('boom');
+    });
+    expect(queue.pending()).toBe(1);
+
+    await queue.idle();
+    expect(queue.pending()).toBe(0);
+  });
 });

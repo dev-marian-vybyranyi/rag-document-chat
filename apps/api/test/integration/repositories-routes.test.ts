@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { documents } from '../../src/db/schema.js';
+import { MAX_PENDING_UPLOADS } from '../../src/documents/upload.js';
 import type { RepositoryJob } from '../../src/repositories/ingest.js';
 import { buildZip } from '../helpers/zip.js';
 import { buildTestApp, useTestDb, withoutRequestId } from './helpers.js';
@@ -11,8 +12,13 @@ const credentials = { email: 'ada@example.com', password: 'correct horse battery
 describe('repository endpoints', () => {
   const db = useTestDb();
   const jobs: RepositoryJob[] = [];
+  let queued = 0;
   const app = buildTestApp(db, {
-    repositoryIngestion: { enqueue: (job) => jobs.push(job), idle: async () => {} },
+    repositoryIngestion: {
+      enqueue: (job) => jobs.push(job),
+      pending: () => queued,
+      idle: async () => {},
+    },
     maxArchiveBytes: 4096,
     usageLimits: { maxDocumentsPerUser: 2, maxChatsPerUser: 100, maxMessagesPerChat: 200 },
   });
@@ -202,6 +208,42 @@ describe('repository endpoints', () => {
 
       expect(res.status).toBe(409);
       expect(res.body.error.code).toBe('document_limit');
+    });
+  });
+
+  describe('when the indexing queue is full', () => {
+    it.each([
+      [
+        'an address',
+        (agent: Awaited<ReturnType<typeof signedIn>>) =>
+          agent.post('/repositories').send({ url: 'https://github.com/acme/shop' }),
+      ],
+      [
+        'a zip archive',
+        (agent: Awaited<ReturnType<typeof signedIn>>) =>
+          agent.post('/repositories/upload').attach('file', zip(), 'shop.zip'),
+      ],
+    ])('refuses %s and stores nothing', async (_name, send) => {
+      const agent = await signedIn();
+      queued = MAX_PENDING_UPLOADS.repositories;
+
+      const res = await send(agent);
+      queued = 0;
+
+      expect(res.status).toBe(503);
+      expect(res.body.error.code).toBe('ai_busy');
+      expect(await db.select().from(documents)).toEqual([]);
+      expect(jobs).toEqual([]);
+    });
+
+    it('still accepts a repository when one place is left', async () => {
+      const agent = await signedIn();
+      queued = MAX_PENDING_UPLOADS.repositories - 1;
+
+      const res = await agent.post('/repositories').send({ url: 'https://github.com/acme/shop' });
+      queued = 0;
+
+      expect(res.status).toBe(202);
     });
   });
 

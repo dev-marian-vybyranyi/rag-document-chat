@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { documents } from '../../src/db/schema.js';
+import { MAX_PENDING_UPLOADS } from '../../src/documents/upload.js';
 import { buildTestApp, useTestDb } from './helpers.js';
 
 const credentials = { email: 'ada@example.com', password: 'correct horse battery' };
@@ -202,6 +203,39 @@ describe('POST /documents', () => {
 
       expect(res.status).toBe(400);
       expect(await db.select().from(documents)).toEqual([]);
+    });
+  });
+
+  describe('when the indexing queue is full', () => {
+    let queued = 0;
+    const jobs: unknown[] = [];
+    const busy = buildTestApp(db, {
+      ingestion: { enqueue: (job) => jobs.push(job), pending: () => queued, idle: async () => {} },
+    });
+
+    it('refuses the file, stores nothing and keeps it out of the queue', async () => {
+      const agent = request.agent(busy);
+      await agent.post('/auth/register').send(credentials);
+      queued = MAX_PENDING_UPLOADS.documents;
+
+      const res = await agent.post('/documents').attach('file', text, 'notes.txt');
+
+      expect(res.status).toBe(503);
+      expect(res.body.error.code).toBe('ai_busy');
+      expect(await db.select().from(documents)).toEqual([]);
+      expect(jobs).toEqual([]);
+    });
+
+    it('still accepts a file when one place is left', async () => {
+      jobs.length = 0;
+      const agent = request.agent(busy);
+      await agent.post('/auth/register').send(credentials);
+      queued = MAX_PENDING_UPLOADS.documents - 1;
+
+      const res = await agent.post('/documents').attach('file', text, 'notes.txt');
+
+      expect(res.status).toBe(202);
+      expect(jobs).toHaveLength(1);
     });
   });
 });

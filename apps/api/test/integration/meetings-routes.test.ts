@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { documents } from '../../src/db/schema.js';
+import { MAX_PENDING_UPLOADS } from '../../src/documents/upload.js';
 import type { MeetingJob } from '../../src/meetings/ingest.js';
 import { buildTestApp, useTestDb, withoutRequestId } from './helpers.js';
 
@@ -26,10 +27,12 @@ const vtt = [
 describe('meeting transcript endpoint', () => {
   const db = useTestDb();
   const jobs: MeetingJob[] = [];
+  let queued = 0;
   const app = buildTestApp(db, {
     meetingIngestion: {
       enqueue: (job) => jobs.push(job),
       pendingRecordings: () => 0,
+      pending: () => queued,
       idle: async () => {},
     },
     transcriptLimits: {
@@ -54,6 +57,19 @@ describe('meeting transcript endpoint', () => {
     content: string,
     name = 'standup.txt',
   ) => agent.post('/meetings').attach('file', Buffer.from(content), name);
+
+  it('asks to wait when the indexing queue is full, and keeps nothing', async () => {
+    const agent = await signedIn();
+    queued = MAX_PENDING_UPLOADS.meetings;
+
+    const res = await upload(agent, standup);
+    queued = 0;
+
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe('ai_busy');
+    expect(await db.select().from(documents)).toEqual([]);
+    expect(jobs).toEqual([]);
+  });
 
   it('requires a signed-in user', async () => {
     const res = await request(app).post('/meetings').attach('file', Buffer.from(standup), 'a.txt');

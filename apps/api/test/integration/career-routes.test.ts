@@ -6,6 +6,7 @@ import type { CareerJob } from '../../src/career/ingest.js';
 import type { CareerLimits } from '../../src/career/limits.js';
 import { createCareerRouter } from '../../src/career/routes.js';
 import { documents } from '../../src/db/schema.js';
+import { MAX_PENDING_UPLOADS } from '../../src/documents/upload.js';
 import type { DocumentRepository } from '../../src/documents/repository.js';
 import { errorHandler } from '../../src/http/errors.js';
 import { defaultUsageLimits } from '../../src/http/limits.js';
@@ -35,7 +36,12 @@ const limits: CareerLimits = {
 describe('resume and job posting endpoints', () => {
   const db = useTestDb();
   const jobs: CareerJob[] = [];
-  const careerIngestion = { enqueue: (job: CareerJob) => jobs.push(job), idle: async () => {} };
+  let queued = 0;
+  const careerIngestion = {
+    enqueue: (job: CareerJob) => jobs.push(job),
+    pending: () => queued,
+    idle: async () => {},
+  };
   const app = buildTestApp(db, {
     careerIngestion,
     careerLimits: limits,
@@ -441,6 +447,36 @@ describe('resume and job posting endpoints', () => {
       );
 
       expect(res.status).toBe(202);
+    });
+  });
+
+  describe('when the indexing queue is full', () => {
+    const fill = (count: number) => {
+      queued = count;
+    };
+
+    it.each([
+      ['a resume', uploadResume],
+      ['a job posting', uploadJob],
+    ])('refuses %s and stores nothing', async (_name, upload) => {
+      const agent = await signedIn();
+      fill(MAX_PENDING_UPLOADS.career);
+
+      const res = await upload(agent);
+
+      expect(res.status).toBe(503);
+      expect(res.body.error.code).toBe('ai_busy');
+      expect(await db.select().from(documents)).toEqual([]);
+      expect(jobs).toEqual([]);
+      fill(0);
+    });
+
+    it('still accepts a file when one place is left', async () => {
+      const agent = await signedIn();
+      fill(MAX_PENDING_UPLOADS.career - 1);
+
+      expect((await uploadResume(agent)).status).toBe(202);
+      fill(0);
     });
   });
 

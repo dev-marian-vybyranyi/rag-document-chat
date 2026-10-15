@@ -29,6 +29,9 @@ export function createJobQueue(concurrency: number, onError: (error: unknown) =>
       waiting.push(job);
       startNext();
     },
+    pending(): number {
+      return running + waiting.length;
+    },
     idle(): Promise<void> {
       if (running === 0 && waiting.length === 0) return Promise.resolve();
       return new Promise((resolve) => idleWaiters.push(resolve));

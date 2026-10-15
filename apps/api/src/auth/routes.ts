@@ -22,7 +22,6 @@ interface AuthRouterDeps {
 
 export function createAuthRouter({ users, sessions, cookieSecure, limiters }: AuthRouterDeps) {
   const router = Router();
-  router.use(limiters.overall);
 
   async function startSession(res: Response, userId: string) {
     const { token, expiresAt } = await sessions.create(userId);
@@ -31,7 +30,7 @@ export function createAuthRouter({ users, sessions, cookieSecure, limiters }: Au
 
   const decoyHash = hashPassword('decoy-password-for-timing');
 
-  router.post('/register', async (req, res) => {
+  router.post('/register', limiters.overall, async (req, res) => {
     const { email, password } = parseBody(registerSchema, req.body);
 
     try {
@@ -46,7 +45,7 @@ export function createAuthRouter({ users, sessions, cookieSecure, limiters }: Au
     }
   });
 
-  router.post('/login', limiters.failedLogins, async (req, res) => {
+  router.post('/login', limiters.overall, limiters.failedLogins, async (req, res) => {
     const { email, password } = parseBody(loginSchema, req.body);
 
     const user = await users.findByEmail(email);
