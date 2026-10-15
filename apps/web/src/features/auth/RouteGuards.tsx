@@ -7,7 +7,6 @@ interface RedirectState {
   expired?: boolean;
 }
 
-/** Layout route: renders the nested routes only for a signed-in user, otherwise sends them to /login. */
 export function RequireAuth() {
   const { state } = useAuth();
   const location = useLocation();
@@ -18,7 +17,6 @@ export function RequireAuth() {
     case 'unavailable':
       return <UnavailableScreen />;
     case 'anonymous':
-      // Remember where they were heading so signing in can take them back there.
       return (
         <Navigate
           to="/login"
@@ -31,7 +29,6 @@ export function RequireAuth() {
   }
 }
 
-/** Layout route for /login and /register: a signed-in user has no business there. */
 export function RedirectIfAuthenticated() {
   const { state } = useAuth();
   const location = useLocation();

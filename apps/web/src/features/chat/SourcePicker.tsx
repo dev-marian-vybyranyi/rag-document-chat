@@ -6,7 +6,7 @@ import {
   FolderGit2Icon,
   UsersIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -33,6 +33,7 @@ export function SourcePicker({
 }) {
   const { state } = useDocuments();
   const { setChatSources } = useChats();
+  const lastSourceHint = useId();
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -159,6 +160,7 @@ export function SourcePicker({
                             type="checkbox"
                             checked={isChosen(source.id)}
                             disabled={pending || only}
+                            aria-describedby={only ? lastSourceHint : undefined}
                             onChange={() => toggle(source.id)}
                             className="size-4 accent-primary"
                           />
@@ -182,6 +184,11 @@ export function SourcePicker({
           </ul>
         )}
 
+        {chosen.length === 1 && library.length > 1 && (
+          <p id={lastSourceHint} className="text-xs text-muted-foreground">
+            One source has to stay chosen, so the last one cannot be switched off.
+          </p>
+        )}
         {empty && (
           <p role="alert" className="text-xs text-destructive">
             The sources chosen for this chat were deleted, so nothing can be found. Choose others.

@@ -62,3 +62,16 @@ describe.each([
     expect(contrast(token(selector, '--input'), surface)).toBeGreaterThanOrEqual(AT_LEAST);
   });
 });
+
+const TEXT_AT_LEAST = 4.5;
+
+describe.each([
+  [':root', 'light'],
+  ['.dark', 'dark'],
+])('%s (%s theme) secondary text', (selector) => {
+  it.each(['--background', '--card', '--popover', '--muted'])('is readable on %s', (surface) => {
+    expect(
+      contrast(token(selector, '--muted-foreground'), token(selector, surface)),
+    ).toBeGreaterThanOrEqual(TEXT_AT_LEAST);
+  });
+});

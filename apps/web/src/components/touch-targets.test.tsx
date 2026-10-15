@@ -93,6 +93,14 @@ describe('touch targets', () => {
     expect(classes).toContain('pointer-coarse:py-3.5');
   });
 
+  it('lets a long source name wrap instead of cutting it off', () => {
+    render(<SourceList sources={[source]} />);
+    const classes = screen.getByRole('button', { name: /handbook\.pdf/ }).className.split(' ');
+
+    expect(classes).toContain('break-words');
+    expect(classes).not.toContain('truncate');
+  });
+
   it('widens the area that opens a citation on a touch screen without moving the text', () => {
     render(
       <p>

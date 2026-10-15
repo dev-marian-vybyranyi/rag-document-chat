@@ -44,6 +44,21 @@ describe('AuthForm', () => {
       expect(screen.getByRole('button', { name: 'Sign in' })).toBeEnabled();
     });
 
+    it('can show the password while it is typed, and hide it again', async () => {
+      const user = userEvent.setup();
+      renderForm('login');
+      const password = screen.getByLabelText('Password');
+      const toggle = screen.getByRole('button', { name: 'Show password' });
+      expect(toggle).toHaveAttribute('aria-pressed', 'false');
+
+      await user.click(toggle);
+      expect(password).toHaveAttribute('type', 'text');
+      expect(toggle).toHaveAttribute('aria-pressed', 'true');
+
+      await user.click(toggle);
+      expect(password).toHaveAttribute('type', 'password');
+    });
+
     it('lets the browser offer saved passwords and does not impose a length rule', () => {
       renderForm('login');
 

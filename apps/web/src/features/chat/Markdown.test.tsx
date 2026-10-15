@@ -123,6 +123,7 @@ describe('Markdown', () => {
 
       expect(writeText).toHaveBeenCalledWith('npm test');
       expect(await screen.findByText('Copied')).toBeInTheDocument();
+      expect(screen.getByRole('status')).toHaveTextContent('Code copied.');
     });
 
     it('does not claim to have copied when the browser refuses', async () => {
@@ -135,6 +136,18 @@ describe('Markdown', () => {
 
       expect(writeText).toHaveBeenCalled();
       expect(screen.queryByText('Copied')).not.toBeInTheDocument();
+    });
+
+    it('says so when the browser refuses, to the eye and to a screen reader', async () => {
+      const writeText = vi.fn().mockRejectedValue(new Error('denied'));
+      const user = userEvent.setup();
+      Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+      renderMarkdown('```sh\nnpm test\n```');
+
+      await user.click(screen.getByRole('button', { name: 'Copy code' }));
+
+      expect(await screen.findByRole('button', { name: 'Could not copy' })).toBeInTheDocument();
+      expect(screen.getByRole('status')).toHaveTextContent('Could not copy the code.');
     });
   });
 

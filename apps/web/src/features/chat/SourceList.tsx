@@ -16,7 +16,7 @@ export function SourceList({ sources }: { sources: ChatSource[] }) {
               type="button"
               onClick={() => open(source)}
               title={source.excerpt}
-              className="block max-w-full cursor-pointer truncate rounded-md border bg-muted/50 px-2 py-1 text-left text-xs pointer-coarse:py-3.5 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="block max-w-full cursor-pointer rounded-md border bg-muted/50 px-2 py-1 text-left text-xs break-words pointer-coarse:py-3.5 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               <span className="font-medium">[{source.id}]</span>{' '}
               {isPlaced(source) ? describeLocation(source) : source.filename}

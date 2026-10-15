@@ -1,5 +1,6 @@
 import { CalendarClockIcon, Loader2Icon } from 'lucide-react';
 import { useCallback, useState, type FormEvent } from 'react';
+import { SegmentedControl } from '@/components/SegmentedControl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -18,9 +19,9 @@ import { MAX_MEETING_TITLE_LENGTH, TRANSCRIPT_LIMIT_LABEL, validateTranscript } 
 
 type Mode = 'transcript' | 'recording';
 
-const MODES: Array<{ mode: Mode; label: string }> = [
-  { mode: 'transcript', label: 'Transcript' },
-  { mode: 'recording', label: 'Recording' },
+const MODES: Array<{ value: Mode; label: string }> = [
+  { value: 'transcript', label: 'Transcript' },
+  { value: 'recording', label: 'Recording' },
 ];
 
 export function AddMeetingDialog() {
@@ -116,22 +117,13 @@ export function AddMeetingDialog() {
         </DialogHeader>
 
         <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
-          <div role="radiogroup" aria-label="What to add" className="flex gap-2">
-            {MODES.map((option) => (
-              <Button
-                key={option.mode}
-                type="button"
-                role="radio"
-                aria-checked={mode === option.mode}
-                variant={mode === option.mode ? 'default' : 'outline'}
-                size="sm"
-                disabled={pending}
-                onClick={() => chooseMode(option.mode)}
-              >
-                {option.label}
-              </Button>
-            ))}
-          </div>
+          <SegmentedControl
+            label="What to add"
+            value={mode}
+            options={MODES}
+            onChange={chooseMode}
+            disabled={pending}
+          />
 
           {mode === 'recording' ? (
             <RecordingField disabled={pending} onChange={changeRecording} />

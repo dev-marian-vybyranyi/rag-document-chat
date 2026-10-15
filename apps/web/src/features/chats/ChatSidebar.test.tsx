@@ -142,6 +142,39 @@ describe('chat sidebar', () => {
     });
   });
 
+  describe('the home page', () => {
+    it('offers to start a chat and to add documents, so it is not a dead end', async () => {
+      const created = chat('c3', 'New chat');
+      const { calls } = withChats([budget], {
+        'POST /api/chats': jsonResponse(201, { chat: created }),
+        'GET /api/chats/c3': jsonResponse(200, { chat: created, messages: [] }),
+      });
+      const user = userEvent.setup();
+      renderApp();
+
+      expect(await screen.findByRole('link', { name: 'Add documents' })).toHaveAttribute(
+        'href',
+        '/documents',
+      );
+      await user.click(screen.getByRole('button', { name: 'Start a new chat' }));
+
+      expect(await screen.findByRole('textbox', { name: 'Your question' })).toBeInTheDocument();
+      expect(calls.filter((c) => c.route === 'POST /api/chats')).toHaveLength(1);
+    });
+
+    it('says so when the chat cannot be started', async () => {
+      withChats([budget], {
+        'POST /api/chats': jsonResponse(500, { error: { code: 'internal_error', message: 'x' } }),
+      });
+      const user = userEvent.setup();
+      renderApp();
+
+      await user.click(await screen.findByRole('button', { name: 'Start a new chat' }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Could not start a new chat');
+    });
+  });
+
   describe('starting a new chat', () => {
     it('creates it, puts it first in the list and opens it', async () => {
       const created = chat('c3', 'New chat');
@@ -230,6 +263,22 @@ describe('chat sidebar', () => {
       expect(await screen.findByText('Could not start a new chat. Try again.')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'New chat' })).toBeEnabled();
       expect(within(await conversations()).getAllByRole('link')).toHaveLength(1);
+    });
+  });
+
+  describe('navigation', () => {
+    it('puts Documents and Career in a landmark of their own, apart from the conversations', async () => {
+      withChats([budget]);
+      renderApp();
+
+      const main = await screen.findByRole('navigation', { name: 'Main' });
+
+      expect(
+        within(main)
+          .getAllByRole('link')
+          .map((link) => link.textContent),
+      ).toEqual(['Documents', 'Career']);
+      expect(within(await conversations()).queryByRole('link', { name: 'Career' })).toBeNull();
     });
   });
 

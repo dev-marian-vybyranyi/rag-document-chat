@@ -2,6 +2,7 @@ import { useChat } from '@ai-sdk/react';
 import { Loader2Icon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { useChats } from '@/features/chats/chats-context';
 import { Composer } from './Composer';
 import { MessageBubble } from './MessageBubble';
@@ -47,7 +48,7 @@ export function ChatView({
   const bottomRef = useRef<HTMLDivElement>(null);
   const pinnedToBottom = useRef(true);
 
-  const { messages, sendMessage, status, error, stop } = useChat<ChatUIMessage>({
+  const { messages, sendMessage, regenerate, status, error, stop } = useChat<ChatUIMessage>({
     id: chatId,
     messages: initialMessages,
     transport,
@@ -68,6 +69,13 @@ export function ChatView({
   useEffect(() => {
     if (pinnedToBottom.current) bottomRef.current?.scrollIntoView?.({ block: 'end' });
   }, [messages, waiting]);
+
+  function handleRetry() {
+    pinnedToBottom.current = true;
+    setAnnouncement('');
+    setStage('searching');
+    void regenerate();
+  }
 
   function trackScroll() {
     const element = scroller.current;
@@ -135,6 +143,9 @@ export function ChatView({
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{error.message}</AlertDescription>
+            <Button variant="outline" size="sm" className="mt-2 w-fit" onClick={handleRetry}>
+              Try again
+            </Button>
           </Alert>
         )}
         <Composer busy={busy} onSend={handleSend} onStop={stop} />

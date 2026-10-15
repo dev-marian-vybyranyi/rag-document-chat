@@ -28,7 +28,6 @@ export function LoadingScreen() {
   );
 }
 
-/** Shown when the API cannot be reached, which on free hosting usually means it is waking up. */
 export function UnavailableScreen() {
   const { reload } = useAuth();
   return (

@@ -1,14 +1,14 @@
 import { Loader2Icon } from 'lucide-react';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { SegmentedControl } from '@/components/SegmentedControl';
 import { cn } from '@/lib/utils';
 import type { CareerOverview, Posting } from './api';
 import { postingTitle, rankOf, sortPostings, type SortOrder } from './career-view';
 import { FitMeter } from './FitMeter';
 
-const SORTS: Array<{ order: SortOrder; label: string }> = [
-  { order: 'fit', label: 'Best fit' },
-  { order: 'number', label: 'Job number' },
+const SORTS: Array<{ value: SortOrder; label: string }> = [
+  { value: 'fit', label: 'Best fit' },
+  { value: 'number', label: 'Job number' },
 ];
 
 function stateOf(
@@ -48,21 +48,14 @@ export function PostingBoard({
     <section aria-label="Job postings" className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-medium">Job postings</h3>
-        <div role="radiogroup" aria-label="Sort postings by" className="flex gap-1">
-          {SORTS.map((option) => (
-            <Button
-              key={option.order}
-              type="button"
-              role="radio"
-              aria-checked={order === option.order}
-              variant={order === option.order ? 'default' : 'outline'}
-              size="xs"
-              onClick={() => setOrder(option.order)}
-            >
-              {option.label}
-            </Button>
-          ))}
-        </div>
+        <SegmentedControl
+          label="Sort postings by"
+          value={order}
+          options={SORTS}
+          onChange={setOrder}
+          size="xs"
+          className="gap-1"
+        />
       </div>
       <ul className="flex flex-col gap-2">
         {sorted.map((posting) => {

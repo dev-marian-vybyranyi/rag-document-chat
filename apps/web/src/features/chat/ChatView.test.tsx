@@ -279,6 +279,27 @@ describe('chat view', () => {
     });
   });
 
+  describe('when the answer fails', () => {
+    it('offers to try again, and asks the same question once more without showing it twice', async () => {
+      let asked = 0;
+      const { calls } = setup(() =>
+        ++asked === 1
+          ? jsonResponse(500, { error: { code: 'internal_error', message: 'The model is down.' } })
+          : sseResponse(answerChunks(['Now it works'])),
+      );
+      const user = await ask('What is HNSW?');
+      expect(await screen.findByRole('alert')).toHaveTextContent('The model is down.');
+
+      await user.click(screen.getByRole('button', { name: 'Try again' }));
+
+      await waitFor(() => expect(conversation()).toHaveTextContent('Now it works'));
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(within(conversation()).getAllByText('What is HNSW?')).toHaveLength(1);
+      const bodies = calls.filter((c) => c.route.startsWith('POST')).map((c) => c.body);
+      expect(bodies).toEqual([{ content: 'What is HNSW?' }, { content: 'What is HNSW?' }]);
+    });
+  });
+
   describe('the question box', () => {
     it('cannot send an empty or blank question', async () => {
       const { calls } = setup(sseResponse(answerChunks(['x'])));
@@ -373,9 +394,9 @@ describe('chat view', () => {
 
       await ask('What is HNSW?');
 
-      expect((await screen.findByRole('alert')).textContent).toBe(
-        'The AI service is not configured',
-      );
+      expect(
+        within(await screen.findByRole('alert')).getByText('The AI service is not configured'),
+      ).toBeInTheDocument();
     });
 
     it('explains a lost connection', async () => {

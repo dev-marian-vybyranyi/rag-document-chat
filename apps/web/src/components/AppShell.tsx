@@ -1,5 +1,12 @@
 import { MenuIcon } from 'lucide-react';
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type MouseEvent,
+  type ReactNode,
+} from 'react';
 import { useLocation } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -32,6 +39,8 @@ export function AppShell({ headerRight, sidebar, children }: AppShellProps) {
   const [openAt, setOpenAt] = useState<string | null>(null);
   const toggle = useRef<HTMLButtonElement>(null);
   const drawer = useRef<HTMLElement>(null);
+  const main = useRef<HTMLElement>(null);
+  const firstRoute = useRef(location.key);
   const sidebarOpen = openAt === location.key;
   const drawerOpen = sidebarOpen && !isDesktop;
 
@@ -48,8 +57,28 @@ export function AppShell({ headerRight, sidebar, children }: AppShellProps) {
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [drawerOpen]);
 
+  useEffect(() => {
+    if (location.key === firstRoute.current) return;
+    const active = document.activeElement;
+    if (active === document.body || drawer.current?.contains(active)) {
+      main.current?.focus({ preventScroll: true });
+    }
+  }, [location.key]);
+
+  function skipToContent(event: MouseEvent) {
+    event.preventDefault();
+    main.current?.focus();
+  }
+
   return (
     <div className="flex h-dvh flex-col bg-muted/40 text-foreground">
+      <a
+        href="#main"
+        onClick={skipToContent}
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:ring-2 focus:ring-ring focus:outline-none"
+      >
+        Skip to main content
+      </a>
       <header className="flex h-14 shrink-0 items-center justify-between border-b bg-background px-4 md:px-6">
         <div className="flex items-center gap-2">
           <Button
@@ -87,7 +116,13 @@ export function AppShell({ headerRight, sidebar, children }: AppShellProps) {
         >
           {sidebar}
         </aside>
-        <main inert={drawerOpen} className="min-w-0 flex-1 overflow-y-auto">
+        <main
+          ref={main}
+          id="main"
+          tabIndex={-1}
+          inert={drawerOpen}
+          className="min-w-0 flex-1 overflow-y-auto outline-none"
+        >
           {children}
         </main>
       </div>

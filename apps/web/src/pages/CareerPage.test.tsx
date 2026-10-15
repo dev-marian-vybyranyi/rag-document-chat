@@ -571,7 +571,40 @@ describe('the Career page', () => {
       });
       await board();
 
-      expect(screen.getByRole('button', { name: 'Ask about this job' })).toBeDisabled();
+      const ask = screen.getByRole('button', { name: 'Ask about this job' });
+      expect(ask).toBeDisabled();
+      expect(ask).toHaveAccessibleDescription(
+        'You can ask about this job once it has been processed.',
+      );
+    });
+
+    it('says why it is not offered when the posting could not be processed', async () => {
+      setup({
+        'GET /api/career/overview': jsonResponse(
+          200,
+          overview({
+            postings: [
+              posting(2, 'Role', { status: 'failed', error: 'No text found.', profile: null }),
+            ],
+            compared: 0,
+            gaps: [],
+          }),
+        ),
+      });
+      await board();
+
+      expect(
+        screen.getByRole('button', { name: 'Ask about this job' }),
+      ).toHaveAccessibleDescription(/could not be processed/);
+    });
+
+    it('needs no explanation when the posting is ready', async () => {
+      setup();
+      await board();
+
+      const ask = screen.getByRole('button', { name: 'Ask about this job' });
+      expect(ask).toBeEnabled();
+      expect(ask).not.toHaveAttribute('aria-describedby');
     });
   });
 
