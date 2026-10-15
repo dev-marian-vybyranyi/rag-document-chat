@@ -79,24 +79,41 @@ describe('auth rate limiting', () => {
   });
 
   describe('overall ceiling', () => {
-    it('rejects /auth requests beyond the limit but leaves other routes alone', async () => {
-      const app = buildTestApp(db, { authRateLimits: limits({ maxRequests: 3 }) });
-      for (let i = 0; i < 3; i++) await request(app).get('/auth/me');
+    const signIn = (app: ReturnType<typeof buildTestApp>) =>
+      request(app).post('/auth/login').send(credentials);
 
-      const blocked = await request(app).get('/auth/me');
+    it('rejects sign-ins and registrations beyond the limit but leaves other routes alone', async () => {
+      const app = buildTestApp(db, { authRateLimits: limits({ maxRequests: 3 }) });
+      for (let i = 0; i < 3; i++) await signIn(app);
+
+      const login = await signIn(app);
+      const register = await request(app).post('/auth/register').send(credentials);
       const health = await request(app).get('/health');
 
-      expect(blocked.status).toBe(429);
-      expect(blocked.body.error.code).toBe('rate_limited');
+      expect(login.status).toBe(429);
+      expect(login.body.error.code).toBe('rate_limited');
+      expect(register.status).toBe(429);
       expect(health.status).toBe(200);
+    });
+
+    it('does not stop signed-in users from loading the app or signing out once it is spent', async () => {
+      const app = buildTestApp(db, { authRateLimits: limits({ maxRequests: 2 }) });
+      const agent = request.agent(app);
+      expect((await agent.post('/auth/register').send(credentials)).status).toBe(201);
+      await signIn(app);
+      expect((await signIn(app)).status).toBe(429);
+
+      for (let i = 0; i < 5; i++) expect((await agent.get('/auth/me')).status).toBe(200);
+      expect((await request(app).get('/auth/me')).status).toBe(401);
+      expect((await agent.post('/auth/logout')).status).toBe(204);
     });
 
     it('does not depend on the client address, so X-Forwarded-For cannot change the outcome', async () => {
       const app = buildTestApp(db, { authRateLimits: limits({ maxRequests: 2 }) });
 
-      await request(app).get('/auth/me').set('X-Forwarded-For', '1.1.1.1');
-      await request(app).get('/auth/me').set('X-Forwarded-For', '2.2.2.2');
-      const blocked = await request(app).get('/auth/me').set('X-Forwarded-For', '3.3.3.3');
+      await signIn(app).set('X-Forwarded-For', '1.1.1.1');
+      await signIn(app).set('X-Forwarded-For', '2.2.2.2');
+      const blocked = await signIn(app).set('X-Forwarded-For', '3.3.3.3');
 
       expect(blocked.status).toBe(429);
     });

@@ -101,10 +101,11 @@ Raw material for the README – not a polished document.
 
 ### Rate limits keyed by account, not by client IP
 
-- Chosen: 10 failed sign-ins per email per 15 min (successful ones are not counted and a correct password clears the counter) plus a ceiling of 100 requests/min across all `/auth` routes.
+- Chosen: 10 failed sign-ins per email per 15 min (successful ones are not counted and a correct password clears the counter) plus a ceiling of 100 requests/min across all clients, counted only on `POST /auth/register` and `POST /auth/login` (the two routes that run a password hash).
 - Considered: the usual per-IP limit with `trust proxy`.
 - Why: in front of the API sit Render's edge, our nginx and Render's edge again, so the real client IP is at an unpredictable position in `X-Forwarded-For`. A wrong `trust proxy` hop count either gives every user the same key (one attacker locks out the whole site) or lets attackers choose their own key.
-- Trade-offs / when to revisit: someone who knows an email can lock that account for 15 minutes; counters live in memory, so they reset on restart and are per instance. With a known proxy topology add a per-IP limit, and move the store to Redis when running several instances.
+- Why the ceiling skips `GET /auth/me` and `POST /auth/logout`: the ceiling has one shared key, so it was spent by anyone, and the web app treats any answer but 401 from `/auth/me` as "unavailable"; one anonymous client sending 100 requests a minute there took the app down for every signed-in user. Those two routes only look up or delete a session row, like every other authenticated request, which has no limit of its own.
+- Trade-offs / when to revisit: someone can still use up the shared ceiling and block new sign-ins and registrations for everyone for the rest of the minute (signed-in users are not affected); a per-IP limit fixes that once the proxy topology is known. Someone who knows an email can lock that account for 15 minutes; counters live in memory, so they reset on restart and are per instance. With a known proxy topology add a per-IP limit, and move the store to Redis when running several instances.
 
 ### Frontend auth state: plain React context, with an `unavailable` state
 
