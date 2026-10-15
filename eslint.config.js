@@ -6,7 +6,16 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/build/**', '**/coverage/**', '**/node_modules/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/build/**',
+      '**/coverage/**',
+      '**/node_modules/**',
+      '.agents/**',
+      '.claude/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

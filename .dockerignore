@@ -9,3 +9,6 @@
 *.log
 PLAN.md
 docs
+.agents
+.claude
+skills-lock.json

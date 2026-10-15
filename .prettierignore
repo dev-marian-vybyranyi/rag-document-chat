@@ -7,3 +7,6 @@ PLAN.md
 apps/api/drizzle
 samples
 scripts/eval/results
+.agents
+.claude
+skills-lock.json
