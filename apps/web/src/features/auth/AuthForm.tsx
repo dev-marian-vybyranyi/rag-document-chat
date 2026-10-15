@@ -1,4 +1,4 @@
-import { Loader2Icon } from 'lucide-react';
+import { EyeIcon, EyeOffIcon, Loader2Icon } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -20,13 +20,13 @@ const COPY = {
 
 const MIN_PASSWORD_LENGTH = 8;
 
-/** Shared by the login and register pages; the server stays the authority on validation. */
 export function AuthForm({ mode }: { mode: AuthMode }) {
   const { login, register } = useAuth();
   const copy = COPY[mode];
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordShown, setPasswordShown] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
 
@@ -36,7 +36,6 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     setError(null);
     try {
       await (mode === 'login' ? login : register)({ email: email.trim(), password });
-      // On success the route guard notices the new session and leaves this page.
     } catch (cause) {
       setError(
         cause instanceof ApiError
@@ -51,7 +50,6 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const fieldErrors = error?.code === 'validation_error' ? error.details : undefined;
   const emailError = fieldErrors?.email?.[0];
   const passwordError = fieldErrors?.password?.[0];
-  // Field problems are shown next to the fields; everything else gets a general message.
   const formError = error && !fieldErrors ? error.message : undefined;
 
   return (
@@ -83,17 +81,31 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
 
       <div className="grid gap-2">
         <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          autoComplete={copy.passwordAutoComplete}
-          required
-          minLength={mode === 'register' ? MIN_PASSWORD_LENGTH : undefined}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          aria-invalid={passwordError ? true : undefined}
-          aria-describedby={passwordError ? 'password-error' : undefined}
-        />
+        <div className="relative">
+          <Input
+            id="password"
+            type={passwordShown ? 'text' : 'password'}
+            autoComplete={copy.passwordAutoComplete}
+            required
+            minLength={mode === 'register' ? MIN_PASSWORD_LENGTH : undefined}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            aria-invalid={passwordError ? true : undefined}
+            aria-describedby={passwordError ? 'password-error' : undefined}
+            className="pr-10"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Show password"
+            aria-pressed={passwordShown}
+            onClick={() => setPasswordShown((shown) => !shown)}
+            className="absolute top-1/2 right-1 -translate-y-1/2"
+          >
+            {passwordShown ? <EyeOffIcon aria-hidden /> : <EyeIcon aria-hidden />}
+          </Button>
+        </div>
         {mode === 'register' && !passwordError && (
           <p className="text-sm text-muted-foreground">
             At least {MIN_PASSWORD_LENGTH} characters.

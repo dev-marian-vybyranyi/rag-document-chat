@@ -1,11 +1,16 @@
 import { useId, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { SegmentedControl } from '@/components/SegmentedControl';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { validateCareerFile, validateCareerText } from './validation';
 
 type Mode = 'file' | 'text';
+
+const MODES: Array<{ value: Mode; label: string }> = [
+  { value: 'file', label: 'File' },
+  { value: 'text', label: 'Paste text' },
+];
 
 interface Limits {
   what: string;
@@ -56,27 +61,13 @@ export function CareerSourceField({
 
   return (
     <div className="flex flex-col gap-2">
-      <div role="radiogroup" aria-label={`How to add the ${limits.what}`} className="flex gap-2">
-        {(
-          [
-            ['file', 'File'],
-            ['text', 'Paste text'],
-          ] as const
-        ).map(([value, label]) => (
-          <Button
-            key={value}
-            type="button"
-            role="radio"
-            aria-checked={mode === value}
-            variant={mode === value ? 'default' : 'outline'}
-            size="sm"
-            disabled={disabled}
-            onClick={() => chooseMode(value)}
-          >
-            {label}
-          </Button>
-        ))}
-      </div>
+      <SegmentedControl
+        label={`How to add the ${limits.what}`}
+        value={mode}
+        options={MODES}
+        onChange={chooseMode}
+        disabled={disabled}
+      />
 
       {mode === 'file' ? (
         <>

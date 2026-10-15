@@ -207,6 +207,18 @@ describe('the Career page', () => {
     });
   });
 
+  describe('the layout', () => {
+    it('puts the details beside the board by the width of the page, not of the screen, because the sidebar takes room', async () => {
+      setup();
+
+      const columns = (await screen.findByRole('region', { name: 'Job postings' })).parentElement!;
+
+      expect(columns.className).toContain('@3xl:grid-cols-');
+      expect(columns.className).not.toMatch(/(^|\s)(sm|md|lg|xl):grid-cols-/);
+      expect(columns.parentElement).toHaveClass('@container');
+    });
+  });
+
   describe('the board of postings', () => {
     it('lists the postings with the best fit first, and says the rank and the share', async () => {
       const strong = posting(3, 'Frontend Engineer at Hooli', {
@@ -340,6 +352,18 @@ describe('the Career page', () => {
         'GoMust haveShownBuilt Go services on Docker.',
         'PostgreSQLMust haveShownPostgreSQL for billing.',
       ]);
+    });
+
+    it('lets a wide table of requirements be scrolled with the keyboard', async () => {
+      setup();
+      await board();
+
+      const region = screen.getByRole('region', {
+        name: 'Requirements of Job #1 · Backend Engineer at Globex',
+      });
+
+      expect(region).toHaveAttribute('tabindex', '0');
+      expect(within(region).getByRole('table')).toBeInTheDocument();
     });
 
     it('shows another posting when it is chosen, with the quote and the note', async () => {
@@ -547,7 +571,40 @@ describe('the Career page', () => {
       });
       await board();
 
-      expect(screen.getByRole('button', { name: 'Ask about this job' })).toBeDisabled();
+      const ask = screen.getByRole('button', { name: 'Ask about this job' });
+      expect(ask).toBeDisabled();
+      expect(ask).toHaveAccessibleDescription(
+        'You can ask about this job once it has been processed.',
+      );
+    });
+
+    it('says why it is not offered when the posting could not be processed', async () => {
+      setup({
+        'GET /api/career/overview': jsonResponse(
+          200,
+          overview({
+            postings: [
+              posting(2, 'Role', { status: 'failed', error: 'No text found.', profile: null }),
+            ],
+            compared: 0,
+            gaps: [],
+          }),
+        ),
+      });
+      await board();
+
+      expect(
+        screen.getByRole('button', { name: 'Ask about this job' }),
+      ).toHaveAccessibleDescription(/could not be processed/);
+    });
+
+    it('needs no explanation when the posting is ready', async () => {
+      setup();
+      await board();
+
+      const ask = screen.getByRole('button', { name: 'Ask about this job' });
+      expect(ask).toBeEnabled();
+      expect(ask).not.toHaveAttribute('aria-describedby');
     });
   });
 

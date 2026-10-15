@@ -294,6 +294,18 @@ describe('documents page', () => {
       expect(api.calls.some((c) => c.route.startsWith('DELETE'))).toBe(false);
     });
 
+    it('puts focus on Cancel, the safe choice, and gives it back to the Delete button', async () => {
+      setup({ 'GET /api/documents': jsonResponse(200, { documents: [doc()] }) });
+      const user = userEvent.setup();
+      await list();
+
+      await user.click(screen.getByRole('button', { name: 'Delete handbook.pdf' }));
+      expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
+
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+      expect(screen.getByRole('button', { name: 'Delete handbook.pdf' })).toHaveFocus();
+    });
+
     it('says so and keeps the document when the server fails', async () => {
       setup({
         'GET /api/documents': jsonResponse(200, { documents: [doc()] }),

@@ -6,7 +6,7 @@ import {
   FolderGit2Icon,
   UsersIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -33,6 +33,7 @@ export function SourcePicker({
 }) {
   const { state } = useDocuments();
   const { setChatSources } = useChats();
+  const lastSourceHint = useId();
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -87,7 +88,10 @@ export function SourcePicker({
         <Button
           variant="outline"
           size="sm"
-          className={cn('max-w-56 min-w-0', empty && 'border-destructive text-destructive')}
+          className={cn(
+            'max-w-full min-w-0 sm:max-w-56',
+            empty && 'border-destructive text-destructive',
+          )}
         >
           <span className="text-muted-foreground">Searching in: </span>
           <span className="truncate">{label}</span>
@@ -151,11 +155,12 @@ export function SourcePicker({
                     const only = chosen.length === 1 && isChosen(source.id);
                     return (
                       <li key={source.id}>
-                        <label className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-sm hover:bg-muted">
+                        <label className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 pointer-coarse:py-3 text-sm hover:bg-muted">
                           <input
                             type="checkbox"
                             checked={isChosen(source.id)}
                             disabled={pending || only}
+                            aria-describedby={only ? lastSourceHint : undefined}
                             onChange={() => toggle(source.id)}
                             className="size-4 accent-primary"
                           />
@@ -179,6 +184,11 @@ export function SourcePicker({
           </ul>
         )}
 
+        {chosen.length === 1 && library.length > 1 && (
+          <p id={lastSourceHint} className="text-xs text-muted-foreground">
+            One source has to stay chosen, so the last one cannot be switched off.
+          </p>
+        )}
         {empty && (
           <p role="alert" className="text-xs text-destructive">
             The sources chosen for this chat were deleted, so nothing can be found. Choose others.

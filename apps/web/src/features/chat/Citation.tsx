@@ -25,7 +25,7 @@ export function Citation({ source, children }: { source: ChatSource; children: R
           type="button"
           onClick={() => open(source)}
           aria-label={`Source ${source.id}: ${describeSource(source)}`}
-          className="ml-0.5 inline-block cursor-pointer rounded bg-primary/10 px-1 align-baseline text-xs font-medium not-italic text-primary outline-none hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-ring"
+          className="relative ml-0.5 inline-block cursor-pointer rounded bg-primary/10 px-1 align-baseline text-xs font-medium not-italic text-primary outline-none hover:bg-primary/20 pointer-coarse:after:absolute pointer-coarse:after:-inset-x-1 pointer-coarse:after:-inset-y-3 focus-visible:ring-2 focus-visible:ring-ring"
         >
           {children}
         </button>

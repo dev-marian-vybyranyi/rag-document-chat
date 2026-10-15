@@ -394,6 +394,24 @@ describe('choosing the sources of a chat', () => {
       expect(patches(api)).toEqual([]);
     });
 
+    it('says why the last source cannot be unticked, to a screen reader as well', async () => {
+      setup(['r1']);
+      const user = userEvent.setup();
+      const list = await openPicker(user);
+
+      const last = within(list).getByRole('checkbox', { name: /acme\/shop/ });
+
+      expect(last).toHaveAccessibleDescription(/last one cannot be switched off/);
+    });
+
+    it('says nothing about it while more than one source is ticked', async () => {
+      setup(['r1', 'd1']);
+      const user = userEvent.setup();
+      await openPicker(user);
+
+      expect(screen.queryByText(/last one cannot be switched off/)).not.toBeInTheDocument();
+    });
+
     it('chooses "all" when every source is ticked, so sources added later are included', async () => {
       const api = setup(['r1', 'd1', 'd2'], { 'PATCH /api/chats/c1': respond(null) });
       const user = userEvent.setup();

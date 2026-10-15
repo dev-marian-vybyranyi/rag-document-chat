@@ -21,7 +21,11 @@ export function UserMenu() {
   return (
     <div className="flex items-center gap-1 text-sm sm:gap-3">
       <ThemeToggle />
-      {failed && <span className="text-destructive">Could not sign out. Try again.</span>}
+      {failed && (
+        <span role="alert" className="text-destructive">
+          Could not sign out. Try again.
+        </span>
+      )}
       <span className="hidden text-muted-foreground sm:inline">{state.user.email}</span>
       <Button variant="outline" size="sm" onClick={handleLogout}>
         Sign out

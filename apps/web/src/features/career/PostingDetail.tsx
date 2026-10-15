@@ -1,4 +1,5 @@
 import { CheckIcon, MinusIcon, XIcon } from 'lucide-react';
+import { useId } from 'react';
 import { Button } from '@/components/ui/button';
 import { useStartChat } from '../chats/useStartChat';
 import { describeFit } from '../documents/career-status';
@@ -29,6 +30,7 @@ export function PostingDetail({
   const title = postingTitle(posting);
   const sourceIds = resume ? [resume.id, posting.id] : [posting.id];
   const fit = posting.fit;
+  const unavailableId = useId();
 
   return (
     <section aria-label={`Details of ${title}`} className="flex flex-col gap-4">
@@ -41,11 +43,19 @@ export function PostingDetail({
           variant="outline"
           size="sm"
           disabled={posting.status !== 'ready'}
+          aria-describedby={posting.status !== 'ready' ? unavailableId : undefined}
           onClick={() => void start(askAboutJob(posting), sourceIds)}
         >
           Ask about this job
         </Button>
       </div>
+      {posting.status !== 'ready' && (
+        <p id={unavailableId} className="text-xs text-muted-foreground">
+          {posting.status === 'processing'
+            ? 'You can ask about this job once it has been processed.'
+            : 'This posting could not be processed, so there is nothing to ask about.'}
+        </p>
+      )}
       {failed && (
         <p role="alert" className="text-sm text-destructive">
           Could not start a chat. Try again.
@@ -55,7 +65,12 @@ export function PostingDetail({
       {fit ? (
         <>
           <FitMeter fit={fit} label={`Fit of the resume with ${title}`} />
-          <div className="overflow-x-auto rounded-lg border bg-background">
+          <div
+            role="region"
+            aria-label={`Requirements of ${title}`}
+            tabIndex={0}
+            className="overflow-x-auto rounded-lg border bg-background outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <table className="w-full text-left text-sm">
               <caption className="sr-only">
                 Requirements of {title} and what the resume shows

@@ -1,7 +1,7 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../../App';
 import { answerChunks, jsonResponse, openSse, sseResponse, stubApi } from '../../test/fetch';
 import { AuthProvider } from '../auth/AuthProvider';
@@ -53,6 +53,13 @@ async function ask(text: string) {
 }
 
 const conversation = () => screen.getByRole('list', { name: 'Conversation' });
+
+function geometry(element: HTMLElement, scrollTop: number) {
+  Object.defineProperty(element, 'scrollHeight', { value: 2000, configurable: true });
+  Object.defineProperty(element, 'clientHeight', { value: 500, configurable: true });
+  Object.defineProperty(element, 'scrollTop', { value: scrollTop, configurable: true });
+  fireEvent.scroll(element);
+}
 
 describe('chat view', () => {
   it('invites the user to ask something in an empty chat', async () => {
@@ -137,6 +144,159 @@ describe('chat view', () => {
       stream.send({ type: 'text-end', id: 't' });
       stream.send({ type: 'finish', finishReason: 'stop' });
       stream.end();
+    });
+  });
+
+  describe('keeping the reader in place', () => {
+    const scrollIntoView = vi.fn();
+
+    afterEach(() => {
+      scrollIntoView.mockClear();
+      Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+    });
+
+    function stubScrolling() {
+      Object.defineProperty(Element.prototype, 'scrollIntoView', {
+        value: scrollIntoView,
+        configurable: true,
+        writable: true,
+      });
+    }
+
+    async function startStreaming() {
+      stubScrolling();
+      const stream = openSse();
+      setup(() => stream.response());
+      await ask('What is HNSW?');
+      stream.send({ type: 'start', messageId: 'm' });
+      stream.send({ type: 'text-start', id: 't' });
+      stream.send({ type: 'text-delta', id: 't', delta: 'One ' });
+      await screen.findByText(/One/);
+      return { stream, scroller: conversation().parentElement! };
+    }
+
+    it('follows a streaming answer while the reader is at the bottom', async () => {
+      const { stream, scroller } = await startStreaming();
+      geometry(scroller, 1480);
+      scrollIntoView.mockClear();
+
+      stream.send({ type: 'text-delta', id: 't', delta: 'two' });
+
+      await screen.findByText(/One two/);
+      expect(scrollIntoView).toHaveBeenCalled();
+    });
+
+    it('stops following once the reader scrolls up to read, and resumes at the bottom', async () => {
+      const { stream, scroller } = await startStreaming();
+      geometry(scroller, 0);
+      scrollIntoView.mockClear();
+
+      stream.send({ type: 'text-delta', id: 't', delta: 'two' });
+      await screen.findByText(/One two/);
+      expect(scrollIntoView).not.toHaveBeenCalled();
+
+      geometry(scroller, 1450);
+      stream.send({ type: 'text-delta', id: 't', delta: ' three' });
+      await screen.findByText(/One two three/);
+      expect(scrollIntoView).toHaveBeenCalled();
+    });
+
+    it('scrolls to a new question even when the reader had scrolled up', async () => {
+      const { stream, scroller } = await startStreaming();
+      stream.send({ type: 'text-end', id: 't' });
+      stream.send({ type: 'finish', finishReason: 'stop' });
+      stream.end();
+      await screen.findByText('The answer is ready.');
+      geometry(scroller, 0);
+      scrollIntoView.mockClear();
+
+      const user = userEvent.setup();
+      await user.type(await questionBox(), 'Another question{Enter}');
+
+      await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
+    });
+  });
+
+  describe('telling a screen reader the answer is done', () => {
+    const announcer = () => document.querySelector('[aria-live="polite"]')!;
+
+    it('stays silent while the answer streams and says when it is ready', async () => {
+      const stream = openSse();
+      setup(() => stream.response());
+      await ask('What is HNSW?');
+      stream.send({ type: 'start', messageId: 'm' });
+      stream.send({ type: 'text-start', id: 't' });
+      stream.send({ type: 'text-delta', id: 't', delta: 'Partial' });
+      await screen.findByText('Partial');
+      expect(announcer()).toBeEmptyDOMElement();
+
+      stream.send({ type: 'text-end', id: 't' });
+      stream.send({ type: 'finish', finishReason: 'stop' });
+      stream.end();
+
+      await waitFor(() => expect(announcer()).toHaveTextContent('The answer is ready.'));
+    });
+
+    it('says when the answer was stopped', async () => {
+      const stream = openSse();
+      setup(() => stream.response());
+      const user = await ask('What is HNSW?');
+      stream.send({ type: 'start', messageId: 'm' });
+      stream.send({ type: 'text-start', id: 't' });
+      stream.send({ type: 'text-delta', id: 't', delta: 'Partial' });
+      await screen.findByText('Partial');
+
+      await user.click(screen.getByRole('button', { name: 'Stop' }));
+
+      await waitFor(() => expect(announcer()).toHaveTextContent('The answer was stopped.'));
+    });
+
+    it('clears the message when the next question is sent, so it can be said again', async () => {
+      const second = openSse();
+      let asked = 0;
+      setup(() => (++asked === 1 ? sseResponse(answerChunks(['First'])) : second.response()));
+      const user = await ask('One');
+      await waitFor(() => expect(announcer()).toHaveTextContent('The answer is ready.'));
+
+      await user.type(await questionBox(), 'Two{Enter}');
+
+      await waitFor(() => expect(announcer()).toBeEmptyDOMElement());
+      second.send({ type: 'start', messageId: 'm2' });
+      second.send({ type: 'text-start', id: 't' });
+      second.send({ type: 'text-delta', id: 't', delta: 'Second' });
+      second.send({ type: 'text-end', id: 't' });
+      second.send({ type: 'finish', finishReason: 'stop' });
+      second.end();
+      await waitFor(() => expect(announcer()).toHaveTextContent('The answer is ready.'));
+    });
+
+    it('does not say the answer is ready when the request failed', async () => {
+      setup(jsonResponse(500, { error: { code: 'internal_error', message: 'boom' } }));
+      await ask('What is HNSW?');
+
+      expect(await screen.findByRole('alert')).toBeInTheDocument();
+      expect(announcer()).toBeEmptyDOMElement();
+    });
+  });
+
+  describe('when the answer fails', () => {
+    it('offers to try again, and asks the same question once more without showing it twice', async () => {
+      let asked = 0;
+      const { calls } = setup(() =>
+        ++asked === 1
+          ? jsonResponse(500, { error: { code: 'internal_error', message: 'The model is down.' } })
+          : sseResponse(answerChunks(['Now it works'])),
+      );
+      const user = await ask('What is HNSW?');
+      expect(await screen.findByRole('alert')).toHaveTextContent('The model is down.');
+
+      await user.click(screen.getByRole('button', { name: 'Try again' }));
+
+      await waitFor(() => expect(conversation()).toHaveTextContent('Now it works'));
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(within(conversation()).getAllByText('What is HNSW?')).toHaveLength(1);
+      const bodies = calls.filter((c) => c.route.startsWith('POST')).map((c) => c.body);
+      expect(bodies).toEqual([{ content: 'What is HNSW?' }, { content: 'What is HNSW?' }]);
     });
   });
 
@@ -234,9 +394,9 @@ describe('chat view', () => {
 
       await ask('What is HNSW?');
 
-      expect((await screen.findByRole('alert')).textContent).toBe(
-        'The AI service is not configured',
-      );
+      expect(
+        within(await screen.findByRole('alert')).getByText('The AI service is not configured'),
+      ).toBeInTheDocument();
     });
 
     it('explains a lost connection', async () => {

@@ -66,15 +66,17 @@ function Postings({ overview, waiting }: { overview: CareerOverview; waiting: bo
   return (
     <>
       <SharedGaps gaps={gaps} compared={compared} />
-      <div className="grid gap-6 md:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
-        <PostingBoard
-          postings={postings}
-          resume={resume}
-          waiting={waiting}
-          selectedId={selected.id}
-          onSelect={setChosenId}
-        />
-        <PostingDetail posting={selected} resume={resume} />
+      <div className="@container">
+        <div className="grid gap-6 @3xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+          <PostingBoard
+            postings={postings}
+            resume={resume}
+            waiting={waiting}
+            selectedId={selected.id}
+            onSelect={setChosenId}
+          />
+          <PostingDetail posting={selected} resume={resume} />
+        </div>
       </div>
     </>
   );

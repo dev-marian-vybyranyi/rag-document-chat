@@ -62,16 +62,21 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   return (await response.json()) as T;
 }
 
-async function toApiError(response: Response): Promise<ApiError> {
+async function readError(response: Response) {
   try {
-    const { error } = (await response.json()) as {
+    const body = (await response.json()) as {
       error?: { code?: string; message?: string; details?: Record<string, string[]> };
     };
-    if (error?.code && error.message) {
-      return new ApiError(response.status, error.code, error.message, error.details);
-    }
+    return body.error;
   } catch {
-    // not JSON: fall through to the generic error
+    return undefined;
+  }
+}
+
+async function toApiError(response: Response): Promise<ApiError> {
+  const error = await readError(response);
+  if (error?.code && error.message) {
+    return new ApiError(response.status, error.code, error.message, error.details);
   }
   return new ApiError(
     response.status,

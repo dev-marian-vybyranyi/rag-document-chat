@@ -1,37 +1,19 @@
 import { BriefcaseBusinessIcon, FileTextIcon, Loader2Icon, PlusIcon } from 'lucide-react';
-import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router';
+import { NavLink } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { DEFAULT_CHAT_TITLE, type Chat } from './api';
 import { useDocuments } from '../documents/documents-context';
 import { useChats } from './chats-context';
+import { useNewChat } from './useNewChat';
 
-function isUntouched(chat: Chat): boolean {
-  return chat.title === DEFAULT_CHAT_TITLE && chat.updatedAt === chat.createdAt && !chat.sourceIds;
-}
+const ITEM =
+  'rounded-lg px-2.5 py-1.5 pointer-coarse:py-3 text-sm transition-colors hover:bg-muted';
 
 export function ChatSidebar() {
-  const { state, reload, createChat } = useChats();
+  const { state, reload } = useChats();
   const { anyProcessing } = useDocuments();
-  const navigate = useNavigate();
-  const [creating, setCreating] = useState(false);
-  const [createFailed, setCreateFailed] = useState(false);
-
-  async function handleNewChat() {
-    setCreating(true);
-    setCreateFailed(false);
-    try {
-      const untouched = state.status === 'ready' ? state.chats.find(isUntouched) : undefined;
-      const chat = untouched ?? (await createChat());
-      void navigate(`/chats/${chat.id}`);
-    } catch {
-      setCreateFailed(true);
-    } finally {
-      setCreating(false);
-    }
-  }
+  const { open: handleNewChat, creating, failed: createFailed } = useNewChat();
 
   return (
     <div className="flex h-full flex-col gap-3 p-3">
@@ -45,40 +27,36 @@ export function ChatSidebar() {
         </p>
       )}
 
-      <NavLink
-        to="/documents"
-        className={({ isActive }) =>
-          cn(
-            'flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors hover:bg-muted',
-            isActive && 'bg-muted font-medium',
-          )
-        }
-      >
-        <FileTextIcon className="size-4" aria-hidden />
-        Documents
-        {anyProcessing && (
-          <>
-            <Loader2Icon
-              className="ml-auto size-3.5 animate-spin text-muted-foreground"
-              aria-hidden
-            />
-            <span className="sr-only">(processing)</span>
-          </>
-        )}
-      </NavLink>
+      <nav aria-label="Main" className="flex flex-col gap-3">
+        <NavLink
+          to="/documents"
+          className={({ isActive }) =>
+            cn('flex items-center gap-2', ITEM, isActive && 'bg-muted font-medium')
+          }
+        >
+          <FileTextIcon className="size-4" aria-hidden />
+          Documents
+          {anyProcessing && (
+            <>
+              <Loader2Icon
+                className="ml-auto size-3.5 animate-spin text-muted-foreground"
+                aria-hidden
+              />
+              <span className="sr-only">(processing)</span>
+            </>
+          )}
+        </NavLink>
 
-      <NavLink
-        to="/career"
-        className={({ isActive }) =>
-          cn(
-            'flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors hover:bg-muted',
-            isActive && 'bg-muted font-medium',
-          )
-        }
-      >
-        <BriefcaseBusinessIcon className="size-4" aria-hidden />
-        Career
-      </NavLink>
+        <NavLink
+          to="/career"
+          className={({ isActive }) =>
+            cn('flex items-center gap-2', ITEM, isActive && 'bg-muted font-medium')
+          }
+        >
+          <BriefcaseBusinessIcon className="size-4" aria-hidden />
+          Career
+        </NavLink>
+      </nav>
 
       <nav aria-label="Conversations" className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
         {state.status === 'loading' && (
@@ -115,10 +93,7 @@ export function ChatSidebar() {
                   to={`/chats/${chat.id}`}
                   title={chat.title}
                   className={({ isActive }) =>
-                    cn(
-                      'block truncate rounded-lg px-2.5 py-1.5 text-sm transition-colors hover:bg-muted',
-                      isActive && 'bg-muted font-medium',
-                    )
+                    cn('block truncate', ITEM, isActive && 'bg-muted font-medium')
                   }
                 >
                   {chat.title}

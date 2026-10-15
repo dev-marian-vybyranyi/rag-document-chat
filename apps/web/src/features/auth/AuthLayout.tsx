@@ -17,17 +17,15 @@ interface AuthLayoutProps {
   children: ReactNode;
 }
 
-/** The centered card around the login and register forms. */
 export function AuthLayout({ title, description, footer, children }: AuthLayoutProps) {
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center gap-6 bg-muted/40 p-6">
+    <div className="relative flex min-h-dvh flex-col items-center justify-center gap-6 bg-muted/40 p-6">
       <div className="absolute top-3 right-3">
         <ThemeToggle />
       </div>
       <p className="text-xl font-semibold tracking-tight">Document Chat</p>
       <Card className="w-full max-w-sm">
         <CardHeader>
-          {/* CardTitle renders a div, so the page heading is an explicit h1 for assistive technology. */}
           <CardTitle>
             <h1>{title}</h1>
           </CardTitle>

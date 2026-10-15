@@ -2,6 +2,7 @@ import { useChat } from '@ai-sdk/react';
 import { Loader2Icon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { useChats } from '@/features/chats/chats-context';
 import { Composer } from './Composer';
 import { MessageBubble } from './MessageBubble';
@@ -25,6 +26,8 @@ function questionBefore(messages: ChatUIMessage[], index: number): string {
   return '';
 }
 
+const NEAR_BOTTOM_PX = 80;
+
 const STAGE_LABEL: Record<ChatStage, string> = {
   searching: 'Searching your documents…',
   answering: 'Writing the answer…',
@@ -40,17 +43,22 @@ export function ChatView({
   const { refresh } = useChats();
   const transport = useMemo(() => createChatTransport(chatId), [chatId]);
   const [stage, setStage] = useState<ChatStage>('searching');
+  const [announcement, setAnnouncement] = useState('');
+  const scroller = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const pinnedToBottom = useRef(true);
 
-  const { messages, sendMessage, status, error, stop } = useChat<ChatUIMessage>({
+  const { messages, sendMessage, regenerate, status, error, stop } = useChat<ChatUIMessage>({
     id: chatId,
     messages: initialMessages,
     transport,
     onData: (part) => {
       if (part.type === 'data-status') setStage(part.data.stage);
     },
-    onFinish: () => {
+    onFinish: ({ isAbort, isError, isDisconnect }) => {
       void refresh();
+      if (isError || isDisconnect) return;
+      setAnnouncement(isAbort ? 'The answer was stopped.' : 'The answer is ready.');
     },
   });
 
@@ -59,10 +67,26 @@ export function ChatView({
   const waiting = busy && (last?.role !== 'assistant' || textOf(last).length === 0);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView?.({ block: 'end' });
+    if (pinnedToBottom.current) bottomRef.current?.scrollIntoView?.({ block: 'end' });
   }, [messages, waiting]);
 
+  function handleRetry() {
+    pinnedToBottom.current = true;
+    setAnnouncement('');
+    setStage('searching');
+    void regenerate();
+  }
+
+  function trackScroll() {
+    const element = scroller.current;
+    if (!element) return;
+    pinnedToBottom.current =
+      element.scrollHeight - element.scrollTop - element.clientHeight <= NEAR_BOTTOM_PX;
+  }
+
   function handleSend(text: string) {
+    pinnedToBottom.current = true;
+    setAnnouncement('');
     setStage('searching');
     void sendMessage({ text });
   }
@@ -73,6 +97,7 @@ export function ChatView({
     const timer = setTimeout(() => {
       if (askedInitial.current) return;
       askedInitial.current = true;
+      setAnnouncement('');
       setStage('searching');
       void sendMessage({ text: initialQuestion });
       onInitialQuestionSent?.();
@@ -82,7 +107,11 @@ export function ChatView({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6">
+      <div
+        ref={scroller}
+        onScroll={trackScroll}
+        className="min-h-0 flex-1 overflow-y-auto px-4 py-6"
+      >
         {messages.length === 0 && !busy && (
           <div className="mt-16 text-center">
             <p className="text-sm text-muted-foreground">
@@ -105,12 +134,18 @@ export function ChatView({
           </p>
         )}
         <div ref={bottomRef} />
+        <p aria-live="polite" className="sr-only">
+          {announcement}
+        </p>
       </div>
 
       <div className="flex flex-col gap-2 border-t bg-background px-4 py-3">
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{error.message}</AlertDescription>
+            <Button variant="outline" size="sm" className="mt-2 w-fit" onClick={handleRetry}>
+              Try again
+            </Button>
           </Alert>
         )}
         <Composer busy={busy} onSend={handleSend} onStop={stop} />

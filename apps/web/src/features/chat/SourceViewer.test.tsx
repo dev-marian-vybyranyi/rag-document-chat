@@ -249,6 +249,27 @@ describe('source viewer', () => {
     expect(screen.queryByRole('complementary', { name: 'Source viewer' })).not.toBeInTheDocument();
   });
 
+  it('gives focus back to the citation it was opened from when it closes', async () => {
+    setup({
+      'GET /api/chats/c1': jsonResponse(
+        200,
+        savedChat([source(1)], 'HNSW is a layered graph [1].'),
+      ),
+      [PASSAGES_ROUTE]: jsonResponse(200, passages),
+    });
+    const user = userEvent.setup();
+    await user.click(await screen.findByLabelText(/Source 1/));
+    await viewer();
+
+    await user.click(screen.getByRole('button', { name: 'Close source viewer' }));
+    expect(screen.getByLabelText(/Source 1/)).toHaveFocus();
+
+    await user.click(screen.getByLabelText(/Source 1/));
+    await viewer();
+    await user.keyboard('{Escape}');
+    expect(screen.getByLabelText(/Source 1/)).toHaveFocus();
+  });
+
   it('moves focus into the panel when it opens', async () => {
     setup({
       'GET /api/chats/c1': jsonResponse(

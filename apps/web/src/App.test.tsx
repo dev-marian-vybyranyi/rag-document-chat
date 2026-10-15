@@ -117,7 +117,7 @@ describe('App routing', () => {
 
       await user.click(await screen.findByRole('button', { name: 'Sign out' }));
 
-      expect(await screen.findByText('Could not sign out. Try again.')).toBeInTheDocument();
+      expect(await screen.findByRole('alert')).toHaveTextContent('Could not sign out. Try again.');
       expect(screen.getByText(ada.email)).toBeInTheDocument();
     });
   });
