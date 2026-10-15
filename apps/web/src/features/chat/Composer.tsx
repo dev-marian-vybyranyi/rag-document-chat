@@ -45,7 +45,7 @@ export function Composer({ busy, onSend, onStop }: ComposerProps) {
           maxLength={MAX_QUESTION_LENGTH}
           rows={1}
           autoFocus
-          className="max-h-40 min-h-9 flex-1 resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none [field-sizing:content] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="max-h-40 min-h-9 flex-1 resize-none rounded-lg border border-input bg-background px-3 py-2 text-base outline-none md:text-sm [field-sizing:content] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
         {busy ? (
           <Button type="button" variant="outline" size="lg" onClick={onStop}>

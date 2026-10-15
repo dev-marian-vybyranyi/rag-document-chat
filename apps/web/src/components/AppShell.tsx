@@ -1,8 +1,24 @@
 import { MenuIcon } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { useLocation } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+const DESKTOP_QUERY = '(min-width: 768px)';
+
+function subscribeToDesktop(onChange: () => void) {
+  const query = matchMedia(DESKTOP_QUERY);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
+}
+
+function useIsDesktop() {
+  return useSyncExternalStore(
+    subscribeToDesktop,
+    () => matchMedia(DESKTOP_QUERY).matches,
+    () => true,
+  );
+}
 
 interface AppShellProps {
   headerRight?: ReactNode;
@@ -12,14 +28,32 @@ interface AppShellProps {
 
 export function AppShell({ headerRight, sidebar, children }: AppShellProps) {
   const location = useLocation();
+  const isDesktop = useIsDesktop();
   const [openAt, setOpenAt] = useState<string | null>(null);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const drawer = useRef<HTMLElement>(null);
   const sidebarOpen = openAt === location.key;
+  const drawerOpen = sidebarOpen && !isDesktop;
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    drawer.current?.querySelector<HTMLElement>('a, button')?.focus();
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      setOpenAt(null);
+      toggle.current?.focus();
+    }
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [drawerOpen]);
 
   return (
-    <div className="flex h-screen flex-col bg-muted/40 text-foreground">
+    <div className="flex h-dvh flex-col bg-muted/40 text-foreground">
       <header className="flex h-14 shrink-0 items-center justify-between border-b bg-background px-4 md:px-6">
         <div className="flex items-center gap-2">
           <Button
+            ref={toggle}
             variant="ghost"
             size="icon"
             className="md:hidden"
@@ -35,7 +69,16 @@ export function AppShell({ headerRight, sidebar, children }: AppShellProps) {
         {headerRight}
       </header>
       <div className="relative flex min-h-0 flex-1">
+        {drawerOpen && (
+          <div
+            aria-hidden
+            data-testid="sidebar-scrim"
+            className="absolute inset-0 z-[5] bg-black/40"
+            onClick={() => setOpenAt(null)}
+          />
+        )}
         <aside
+          ref={drawer}
           id="sidebar"
           className={cn(
             'absolute inset-y-0 left-0 z-10 w-72 border-r bg-background md:static md:block md:w-64 md:shrink-0',
@@ -44,7 +87,9 @@ export function AppShell({ headerRight, sidebar, children }: AppShellProps) {
         >
           {sidebar}
         </aside>
-        <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
+        <main inert={drawerOpen} className="min-w-0 flex-1 overflow-y-auto">
+          {children}
+        </main>
       </div>
     </div>
   );

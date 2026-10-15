@@ -207,6 +207,18 @@ describe('the Career page', () => {
     });
   });
 
+  describe('the layout', () => {
+    it('puts the details beside the board by the width of the page, not of the screen, because the sidebar takes room', async () => {
+      setup();
+
+      const columns = (await screen.findByRole('region', { name: 'Job postings' })).parentElement!;
+
+      expect(columns.className).toContain('@3xl:grid-cols-');
+      expect(columns.className).not.toMatch(/(^|\s)(sm|md|lg|xl):grid-cols-/);
+      expect(columns.parentElement).toHaveClass('@container');
+    });
+  });
+
   describe('the board of postings', () => {
     it('lists the postings with the best fit first, and says the rank and the share', async () => {
       const strong = posting(3, 'Frontend Engineer at Hooli', {

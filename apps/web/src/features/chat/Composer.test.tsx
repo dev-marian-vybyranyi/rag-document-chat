@@ -17,6 +17,14 @@ describe('Composer', () => {
     expect(setup()).toHaveAttribute('placeholder', 'Ask about your documents or code…');
   });
 
+  it('uses a 16px font on a phone, so iOS does not zoom the page when it is focused', () => {
+    const classes = setup().className.split(' ');
+
+    expect(classes).toContain('text-base');
+    expect(classes).toContain('md:text-sm');
+    expect(classes).not.toContain('text-sm');
+  });
+
   it('shows no counter for a short question', async () => {
     const user = userEvent.setup();
     await user.type(setup(), 'short');
