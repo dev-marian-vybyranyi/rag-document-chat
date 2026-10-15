@@ -30,6 +30,7 @@ export interface RepositoryJob {
 
 export interface RepositoryIngestionService {
   enqueue(job: RepositoryJob): void;
+  pending(): number;
   idle(): Promise<void>;
 }
 
@@ -175,6 +176,7 @@ export function createRepositoryIngestion(
     enqueue(job) {
       queue.add(() => process(job));
     },
+    pending: () => queue.pending(),
     idle: () => queue.idle(),
   };
 }

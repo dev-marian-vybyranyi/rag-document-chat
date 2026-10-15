@@ -46,6 +46,7 @@ export type MeetingJob = TextMeetingJob | RecordingMeetingJob;
 export interface MeetingIngestionService {
   enqueue(job: MeetingJob): void;
   pendingRecordings(): number;
+  pending(): number;
   idle(): Promise<void>;
 }
 
@@ -223,6 +224,7 @@ export function createMeetingIngestion(options: MeetingIngestionOptions): Meetin
       queue.add(() => process(job));
     },
     pendingRecordings: () => pendingRecordings,
+    pending: () => queue.pending(),
     idle: () => queue.idle(),
   };
 }

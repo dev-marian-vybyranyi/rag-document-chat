@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { documents } from '../../src/db/schema.js';
+import { MAX_PENDING_UPLOADS } from '../../src/documents/upload.js';
 import type { MeetingJob } from '../../src/meetings/ingest.js';
 import { audioSamples } from '../helpers/audio.js';
 import { buildTestApp, useTestDb } from './helpers.js';
@@ -11,10 +12,12 @@ describe('meeting recording endpoint', () => {
   const db = useTestDb();
   const jobs: MeetingJob[] = [];
   let pending = 0;
+  let queued = 0;
   const app = buildTestApp(db, {
     meetingIngestion: {
       enqueue: (job) => jobs.push(job),
       pendingRecordings: () => pending,
+      pending: () => queued,
       idle: async () => {},
     },
     transcriptLimits: {
@@ -232,6 +235,19 @@ describe('meeting recording endpoint', () => {
         code: 'ai_busy',
         message: 'Other recordings are being transcribed. Try again in a few minutes.',
       });
+      expect(await db.select().from(documents)).toEqual([]);
+      expect(jobs).toEqual([]);
+    });
+
+    it('asks to wait when the indexing queue is full, and keeps nothing', async () => {
+      const agent = await signedIn();
+      queued = MAX_PENDING_UPLOADS.meetings;
+
+      const res = await upload(agent);
+      queued = 0;
+
+      expect(res.status).toBe(503);
+      expect(res.body.error.code).toBe('ai_busy');
       expect(await db.select().from(documents)).toEqual([]);
       expect(jobs).toEqual([]);
     });

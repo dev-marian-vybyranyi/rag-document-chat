@@ -6,6 +6,23 @@ export const DEFAULT_MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 const megabytes = (bytes: number) => Math.round((bytes / (1024 * 1024)) * 10) / 10;
 
+export const MAX_PENDING_UPLOADS = {
+  documents: 8,
+  repositories: 4,
+  career: 8,
+  meetings: 8,
+} as const;
+
+export function requireQueueRoom(queue: { pending(): number }, max: number): void {
+  if (queue.pending() >= max) {
+    throw new AppError(
+      503,
+      'ai_busy',
+      'Other files are still being processed. Try again in a few minutes.',
+    );
+  }
+}
+
 const MAX_FIELD_BYTES = 1024;
 
 export function singleFileUpload(

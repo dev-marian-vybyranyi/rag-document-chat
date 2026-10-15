@@ -4,7 +4,7 @@ import { requireAuth, userOf } from '../auth/middleware.js';
 import { checkContent, sanitizeFilename } from '../documents/file-types.js';
 import { toPublicDocument } from '../documents/public.js';
 import type { DocumentRepository } from '../documents/repository.js';
-import { singleFileUpload } from '../documents/upload.js';
+import { MAX_PENDING_UPLOADS, requireQueueRoom, singleFileUpload } from '../documents/upload.js';
 import { AppError } from '../http/errors.js';
 import { plural } from '../http/limits.js';
 import { stripInvisibleCharacters } from '../rag/sanitize.js';
@@ -94,6 +94,7 @@ export function createMeetingsRouter({
         `You have reached the limit of ${plural(maxDocumentsPerUser, 'document')}. Delete one to add another.`,
       );
     }
+    requireQueueRoom(ingestion, MAX_PENDING_UPLOADS.meetings);
   }
 
   router.post(

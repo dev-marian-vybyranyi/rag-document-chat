@@ -22,6 +22,7 @@ export interface IngestionJob {
 
 export interface IngestionService {
   enqueue(job: IngestionJob): void;
+  pending(): number;
   idle(): Promise<void>;
 }
 
@@ -120,6 +121,7 @@ export function createIngestionService(options: IngestionOptions): IngestionServ
     enqueue(job) {
       queue.add(() => process(job));
     },
+    pending: () => queue.pending(),
     idle: () => queue.idle(),
   };
 }

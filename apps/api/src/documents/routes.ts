@@ -8,7 +8,7 @@ import { checkContent, detectFileType, sanitizeFilename } from './file-types.js'
 import type { IngestionService } from './ingest.js';
 import { toPublicDocument } from './public.js';
 import type { DocumentRepository } from './repository.js';
-import { singleFileUpload } from './upload.js';
+import { MAX_PENDING_UPLOADS, requireQueueRoom, singleFileUpload } from './upload.js';
 
 export const MAX_PASSAGE_RADIUS = 3;
 export const DEFAULT_PASSAGE_RADIUS = 1;
@@ -112,6 +112,7 @@ export function createDocumentsRouter({
         `You have reached the limit of ${plural(maxDocumentsPerUser, 'document')}. Delete one to add another.`,
       );
     }
+    requireQueueRoom(ingestion, MAX_PENDING_UPLOADS.documents);
 
     const document = await documents.create({
       userId,
