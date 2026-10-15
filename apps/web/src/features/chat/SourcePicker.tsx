@@ -87,7 +87,10 @@ export function SourcePicker({
         <Button
           variant="outline"
           size="sm"
-          className={cn('max-w-56 min-w-0', empty && 'border-destructive text-destructive')}
+          className={cn(
+            'max-w-full min-w-0 sm:max-w-56',
+            empty && 'border-destructive text-destructive',
+          )}
         >
           <span className="text-muted-foreground">Searching in: </span>
           <span className="truncate">{label}</span>
@@ -151,7 +154,7 @@ export function SourcePicker({
                     const only = chosen.length === 1 && isChosen(source.id);
                     return (
                       <li key={source.id}>
-                        <label className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-sm hover:bg-muted">
+                        <label className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 pointer-coarse:py-3 text-sm hover:bg-muted">
                           <input
                             type="checkbox"
                             checked={isChosen(source.id)}

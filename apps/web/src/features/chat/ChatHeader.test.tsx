@@ -44,6 +44,15 @@ describe('chat header', () => {
     expect(await screen.findByRole('heading', { name: 'Budget 2026' })).toBeInTheDocument();
   });
 
+  it('puts the source picker on a row of its own on a phone, so the title keeps its room', async () => {
+    setup();
+
+    const picker = await screen.findByRole('button', { name: /Searching in/ });
+
+    expect(picker.parentElement).toHaveClass('order-last', 'basis-full', 'sm:order-none');
+    expect(picker).toHaveClass('max-w-full', 'sm:max-w-56');
+  });
+
   describe('renaming', () => {
     it('saves the new title and shows it in the header and the list', async () => {
       const api = setup({
@@ -103,6 +112,25 @@ describe('chat header', () => {
       expect(calls(api, 'PATCH')).toHaveLength(0);
     });
 
+    it('puts focus back on the Rename button after saving, on Escape and on Cancel', async () => {
+      setup({
+        'PATCH /api/chats/c1': () => jsonResponse(200, { chat: chat('c1', 'Q4 budget') }),
+      });
+      const user = userEvent.setup();
+      await user.click(await screen.findByRole('button', { name: 'Rename chat' }));
+      await user.type(await titleBox(), '{Escape}');
+      expect(screen.getByRole('button', { name: 'Rename chat' })).toHaveFocus();
+
+      await user.click(screen.getByRole('button', { name: 'Rename chat' }));
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+      expect(screen.getByRole('button', { name: 'Rename chat' })).toHaveFocus();
+
+      await user.click(screen.getByRole('button', { name: 'Rename chat' }));
+      await user.type(await titleBox(), ' v2{Enter}');
+      await screen.findByRole('heading', { name: 'Q4 budget' });
+      expect(screen.getByRole('button', { name: 'Rename chat' })).toHaveFocus();
+    });
+
     it('keeps the editor open and says so when the server fails', async () => {
       setup({
         'PATCH /api/chats/c1': jsonResponse(500, {
@@ -152,6 +180,17 @@ describe('chat header', () => {
 
       expect(screen.queryByText('Delete this chat and its messages?')).not.toBeInTheDocument();
       expect(calls(api, 'DELETE')).toHaveLength(0);
+    });
+
+    it('puts focus on Cancel, the safe choice, and gives it back to the Delete button', async () => {
+      setup();
+      const user = userEvent.setup();
+
+      await user.click(await screen.findByRole('button', { name: 'Delete chat' }));
+      expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
+
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+      expect(screen.getByRole('button', { name: 'Delete chat' })).toHaveFocus();
     });
 
     it('removes the chat, takes the user home and drops it from the list', async () => {

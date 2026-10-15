@@ -37,7 +37,12 @@ export function CodeBlock({ children }: { children?: ReactNode }) {
           {copied ? 'Copied' : 'Copy'}
         </Button>
       </div>
-      <pre className="overflow-x-auto p-3 text-[0.85em] leading-relaxed">
+      <pre
+        role="region"
+        aria-label={`Code, ${language ?? 'text'}`}
+        tabIndex={0}
+        className="overflow-x-auto p-3 text-[0.85em] leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+      >
         <code className="font-mono">{text}</code>
       </pre>
     </div>

@@ -25,7 +25,10 @@ export function CodeSnippet({ code, language, startLine, label, className }: Cod
       role="region"
       aria-label={label}
       tabIndex={0}
-      className={cn('overflow-x-auto rounded-md font-mono text-xs leading-relaxed', className)}
+      className={cn(
+        'overflow-x-auto rounded-md font-mono text-xs leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+        className,
+      )}
     >
       <pre className="min-w-max py-1.5">
         <code>

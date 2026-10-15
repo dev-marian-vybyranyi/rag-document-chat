@@ -55,7 +55,12 @@ export function PostingDetail({
       {fit ? (
         <>
           <FitMeter fit={fit} label={`Fit of the resume with ${title}`} />
-          <div className="overflow-x-auto rounded-lg border bg-background">
+          <div
+            role="region"
+            aria-label={`Requirements of ${title}`}
+            tabIndex={0}
+            className="overflow-x-auto rounded-lg border bg-background outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <table className="w-full text-left text-sm">
               <caption className="sr-only">
                 Requirements of {title} and what the resume shows

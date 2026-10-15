@@ -53,7 +53,12 @@ export function Markdown({ children, sources }: { children: string; sources: Cha
         <blockquote className="my-2 border-l-2 pl-3 text-muted-foreground" {...props} />
       ),
       table: ({ node: _node, ...props }) => (
-        <div className="my-3 overflow-x-auto">
+        <div
+          role="region"
+          aria-label="Table"
+          tabIndex={0}
+          className="my-3 overflow-x-auto rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
           <table className="w-full border-collapse text-left text-xs" {...props} />
         </div>
       ),

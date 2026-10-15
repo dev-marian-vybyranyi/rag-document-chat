@@ -46,6 +46,17 @@ describe('Markdown', () => {
       expect(screen.getByRole('cell', { name: 'HNSW' })).toBeInTheDocument();
     });
 
+    it('lets a wide table be scrolled with the keyboard', async () => {
+      const user = userEvent.setup();
+      renderMarkdown('| Index | Speed |\n| --- | --- |\n| HNSW | fast |');
+
+      const region = screen.getByRole('region', { name: 'Table' });
+      await user.tab();
+
+      expect(region).toHaveFocus();
+      expect(within(region).getByRole('table')).toBeInTheDocument();
+    });
+
     it('renders inline code apart from code blocks', () => {
       renderMarkdown('Use `CREATE INDEX` here');
 
@@ -62,6 +73,18 @@ describe('Markdown', () => {
   });
 
   describe('code blocks', () => {
+    it('lets a long line of code be scrolled with the keyboard', async () => {
+      const user = userEvent.setup();
+      renderMarkdown('```ts\nconst a = 1;\n```');
+
+      const region = screen.getByRole('region', { name: 'Code, ts' });
+      await user.tab();
+      await user.tab();
+
+      expect(region).toHaveFocus();
+      expect(within(region).getByText('const a = 1;')).toBeInTheDocument();
+    });
+
     it('shows the language and the code exactly as written', () => {
       renderMarkdown('```sql\nSELECT *\n  FROM docs;\n```');
 

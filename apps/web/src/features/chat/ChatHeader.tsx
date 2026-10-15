@@ -1,5 +1,5 @@
 import { PencilIcon, Trash2Icon } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +31,18 @@ export function ChatHeader({
   const [draft, setDraft] = useState(title);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const renameButton = useRef<HTMLButtonElement>(null);
+  const deleteButton = useRef<HTMLButtonElement>(null);
+  const cancelDelete = useRef<HTMLButtonElement>(null);
+  const previousMode = useRef<Mode>('view');
+
+  useEffect(() => {
+    const before = previousMode.current;
+    previousMode.current = mode;
+    if (mode === 'confirm-delete') cancelDelete.current?.focus();
+    else if (mode === 'view' && before === 'rename') renameButton.current?.focus();
+    else if (mode === 'view' && before === 'confirm-delete') deleteButton.current?.focus();
+  }, [mode]);
 
   function enter(next: Mode) {
     setDraft(title);
@@ -102,8 +114,11 @@ export function ChatHeader({
 
       {mode === 'view' && (
         <>
-          <SourcePicker chatId={chatId} sourceIds={sourceIds} />
+          <div className="order-last basis-full sm:order-none sm:basis-auto">
+            <SourcePicker chatId={chatId} sourceIds={sourceIds} />
+          </div>
           <Button
+            ref={renameButton}
             variant="ghost"
             size="icon-sm"
             aria-label="Rename chat"
@@ -112,6 +127,7 @@ export function ChatHeader({
             <PencilIcon aria-hidden />
           </Button>
           <Button
+            ref={deleteButton}
             variant="ghost"
             size="icon-sm"
             aria-label="Delete chat"
@@ -128,7 +144,13 @@ export function ChatHeader({
           <Button variant="destructive" size="sm" onClick={confirmDelete} disabled={pending}>
             Delete
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => enter('view')} disabled={pending}>
+          <Button
+            ref={cancelDelete}
+            variant="ghost"
+            size="sm"
+            onClick={() => enter('view')}
+            disabled={pending}
+          >
             Cancel
           </Button>
         </div>

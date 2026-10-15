@@ -233,6 +233,21 @@ describe('chat sidebar', () => {
     });
   });
 
+  describe('on a touch screen', () => {
+    it('makes every item in the sidebar tall enough to tap', async () => {
+      withChats([budget]);
+      renderApp();
+
+      const items = [
+        await screen.findByRole('link', { name: 'Documents' }),
+        screen.getByRole('link', { name: 'Career' }),
+        within(await conversations()).getByRole('link', { name: 'Budget 2026' }),
+      ];
+
+      for (const item of items) expect(item).toHaveClass('pointer-coarse:py-3');
+    });
+  });
+
   describe('on a narrow screen', () => {
     it('hides and shows the sidebar with the menu button, and closes it after navigating', async () => {
       withChats([budget, onboarding]);

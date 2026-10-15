@@ -8,6 +8,9 @@ import { DEFAULT_CHAT_TITLE, type Chat } from './api';
 import { useDocuments } from '../documents/documents-context';
 import { useChats } from './chats-context';
 
+const ITEM =
+  'rounded-lg px-2.5 py-1.5 pointer-coarse:py-3 text-sm transition-colors hover:bg-muted';
+
 function isUntouched(chat: Chat): boolean {
   return chat.title === DEFAULT_CHAT_TITLE && chat.updatedAt === chat.createdAt && !chat.sourceIds;
 }
@@ -48,10 +51,7 @@ export function ChatSidebar() {
       <NavLink
         to="/documents"
         className={({ isActive }) =>
-          cn(
-            'flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors hover:bg-muted',
-            isActive && 'bg-muted font-medium',
-          )
+          cn('flex items-center gap-2', ITEM, isActive && 'bg-muted font-medium')
         }
       >
         <FileTextIcon className="size-4" aria-hidden />
@@ -70,10 +70,7 @@ export function ChatSidebar() {
       <NavLink
         to="/career"
         className={({ isActive }) =>
-          cn(
-            'flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors hover:bg-muted',
-            isActive && 'bg-muted font-medium',
-          )
+          cn('flex items-center gap-2', ITEM, isActive && 'bg-muted font-medium')
         }
       >
         <BriefcaseBusinessIcon className="size-4" aria-hidden />
@@ -115,10 +112,7 @@ export function ChatSidebar() {
                   to={`/chats/${chat.id}`}
                   title={chat.title}
                   className={({ isActive }) =>
-                    cn(
-                      'block truncate rounded-lg px-2.5 py-1.5 text-sm transition-colors hover:bg-muted',
-                      isActive && 'bg-muted font-medium',
-                    )
+                    cn('block truncate', ITEM, isActive && 'bg-muted font-medium')
                   }
                 >
                   {chat.title}

@@ -354,6 +354,18 @@ describe('the Career page', () => {
       ]);
     });
 
+    it('lets a wide table of requirements be scrolled with the keyboard', async () => {
+      setup();
+      await board();
+
+      const region = screen.getByRole('region', {
+        name: 'Requirements of Job #1 · Backend Engineer at Globex',
+      });
+
+      expect(region).toHaveAttribute('tabindex', '0');
+      expect(within(region).getByRole('table')).toBeInTheDocument();
+    });
+
     it('shows another posting when it is chosen, with the quote and the note', async () => {
       setup();
       const user = userEvent.setup();

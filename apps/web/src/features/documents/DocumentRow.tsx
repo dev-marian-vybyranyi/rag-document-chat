@@ -6,7 +6,7 @@ import {
   Trash2Icon,
   UsersIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { DocumentItem } from './api';
 import { useStartChat } from '../chats/useStartChat';
@@ -86,6 +86,15 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
   const [confirming, setConfirming] = useState(false);
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
+  const deleteButton = useRef<HTMLButtonElement>(null);
+  const cancelButton = useRef<HTMLButtonElement>(null);
+  const wasConfirming = useRef(false);
+
+  useEffect(() => {
+    if (confirming) cancelButton.current?.focus();
+    else if (wasConfirming.current) deleteButton.current?.focus();
+    wasConfirming.current = confirming;
+  }, [confirming]);
 
   async function confirmRemove() {
     setPending(true);
@@ -159,6 +168,7 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
               Delete
             </Button>
             <Button
+              ref={cancelButton}
               variant="ghost"
               size="sm"
               onClick={() => setConfirming(false)}
@@ -169,6 +179,7 @@ export function DocumentRow({ document }: { document: DocumentItem }) {
           </div>
         ) : (
           <Button
+            ref={deleteButton}
             variant="ghost"
             size="icon-sm"
             aria-label={`Delete ${name}`}
